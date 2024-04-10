@@ -1,3 +1,16 @@
+# CascadingDelay
+Michael Variny repo for trying to propose a method to solve the cascading delay problem with uas for vertiport use
+
+working files are GUICreation.py to make a GUI to send commands directly to BlueSky software
+and BlueSkyPythonSims which is intended to send commands to BlueSky without a GUI and visualize the simulation there
+
+
+
+
+
+#REST OF BLUESKY FORK README
+
+
 # 10 years of BlueSky!
 This year marks BlueSky's tenth anniversary, which we are celebrating with a two-day [workshop](https://forms.office.com/e/mXamnSYba5) on November 8-9.
 ![workshop programme](https://github.com/TUDelft-CNS-ATM/bluesky/blob/a20cf4497d6fc57d859970891026db7ba3574807/docs/workshop_programme.png)
