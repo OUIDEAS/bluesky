@@ -202,7 +202,7 @@ class Traffic(Entity):
         self.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
 
 
-    def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0):
+    def cre(self, acid, actype="B2", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0):
         """ Create one or more aircraft. """
         # Determine number of aircraft to create from array length of acid
         n = 1 if isinstance(acid, str) else len(acid)

@@ -43,7 +43,7 @@ class Simulation:
         self.utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
         # Flag indicating running at fixed rate or fast time
-        self.ffmode = False
+        self.ffmode = True
         self.ffstop = None
 
         # Flag indicating whether timestep can be varied to ensure realtime op
@@ -147,7 +147,7 @@ class Simulation:
     def op(self):
         ''' Set simulation state to OPERATE. '''
         self.syst = time.time() + self.simdt
-        self.ffmode = False
+        self.ffmode = True
         self.ffstop = None
         self.state = bs.OP
         self.set_dtmult(1.0)
@@ -156,7 +156,7 @@ class Simulation:
         ''' Set simulation state to HOLD. '''
         self.syst = time.time() + self.simdt / self.dtmult
         self.state = bs.HOLD
-        self.ffmode = False
+        self.ffmode = True
         self.ffstop = None
 
 
@@ -168,7 +168,7 @@ class Simulation:
         self.simdt = bs.settings.simdt
         simtime.reset()
         self.utc = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        self.ffmode = False
+        self.ffmode = True
         self.set_dtmult(1.0)
         simtime.reset()
         core.reset()

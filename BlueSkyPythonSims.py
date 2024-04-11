@@ -1,180 +1,136 @@
 import bluesky as bs
+from bluesky import traffic
 import numpy as np
-# from bluesky.simulation import ScreenIO
+import time
+from bluesky.simulation import ScreenIO
 import matplotlib.pyplot as plt
-from bluesky.network.client import Client
+# from bluesky.network.client import Client
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
 
-# class ScreenDummy(ScreenIO):
-#     """
-#     Dummy class for the screen. Inherits from ScreenIO to make sure all the
-#     necessary methods are there. This class is there to reimplement the echo
-#     method so that console messages are printed.
-#     """
-#     def echo(self, text='', flags=0):
-#         """Just print echo messages"""
-#         print("BlueSky console:", text)
+class ScreenDummy(ScreenIO):
+    """
+    Dummy class for the screen. Inherits from ScreenIO to make sure all the
+    necessary methods are there. This class is there to reimplement the echo
+    method so that console messages are printed.
+    """
+    def echo(self, text='', flags=0):
+        """Just print echo messages"""
+        print("BlueSky console:", text)
 
 
 
 
-# The echo textbox, command line, and bluesky network client as globals
-echobox = None
-cmdline = None
-bsclient = None
+#Start the Sim
+
+bs.init(mode ='sim', detached=True)
+bs.sim.ffmode = True
+bs.scr = ScreenDummy()
+
+n = 20
+
+# bs.traf.mcre(n, actype ="A320")
+
+bs.traf.mcre(n, 'B737')
+# bs.traf.cre(acid = 'AC1', actype = 'B737', aclat  = 39.0, aclon = -1*82.0, achdg = 0, acalt= 1500, acspd= 300)
+
+# bsclient.get_trajectories()
+
+for acid in bs.traf.id:
+    #Initial Path Waypoints
+    bs.stack.stack(f'ORIG {acid} KCMH;'
+                f'ADDWPT {acid} HEH FL150;'
+                f'ADDWPT {acid} BUD FL100;'
+                f'ADDWPT {acid} TVT FL200;'
+                f'ADDWPT {acid} JPU FL150;'
+                f'VNAV {acid} ON')
+
+bs.stack.stack('DT 1;FF')
+
+# we'll run the simulation for up to 4000 seconds
+t_max = 1000
+
+ntraf = bs.traf.ntraf
+print(ntraf)
+n_steps = int(t_max + 1)
+t = np.linspace(0, t_max, n_steps)
+
+# allocate some empty arrays for the results
+res = np.zeros((n_steps, 5, ntraf))
+
+# print(np.ndim(res))
+# print(res[0][0][0])
+# iteratively simulate the traffic
+bs.traf
+start_time = time.time()
+for i in range(n_steps):
+    # Perform one step of the simulation
+    bs.sim.step()
+    
+
+    # save the results from the simulator in the results array,
+    # here we keep the latitude, longitude, altitude and TAS
+    res[i] = [bs.traf.lat,
+                bs.traf.lon,
+                bs.traf.alt,
+                bs.traf.tas,
+                bs.traf.hdg]
+    # plt.plot(bs.traf.lon, bs.traf.lat, marker = '^')
+    # plt.pause(0.0001)
+end_time = time.time()
+print("SIM TIME", end_time-start_time)
+
+'''Plotting'''
+
+# for idx, acid in enumerate(bs.traf.id):
+#     fig = plt.figure(figsize=(10, 40))
+#     ax1 = plt.subplot2grid((8, 1), (0, 0), rowspan=2)
+#     ax2 = plt.subplot2grid((4, 1), (1, 0))
+#     ax3 = plt.subplot2grid((4, 1), (2, 0))
+#     ax4 = plt.subplot2grid((4, 1), (3, 0))
+#     ax1.plot(res[:, 1, idx], res[:, 0, idx])
+#     ax1.set_xlabel('lon')
+#     ax1.set_ylabel('lat')
+#     ax1.grid()
+
+#     ax2.plot(t, res[:, 2, idx])
+#     ax2.set_xlabel('t [s]')
+#     ax2.set_ylabel('alt [m]')
+#     ax2.grid()
+
+#     ax3.plot(t, res[:, 3, idx])
+#     ax3.set_xlabel('t [s]')
+#     ax3.set_ylabel('TAS [m/s]')
+#     ax3.grid()
+
+#     ax4.plot(t, res[:, 4, idx])
+#     ax4.set_xlabel('t [s]')
+#     ax4.set_ylabel('heading')
+#     ax4.grid()
+
+#     fig.suptitle(f'Trajectory {acid}')
 
 
-class TextClient(Client):
-    '''
-        Subclassed Client with a timer to periodically check for incoming data,
-        an overridden event function to handle data, and a stack function to
-        send stack commands to BlueSky.
-    '''
-    def __init__(self):
-        super().__init__()
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update)
-        self.timer.start(20)
+# markers = ['o', 's', '^', 'v', '>', '<', 'P', 'X', 'D', '*', '+', 'x', '|', '_', '1', '2', '3', '4', 'h', 'H']
+used_colors = []
+for idx, acid in enumerate(bs.traf.id):
+    available_colors = [color for color in range(1, 101) if color not in used_colors]
+    color_idx = np.random.choice(available_colors)
+    color = plt.cm.tab20(color_idx)  # Use a colormap to generate a color
+    used_colors.append(color_idx)  # Add the used color index to the list
+    if idx%2 == 0:
+        marker = 'o'
+    elif idx%3 == 0:
+        marker = '^'
+    else:
+        marker = 'x'
+    # marker = np.random.choice()  # Randomly select a marker style
+    color = np.random.rand(3,)  # Randomly select a color
+    plt.plot(res[::10, 1, idx], res[::10, 0, idx], marker = marker, linestyle = '', label=f'AC{idx}', color=color)
+# plt.plot(res[:, 1], res[:, 0])
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+plt.grid()
+plt.legend()
 
-    def event(self, name, data, sender_id):
-        ''' Overridden event function to handle incoming ECHO commands. '''
-        if name == b'ECHO' and echobox is not None:
-            echobox.echo(**data)
-
-    def stack(self, text):
-        ''' Stack function to send stack commands to BlueSky. '''
-        self.send_event(b'STACK', text)
-
-    def echo(self, text, flags=None):
-        ''' Overload Client's echo function. '''
-        if echobox is not None:
-            echobox.echo(text, flags)
-    def get_trajectories(self):
-        return self.send_event(b'GET_TRAJECTORIES')
-
-class Echobox(QTextEdit):
-    ''' Text box to show echoed text coming from BlueSky. '''
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setMinimumHeight(150)
-        self.setReadOnly(True)
-        # self.setFocusPolicy(Qt.NoFocus)
-
-    def echo(self, text, flags=None):
-        ''' Add text to this echo box. '''
-        self.append(text)
-        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
-
-
-# class Cmdline(QTextEdit):
-#     ''' Wrapper class for the command line. '''
-#     def __init__(self, parent=None):
-#         super().__init__(parent)
-#         self.setMaximumHeight(21)
-#         # self.setFocusPolicy(Qt.StrongFocus)
-#         # self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-#     def keyPressEvent(self, event):
-#         ''' Handle Enter keypress to send a command to BlueSky. '''
-#         if event.key() == Qt.Key.Key_Enter or event.key() == Qt.Key.Key_Return:
-#             if bsclient is not None:
-#                 bsclient.stack(self.toPlainText())
-#                 echobox.echo(self.toPlainText())
-#             self.setText('')
-#         else:
-#             super().keyPressEvent(event)
-
-
-
-
-
-#Creating Aircraft
-# bs.stack.stack('CRE KL001 B737 KCMH 0 FL150 300')
-# bs.sim.step()
-# print('Lat Lon', bs.traf.lat, bs.traf.lon)
-
-if __name__ == '__main__':
-    # Construct the Qt main object
-    app = QApplication([])
-
-    # Create a window with a stack text box and a command line
-    win = QWidget()
-    win.setWindowTitle('External Client with a GUI')
-    layout = QVBoxLayout()
-    win.setLayout(layout)
-
-    echobox = Echobox(win)
-    # cmdline = Cmdline(win)
-    layout.addWidget(echobox)
-    layout.addWidget(cmdline)
-    # win.show()
-
-    # Create and start BlueSky client
-    bsclient = TextClient()
-    bsclient.connect(event_port=11000, stream_port=11001)
-    # app.exec()
-    bs.init(mode ='sim')
-    # bs.scr = ScreenDummy()
-
-    n = 3
-
-    bs.traf.mcre(n, actype ="F150")
-    bsclient.get_trajectories()
-
-    for acid in bs.traf.id:
-        # set the origin (not needed if initialized in flight),
-        # and add some waypoints, here only the altitude (in m) is passed to the
-        # function, but you can additionally pass a speed as well
-        # finally turn on VNAV for each flight
-        bsclient.stack(f'ORIG {acid} KCMH;'
-                    f'ADDWPT {acid} APE FL150;'
-                    f'ADDWPT {acid} BUD FL150;'
-                    f'ADDWPT {acid} TVT FL150;'
-                    f'ADDWPT {acid} JPU FL150;'
-                    f'VNAV {acid} ON')
-    bs.stack.stack('DT 1;FF')
-
-    # we'll run the simulation for up to 4000 seconds
-    t_max = 5000
-
-    ntraf = bs.traf.ntraf
-    n_steps = int(t_max + 1)
-    t = np.linspace(0, t_max, n_steps)
-
-    # allocate some empty arrays for the results
-    res = np.zeros((n_steps, 4, ntraf))
-
-    # iteratively simulate the traffic
-    for i in range(n_steps):
-        # Perform one step of the simulation
-        # bs.sim.step()
-
-        # save the results from the simulator in the results array,
-        # here we keep the latitude, longitude, altitude and TAS
-        res[i] = [bs.traf.lat,
-                    bs.traf.lon,
-                    bs.traf.alt,
-                    bs.traf.tas]
-
-    # for idx, acid in enumerate(bs.traf.id):
-    #     fig = plt.figure(figsize=(10, 15))
-    #     ax1 = plt.subplot2grid((4, 1), (0, 0), rowspan=2)
-    #     ax2 = plt.subplot2grid((4, 1), (2, 0))
-    #     ax3 = plt.subplot2grid((4, 1), (3, 0))
-
-    #     ax1.plot(res[:, 1, idx], res[:, 0, idx])
-    #     ax1.set_xlabel('lon')
-    #     ax1.set_ylabel('lat')
-
-    #     ax2.plot(t, res[:, 2, idx])
-    #     ax2.set_xlabel('t [s]')
-    #     ax2.set_ylabel('alt [m]')
-
-    #     ax3.plot(t, res[:, 3, idx])
-    #     ax3.set_xlabel('t [s]')
-    #     ax3.set_ylabel('TAS [m/s]')
-        
-    #     fig.suptitle(f'Trajectory {acid}')
-
-    # plt.show()
+plt.show()

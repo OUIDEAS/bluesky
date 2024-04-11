@@ -25,7 +25,7 @@ class ScreenIO:
     # =========================================================================
     def __init__(self):
         # Screen state defaults
-        self.def_pan     = (0.0, 0.0)
+        self.def_pan     = (40.001168, -82.899589)
         self.def_zoom    = 1.0
         self.route_all   = ""
 
