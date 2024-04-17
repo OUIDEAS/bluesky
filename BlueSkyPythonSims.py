@@ -6,6 +6,7 @@ import time
 from bluesky.simulation import ScreenIO
 import matplotlib.pyplot as plt
 from bluesky.tools import geo, aero, areafilter, plotter
+import re, sys, io
 # from PyQt5.QtCore import Qt, QTimer
 # from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
 
@@ -138,17 +139,104 @@ def plotWPTCoords(wpts):
             wptlat.append(wptdata['wplat'][wptidx])
     # print(wptlon, wptlat)
     plt.scatter(wptlon, wptlat, marker = 's', label = 'Waypoint')
-            
 
+def rwgs84(latd):
+    """ Calculate the earths radius with WGS'84 geoid definition
+        In:  lat [deg] (latitude)
+        Out: R   [m]   (earth radius) """
+    lat    = np.radians(latd)
+    a      = 6378137.0       # [m] Major semi-axis WGS-84
+    b      = 6356752.314245  # [m] Minor semi-axis WGS-84
+    coslat = np.cos(lat)
+    sinlat = np.sin(lat)
+
+    an     = a * a * coslat
+    bn     = b * b * sinlat
+    ad     = a * coslat
+    bd     = b * sinlat
+
+    # Calculate radius in meters
+    r = np.sqrt((an * an + bn * bn) / (ad * ad + bd * bd))
+
+    return r
+
+
+def qdrdist(latd1, lond1, latd2, lond2):
+    """ Calculate bearing and distance, using WGS'84
+        In:
+            latd1,lond1 en latd2, lond2 [deg] :positions 1 & 2
+        Out:
+            qdr [deg] = heading from 1 to 2
+            d [nm]    = distance from 1 to 2 in nm """
+
+    # Haversine with average radius for direction
+
+    # Check for hemisphere crossing,
+    # when simple average would not work
+
+    # res1 for same hemisphere
+    res1 = rwgs84(0.5 * (latd1 + latd2))
+
+    # res2 :different hemisphere
+    a    = 6378137.0       # [m] Major semi-axis WGS-84
+    r1   = rwgs84(latd1)
+    r2   = rwgs84(latd2)
+    res2 = 0.5 * (abs(latd1) * (r1 + a) + abs(latd2) * (r2 + a)) / \
+        (np.maximum(0.000001,abs(latd1) + abs(latd2)))
+
+    # Condition
+    sw   = (latd1 * latd2 >= 0.)
+
+    r    = sw * res1 + (1 - sw) * res2
+
+    # Convert to radians
+    lat1 = np.radians(latd1)
+    lon1 = np.radians(lond1)
+    lat2 = np.radians(latd2)
+    lon2 = np.radians(lond2)
+
+    #root = sin1 * sin1 + coslat1 * coslat2 * sin2 * sin2
+    #d    =  2.0 * r * np.arctan2(np.sqrt(root) , np.sqrt(1.0 - root))
+    # d =2.*r*np.arcsin(np.sqrt(sin1*sin1 + coslat1*coslat2*sin2*sin2))
+
+    # Corrected to avoid "nan" at westward direction
+    d = r*np.arccos(np.cos(lat1)*np.cos(lat2)*np.cos(lon2-lon1) + \
+                 np.sin(lat1)*np.sin(lat2))
+
+    # Bearing from Ref. http://www.movable-type.co.uk/scripts/latlong.html
+
+    # sin1 = np.sin(0.5 * (lat2 - lat1))
+    # sin2 = np.sin(0.5 * (lon2 - lon1))
+
+    coslat1 = np.cos(lat1)
+    coslat2 = np.cos(lat2)
+
+    qdr = np.degrees(np.arctan2(np.sin(lon2 - lon1) * coslat2,
+                                coslat1 * np.sin(lat2) -
+                                np.sin(lat1) * coslat2 * np.cos(lon2 - lon1)))
+
+    return qdr, d#/nm    
+# def process_output(line):
+#     # global distance_values
+#     match = re.search(pattern, line)
+#     if match:
+#         # Extract the distance value from the match object and convert it to float
+#         distance = float(match.group(1))
+#         # Append the distance value to the list
+#         return distance
+
+nm  = 1852.  # m       1 nautical mile
 #Start the Sim
 start_time = time.time()
 bs.init(mode ='sim', detached=True)
 bs.sim.ffmode = True
 bs.scr = ScreenDummy()
 
+#Pattern for pulling from terminal
+pattern = r'Dist = (\d+\.\d+) nm'
 #Creat Log
-bs.stack.stack(f'CRELOG MYLOG 1')
-bs.stack.stack(f'SCEN PYTHONSCEN; SAVEIC PYTHONSCEN')
+# bs.stack.stack(f'CRELOG MYLOG 1')
+# bs.stack.stack(f'SCEN PYTHONSCEN; SAVEIC PYTHONSCEN')
 #Set Sim Time
 
 #Read from datasets
@@ -158,10 +246,14 @@ datasets = [wptdata, aptdata]
 
 #Make Aircraft
 n = 5
-
 mytraf = bs.traf.mcre(n, 'B737', 150, 300 )
-bs.stack.stack(f'MYLOG add traf.id, traf.lat, traf.lon, traf.alt, traf.tas, traf.hdg')
-bs.stack.stack(f'MYLOG ON')
+# mytraf = bs.traf.cre('KL001', 'B737', 39.5, -83.2, 0, 150, 300)
+
+# bs.stack.stack(f'MYLOG add traf.id, traf.lat, traf.lon, traf.alt, traf.tas, traf.hdg')
+# bs.stack.stack(f'MYLOG ON')
+
+
+
 # '''Code to create a group of aircraft, kind of pointless'''
 # # Get the list of aircraft identifiers
 # aircraft_ids = [acid for acid in bs.traf.id]
@@ -221,11 +313,15 @@ lats, lons = getWPLatLon(wpts)
 count = np.zeros(len(bs.traf.id))
 # print(bs.traf.id[0])
 # print(count)
-
+ETA = np.zeros((len(bs.traf.id), n_steps))
+print(ETA)
+distances = np.zeros((len(bs.traf.id), n_steps))
+counter = 0
 #The sim
 for i in range(n_steps):
     # Perform one step of the simulation
     bs.sim.step()
+    counter+=1
     # if i >= 100 and count == 0:
     #     print("BREAK PRINT")
 
@@ -244,11 +340,15 @@ for i in range(n_steps):
                 bs.traf.tas,
                 bs.traf.hdg]
     for j in range(len(bs.traf.id)):
-
         if np.isclose(bs.traf.lat[j], lats[-1], atol = 0.05) and np.isclose(bs.traf.lon[j], lons[-1], atol = 0.05) and count[j] == 0:
             bs.stack.stack(f'ECHO {bs.traf.id[j]} {i}')
             count[j] = 1
-
+        # bs.stack.stack(f'DIST {bs.traf.lat[j]}, {bs.traf.lon[j]}, {lats[-1]}, {lons[-1]}')
+        dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], lats[-1], lons[-1])
+        distances[j][i] = dist[1]
+        if count[j]!=1 :#and distances[j][i] < distances[j][i-1]:
+            ETA[j][i] = dist[1]/bs.traf.tas[j]
+        
 end_time = time.time()
 bs.scr.update()
 
@@ -283,7 +383,7 @@ print("SIM TIME", end_time-start_time)
 #     ax4.grid()
 
 #     fig.suptitle(f'Trajectory {acid}')
-
+print(ETA)
 
 # markers = ['o', 's', '^', 'v', '>', '<', 'P', 'X', 'D', '*', '+', 'x', '|', '_', '1', '2', '3', '4', 'h', 'H']
 used_colors = []
