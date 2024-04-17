@@ -25,7 +25,7 @@ class ScreenIO:
     # =========================================================================
     def __init__(self):
         # Screen state defaults
-        self.def_pan     = (40.001168, -82.899589)
+        self.def_pan     = (39.5, -83.2)
         self.def_zoom    = 1.0
         self.route_all   = ""
 
@@ -93,10 +93,10 @@ class ScreenIO:
         zoom     = self.client_zoom.get(sender) or self.def_zoom
         ar       = self.client_ar.get(sender) or 1.0
 
-        lat0 = lat - 1.0 / (zoom * ar)
-        lat1 = lat + 1.0 / (zoom * ar)
-        lon0 = lon - 1.0 / (zoom * np.cos(np.radians(lat)))
-        lon1 = lon + 1.0 / (zoom * np.cos(np.radians(lat)))
+        lat0 = lat - 0.10 / (zoom * ar)
+        lat1 = lat + 0.10 / (zoom * ar)
+        lon0 = lon - 0.10 / (zoom * np.cos(np.radians(lat)))
+        lon1 = lon + 0.10 / (zoom * np.cos(np.radians(lat)))
         return lat0, lat1, lon0, lon1
 
     def zoom(self, zoom, absolute=True):
