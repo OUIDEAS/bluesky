@@ -60,6 +60,7 @@ def getWPLatLon(wpts):
             wptlat.append(wptdata['wplat'][wptidx])
 
     return wptlat, wptlon
+
 def shape4PlotAirport(ap1, ap2):
     #Check which dataset each wp is in
     j = -1
@@ -160,7 +161,6 @@ def rwgs84(latd):
 
     return r
 
-
 def qdrdist(latd1, lond1, latd2, lond2):
     """ Calculate bearing and distance, using WGS'84
         In:
@@ -229,14 +229,14 @@ nm  = 1852.  # m       1 nautical mile
 #Start the Sim
 start_time = time.time()
 bs.init(mode ='sim', detached=True)
-bs.sim.ffmode = True
+# bs.sim.ffmode = True
 bs.scr = ScreenDummy()
 
 #Pattern for pulling from terminal
 pattern = r'Dist = (\d+\.\d+) nm'
 #Creat Log
-# bs.stack.stack(f'CRELOG MYLOG 1')
-# bs.stack.stack(f'SCEN PYTHONSCEN; SAVEIC PYTHONSCEN')
+bs.stack.stack(f'CRELOG MANUALPOSOrderedFlightAttempt 1')
+bs.stack.stack(f'SCEN MANUALPOSOrderedFlight2; SAVEIC MANUALPOSOrderedFlight2')
 #Set Sim Time
 
 #Read from datasets
@@ -245,12 +245,17 @@ datasets_string = ['wptdata', 'aptdata']
 datasets = [wptdata, aptdata]
 
 #Make Aircraft
-n = 5
-mytraf = bs.traf.mcre(n, 'B737', 150, 300 )
-# mytraf = bs.traf.cre('KL001', 'B737', 39.5, -83.2, 0, 150, 300)
+# n = 20
+# mytraf = bs.traf.mcre(n, 'B737', 150, 300 )
+mytraf = bs.traf.cre('AC0', 'B737', 39.83, -83.2, 0, 150, 250)
+mytraf = bs.traf.cre('AC1', 'B737', 39.78, -83.195, 0, 150, 250)
+mytraf = bs.traf.cre('AC2', 'B737', 39.73, -83.19, 0, 150, 250)
+mytraf = bs.traf.cre('AC3', 'B737', 39.68, -83.185, 0, 150, 250)
+mytraf = bs.traf.cre('AC4', 'B737', 39.63, -83.18, 0, 150, 250)
 
-# bs.stack.stack(f'MYLOG add traf.id, traf.lat, traf.lon, traf.alt, traf.tas, traf.hdg')
-# bs.stack.stack(f'MYLOG ON')
+
+bs.stack.stack(f'MANUALPOSOrderedFlightAttempt add traf.id, traf.lat, traf.lon, traf.alt, traf.tas, traf.hdg')
+bs.stack.stack(f'MANUALPOSOrderedFlightAttempt ON')
 
 
 
@@ -273,8 +278,10 @@ mytraf = bs.traf.mcre(n, 'B737', 150, 300 )
 #     print("Failed to add aircraft to 'NewGroup':", message)
 
 #Set Waupoints and Flight Level (Altitude)
-wpts = ['NIKOE', 'LARGY', 'KCMH', 'COJEZ', 'JASLO']
-fls = ['FL150', 'FL100', 'FL200', 'FL150' , 'FL100']
+wpts = ['NIKOE', 'LARGY', 'KCMH', 'COJEZ', 'JASLO', 'LIMPS']
+fls = ['FL150', 'FL100', 'FL200', 'FL150' , 'FL100', 'FL150']
+rtas = [3000.0, 3500.0, 4000.0, 4500.0, 5000.0]
+index = 0
 for acid in bs.traf.id:
     #Initial Path Waypoints 
     
@@ -284,19 +291,22 @@ for acid in bs.traf.id:
                 # f'ADDWPTMODE {acid} TURNSPD;'
                 # f'ADDWPTMODE {acid} FLYOVER;'
                 # f'ADDWPT {acid} TURNSPD 5'
-                f'ADDWPT {acid} {wpts[0]} {fls[0]};'
+                f'{acid} ADDWPT {wpts[-1]} {fls[-1]};'
+                f'{acid} AFTER {wpts[-1]} ADDWPT {wpts[0]} {fls[0]};'
                 f'{acid} AFTER {wpts[0]} ADDWPT {wpts[1]} {fls[1]};'
                 f'{acid} AFTER {wpts[1]} ADDWPT {wpts[2]} {fls[2]};'
                 f'{acid} AFTER {wpts[2]} ADDWPT {wpts[3]} {fls[3]};'
                 f'{acid} AFTER {wpts[3]} ADDWPT {wpts[4]} {fls[4]};'
-                f'{acid} RTA {wpts[4]} 300.0;'
+                # f'{acid} RTA {wpts[4]} {rtas[index]};'
                 f'VNAV {acid} ON')
-    #bs.stack.stack(f'LISTRTE {acid}') #List Waypoints
-bs.stack.stack(f'DT 1; FF') #Set DT to 1 second
+    index += 1
+    # bs.stack.stack(f'LISTRTE {acid}') #List Waypoints
+bs.stack.stack(f'DT 0.025') #Set DT to 1 second
 bs.stack.stack(f'ECHO TEST')
 # we'll run the simulation for up to 4000 seconds
-t_max = 500
-
+t_max = 12000
+mytraf2 = bs.traf.cre('EM0', 'B737', 39.25, -83.2, 0, 150, 500)
+bs.stack.stack(f'EM0 ADDWPT JASLO 5000')
 ntraf = bs.traf.ntraf
 
 n_steps = int(t_max + 1)
@@ -305,6 +315,7 @@ t = np.linspace(0, t_max, n_steps)
 
 # allocate some empty arrays for the results
 res = np.zeros((n_steps, 5, ntraf))
+em = np.zeros((n_steps, 1))
 # print(res)
 # print(n_steps)
 # iteratively simulate the traffic
@@ -314,14 +325,25 @@ count = np.zeros(len(bs.traf.id))
 # print(bs.traf.id[0])
 # print(count)
 ETA = np.zeros((len(bs.traf.id), n_steps))
-print(ETA)
 distances = np.zeros((len(bs.traf.id), n_steps))
+path_dists = []
+for i in range(len(bs.traf.id)):
+    dist_wp01 = qdrdist(bs.traf.lat[i], bs.traf.lon[i], lats[0], lons[0])
+    dist_wp12 = qdrdist(lats[0], lons[0], lats[1], lons[1])
+    dist_wp23 = qdrdist(lats[1], lons[1], lats[2], lons[2])
+    dist_wp34 = qdrdist(lats[0], lons[0], lats[1], lons[1])
+    dist_wp45 = qdrdist(lats[0], lons[0], lats[1], lons[1])
+    total = dist_wp01[1]+dist_wp12[1]+dist_wp23[1]+dist_wp34[1]+dist_wp45[1]
+    path_dists.append(total)
+    print(path_dists)
+
 counter = 0
 #The sim
 for i in range(n_steps):
     # Perform one step of the simulation
     bs.sim.step()
-    counter+=1
+    
+        
     # if i >= 100 and count == 0:
     #     print("BREAK PRINT")
 
@@ -339,15 +361,18 @@ for i in range(n_steps):
                 bs.traf.alt,
                 bs.traf.tas,
                 bs.traf.hdg]
-    for j in range(len(bs.traf.id)):
-        if np.isclose(bs.traf.lat[j], lats[-1], atol = 0.05) and np.isclose(bs.traf.lon[j], lons[-1], atol = 0.05) and count[j] == 0:
-            bs.stack.stack(f'ECHO {bs.traf.id[j]} {i}')
-            count[j] = 1
-        # bs.stack.stack(f'DIST {bs.traf.lat[j]}, {bs.traf.lon[j]}, {lats[-1]}, {lons[-1]}')
-        dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], lats[-1], lons[-1])
-        distances[j][i] = dist[1]
-        if count[j]!=1 :#and distances[j][i] < distances[j][i-1]:
-            ETA[j][i] = dist[1]/bs.traf.tas[j]
+    if i!=0:
+        for j in range(len(bs.traf.id)):
+            if np.isclose(bs.traf.lat[j], lats[4], atol = 0.05) and np.isclose(bs.traf.lon[j], lons[4], atol = 0.05) and count[j] == 0:
+                bs.stack.stack(f'ECHO {bs.traf.id[j]} {i}')
+                count[j] = 1
+            # bs.stack.stack(f'DIST {bs.traf.lat[j]}, {bs.traf.lon[j]}, {lats[-1]}, {lons[-1]}')
+            # print(res[i-1][0][j])
+            dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], res[i-1][0][j], res[i-1][1][j])
+            # print(path_dists[j], dist)
+            distances[j][i] = path_dists[j]-dist[1]
+            if count[j]!=1 :#and distances[j][i] < distances[j][i-1]:
+                ETA[j][i] = (distances[j][i]/bs.traf.tas[j])/0.025
         
 end_time = time.time()
 bs.scr.update()
@@ -402,7 +427,7 @@ for idx, acid in enumerate(bs.traf.id):
     color = np.random.rand(3,)  # Randomly select a color
     plt.plot(res[::25, 1, idx], res[::25, 0, idx], marker = marker, label=f'AC{idx}', color=color)
 
-shape4PlotAirport('COJEZ', 'NIKOE')
+# shape4PlotAirport('COJEZ', 'NIKOE')
 plotWPTCoords(wpts)
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
