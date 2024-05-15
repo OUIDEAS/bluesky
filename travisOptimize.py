@@ -68,7 +68,8 @@ def path_length(P1, P0, P2, t):
 def solve_optim(P0, P2, target_toa, turn_radius, guess, target_heading, velocity):
     def path_cost(P1):
         return (np.abs(path_length(P1, P0, P2, 1) - target_toa*velocity))
-   
+    
+    
     cons = (
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
@@ -76,7 +77,7 @@ def solve_optim(P0, P2, target_toa, turn_radius, guess, target_heading, velocity
             {'type': 'ineq', 'fun': lambda x: x[0] + P2[0]},
             {'type': 'ineq', 'fun': lambda x: x[1] - P2[1]},
             {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P0[1]-x[1]), (P0[0]-x[0]))-target_heading)}
-        )  
+            )  
    
     val = minimize(path_cost,[guess[0],guess[1]], method='SLSQP', tol=1E-10, constraints=cons)
  
@@ -88,11 +89,11 @@ def solve_optim(P0, P2, target_toa, turn_radius, guess, target_heading, velocity
  
 if __name__ == "__main__":
  
-    velocity  = 86.7258
-    turn_rate = 0.35 # RAD/s
+    velocity  = 100
+    turn_rate = 111111 # RAD/s
     turn_radius = velocity / turn_rate
    
-    target_toa = 600
+    target_toa = 5
     uav_head = np.deg2rad(60)
  
  
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     # print("TARGET LENGTH: ", target_length)
  
     # GOAL: DESIGN P1 TO MEET CONSTRAINTS
-    nodes1 = [np.array([0, 10000, 40000]).flatten(),np.array([0, 1000, 10000]).flatten()]
+    nodes1 = [np.array([0, 100, 400]).flatten(),np.array([0, 100, 100]).flatten()]
  
     # curve1 = bezier.Curve(nodes1, degree=len(nodes1[0])-1)
     bezier_moleski = manual_bez([nodes1[0][0],nodes1[1][0]], [nodes1[0][1],nodes1[1][1]],[nodes1[0][2],nodes1[1][2]], 200)
@@ -154,20 +155,45 @@ if __name__ == "__main__":
     ax.plot(optimal_bez[0],optimal_bez[1], c='black',label='Quadratic Bezier curve')
  
     ax.scatter([nodes1[0][0], optim_sol[0], nodes1[0][2]],[nodes1[1][0],optim_sol[1],nodes1[1][2]], label='Control Points')
+    nodes1 = [np.array([0, 100, 350]).flatten(),np.array([0, 100, 150]).flatten()]
  
+    # curve1 = bezier.Curve(nodes1, degree=len(nodes1[0])-1)
+    bezier_moleski = manual_bez([nodes1[0][0],nodes1[1][0]], [nodes1[0][1],nodes1[1][1]],[nodes1[0][2],nodes1[1][2]], 200)
+ 
+    #OPTIMIZE TEST:
+    optim_sol, curv = solve_optim(P0=[nodes1[0][0],nodes1[1][0]],P2=[nodes1[0][2], nodes1[1][2]],
+                                  target_toa=target_toa,
+                                  turn_radius=turn_radius,
+                                  guess=[nodes1[0][1], nodes1[1][1]],
+                                  target_heading=np.pi/4,
+                                  velocity=velocity)
+   
+    optimal_bez = manual_bez([nodes1[0][0],nodes1[1][0]],
+                             [optim_sol[0],optim_sol[1]],
+                             [nodes1[0][2],nodes1[1][2]], 200)
+    # ax.plot([nodes1[0][0], nodes1[0][2]], [nodes1[1][0], nodes1[1][2]], label = 'Straight Line Path')
+    ax.scatter([nodes1[0][0], optim_sol[0], nodes1[0][2]],[nodes1[1][0],optim_sol[1],nodes1[1][2]], label='Control Points')
+    ax.plot(optimal_bez[0],optimal_bez[1], c='black',label='Quadratic Bezier curve')
+    print("ToA:", path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol[0],optim_sol[1]],P2=[nodes1[0][2], nodes1[1][2]], t=1) / velocity)
+
     ax.text(nodes1[0][0]+0.25,nodes1[1][0],  r'$\bf{p_0}$')
     ax.text(optim_sol[0]+0.25,optim_sol[1],  r'$\bf{p_1}$')
     ax.text(nodes1[0][2]+0.25,nodes1[1][2],  r'$\bf{p_2}$')
+    ax.text(nodes1[0][2]-75,nodes1[1][2]+50,  r'Bezier TOA=5')
+
+    dist = np.hypot(nodes1[1][0]- nodes1[1][2], nodes1[0][0] - nodes1[0][2] )
+    t = dist/velocity
+    print(t)
+    ax.text(nodes1[0][0],nodes1[1][0]-20,  r'Straight Line TOA=4.12')
+    # ax.text(mx+0.25, my, r'$\bf{m}$')
+    # ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')
+    # ax.text(center2x+0.25, center2y, r'$\bf{C_2}$')
  
-    ax.text(mx+0.25, my, r'$\bf{m}$')
-    ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')
-    ax.text(center2x+0.25, center2y, r'$\bf{C_2}$')
- 
-    ax.scatter(mx,my)
-    ax.scatter(center1x,center1y)
-    ax.scatter(center2x,center2y)
-    ax.add_patch(Circle((center1x, center1y), r1, color='black', fill=False))
-    ax.add_patch(Circle((center2x, center2y), r2, color='black', fill=False))
+    # ax.scatter(mx,my)
+    # ax.scatter(center1x,center1y)
+    # ax.scatter(center2x,center2y)
+    # ax.add_patch(Circle((center1x, center1y), r1, color='black', fill=False))
+    # ax.add_patch(Circle((center2x, center2y), r2, color='black', fill=False))
  
     ax.grid(True)
     ax.axis('equal')

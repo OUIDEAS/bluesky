@@ -8,31 +8,6 @@ import time
 show_animation = True
 
 
-def calc_4points_bezier_path(sx, sy, syaw, ex, ey, eyaw, offset):
-    """
-    Compute control points and path given start and end position.
-
-    :param sx: (float) x-coordinate of the starting point
-    :param sy: (float) y-coordinate of the starting point
-    :param syaw: (float) yaw angle at start
-    :param ex: (float) x-coordinate of the ending point
-    :param ey: (float) y-coordinate of the ending point
-    :param eyaw: (float) yaw angle at the end
-    :param offset: (float)
-    :return: (numpy array, numpy array)
-    """
-    dist = np.hypot(sx - ex, sy - ey) / offset
-    control_points = np.array(
-        [[sx, sy],
-         [sx + dist * np.cos(syaw), sy + dist * np.sin(syaw)],
-         [ex - dist * np.cos(eyaw), ey - dist * np.sin(eyaw)],
-         [ex, ey]])
-
-    path = calc_bezier_path(control_points, n_points=15)
-
-    return path, control_points
-
-
 def calc_bezier_path(control_points, n_points=100):
     """
     Compute bezier path (trajectory) given control points.
@@ -130,10 +105,10 @@ class Aircraft:
 def sim_step(ac, dt, targetwpt): #posx, posy, v, h, dt, acid, targetwpt
     posxnew = ac.posx + ac.v*np.cos(ac.h)*dt
     posynew = ac.posy + ac.v*np.sin(ac.h)*dt
-    if ac.acid == 'AC0':
-        hnew = np.arctan2(targetwpt[1]-posynew, targetwpt[0]-posxnew)
-    else:
-        hnew = ac.h
+    # if ac.acid == 'AC0':
+    #     hnew = np.arctan2(targetwpt[1]-posynew, targetwpt[0]-posxnew)
+    # else:
+    hnew = ac.h
     return posxnew, posynew, hnew
 
 
@@ -239,43 +214,54 @@ for i in range(0, 3000):
     innerby.append(i)
 
 figure, ax = plt.subplots()
-ax.set_xlim(700,2000)
-ax.set_ylim(-200, 3200)
+# ax.set_xlim(700,2000)
+# ax.set_ylim(-200, 3200)
 # ax.set_aspect('equal')
-plt.scatter(boundx, boundy)
+# plt.scatter(boundx, boundy)
 valid_points, xvp, yvp = get_valid_points(boundx, boundy, innerbx, innerby, 50)
 path, control_points, wpts, wpts_x, wpts_y = find_bezier_cp(valid_points, start_x, start_y, goal_x, goal_y, boundx, boundy, innerbx, innerby)
 # print(wpts)
 # plt.scatter(xvp, yvp, color = 'green')
-plt.plot(path.T[0], path.T[1], 'r')
-plt.scatter(wpts_x, wpts_y, marker = '*', color = 'yellow')
-plt.scatter(control_points.T[0], control_points.T[1], color = 'yellow')
+# plt.plot(path.T[0], path.T[1], 'r')
+# plt.scatter(wpts_x, wpts_y, marker = '*', color = 'yellow')
+# plt.scatter(control_points.T[0], control_points.T[1], color = 'yellow')
 #acid, v, h, posx, posy)
 # ax.set_aspect('equal')
 target_idx = -1
-AC0 = Aircraft('AC0', 220, 0, 750, -50)
-EAC = Aircraft('EAC', 242, np.deg2rad(90), 750, -500)
+AC0 = Aircraft('AC0', 220, np.deg2rad(90), 750, 0)
+EAC = Aircraft('EAC', 242, np.deg2rad(90), 750, -354) #330 = 15s
+TOI = np.abs(AC0.posy - EAC.posy)/(EAC.v - AC0.v)
+plt.scatter(750, 2200)
 dist = np.hypot(wpts[target_idx][0]-AC0.posx, wpts[target_idx][1]-AC0.posy)
-for i in range(0, 180):
+for i in range(0, 3100):
     dist_prev = dist
-    EAC.posx, EAC.posy, EAC.h = sim_step(EAC, .1, [0,0])
-    target_idx, d = cacl_next_wpt(AC0, wpts, dist)
-    if dist >= dist_prev:
-        target_idx+=1
-    if target_idx >= len(wpts):
-        target_idx = -1
+    EAC.posx, EAC.posy, EAC.h = sim_step(EAC, .01, [0,0])
+    # target_idx, d = cacl_next_wpt(AC0, wpts, dist)
+    # if dist >= dist_prev:
+    #     target_idx+=1
+    # if target_idx >= len(wpts):
+    #     target_idx = -1
     # print(target_idx, wpts)
-    AC0.posx, AC0.posy, AC0.h = sim_step(AC0, .1, wpts[target_idx])
-    dist = np.hypot(wpts[target_idx][0]-AC0.posx, wpts[target_idx][1]-AC0.posy)
+    AC0.posx, AC0.posy, AC0.h = sim_step(AC0, .01, wpts[target_idx])
+    dist = np.hypot(EAC.posx-AC0.posx, EAC.posy-AC0.posy)
+    # print(dist)
     # print(EAC.posy)
     # print(AC0.posx, AC0.posy, AC0.h, wpts[target_idx], target_idx)
-    plt.scatter(AC0.posx, AC0.posy, color = 'black')
-    plt.scatter(EAC.posx, EAC.posy, color = 'red')
-    circ = plt.Circle((EAC.posx, EAC.posy), 250, color = 'b', fill = False)
-    ax.add_artist(circ)
-
+    # plt.scatter(AC0.posx, AC0.posy, color = 'black')
+    # plt.scatter(EAC.posx, EAC.posy, color = 'red')
+    # circ = plt.Circle((EAC.posx, EAC.posy), 250, color = 'b', fill = False)
+    # ax.add_artist(circ)
+    if dist_prev < dist:
+        print('Real TOI: ', i*0.01, 'Calced TOI: ', TOI)
+        break
+    if np.isclose(dist, 150, atol = 5):
+        print(AC0.posy, EAC.posy, dist, i*0.01)
+        print('EAC DIST TO TRAVEL: ', 3100 - EAC.posy)
+        break
     # plt.pause(0.01)
 # plt.grid()
+plt.scatter(AC0.posx, AC0.posy, color = 'black')
+plt.scatter(EAC.posx, EAC.posy, color = 'red')
 stop_time = time.time()
 print("TOTAL TIME: ", stop_time-start_time)
 

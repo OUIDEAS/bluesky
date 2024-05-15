@@ -235,8 +235,8 @@ bs.scr = ScreenDummy()
 #Pattern for pulling from terminal
 pattern = r'Dist = (\d+\.\d+) nm'
 #Creat Log
-bs.stack.stack(f'CRELOG MANUALPOSOrderedFlightAttempt 1')
-bs.stack.stack(f'SCEN MANUALPOSOrderedFlight2; SAVEIC MANUALPOSOrderedFlight2')
+# bs.stack.stack(f'CRELOG MANUALPOSOrderedFlightAttempt 1')
+# bs.stack.stack(f'SCEN MANUALPOSOrderedFlight2; SAVEIC MANUALPOSOrderedFlight2')
 #Set Sim Time
 
 #Read from datasets
@@ -247,15 +247,15 @@ datasets = [wptdata, aptdata]
 #Make Aircraft
 # n = 20
 # mytraf = bs.traf.mcre(n, 'B737', 150, 300 )
-mytraf = bs.traf.cre('AC0', 'B737', 39.83, -83.2, 0, 150, 250)
+mytraf = bs.traf.cre('AC0', 'B737', 2, -83.2, 0, 150, 250)
 mytraf = bs.traf.cre('AC1', 'B737', 39.78, -83.195, 0, 150, 250)
 mytraf = bs.traf.cre('AC2', 'B737', 39.73, -83.19, 0, 150, 250)
 mytraf = bs.traf.cre('AC3', 'B737', 39.68, -83.185, 0, 150, 250)
 mytraf = bs.traf.cre('AC4', 'B737', 39.63, -83.18, 0, 150, 250)
 
 
-bs.stack.stack(f'MANUALPOSOrderedFlightAttempt add traf.id, traf.lat, traf.lon, traf.alt, traf.tas, traf.hdg')
-bs.stack.stack(f'MANUALPOSOrderedFlightAttempt ON')
+# bs.stack.stack(f'MANUALPOSOrderedFlightAttempt add traf.id, traf.lat, traf.lon, traf.alt, traf.tas, traf.hdg')
+# bs.stack.stack(f'MANUALPOSOrderedFlightAttempt ON')
 
 
 
