@@ -1,60 +1,99 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import matplotlib.dates as md
+from matplotlib.patches import Circle
+fig, ax = plt.subplots()
 # # corner_point = [1000, 0]
 # # start_point = [750, -220]
 # # angle = np.arctan2(corner_point[1] - start_point[1], corner_point[0]-start_point[0])
 # # print(np.rad2deg(angle))
-corridor_linex = np.zeros(900)
-y = [i for i in range(0, 900)]
-corridor_linex2 = [1500 for i in range(0, 900)]
+# corridor_linex = np.zeros(900)
+# y = [i for i in range(0, 900)]
+# corridor_linex2 = [1500 for i in range(0, 900)]
 
-evehicle_x1 = [500 for i in range(0, 900)]
-evehicle_x2 = [1000 for i in range(0, 900)]
-
-
-x = [i for i in range(750, 1500)]
-y_sl = [i*np.tan(np.deg2rad(11.3))-200 for i in x]
-# plt.plot(x, y_sl)
+# evehicle_x1 = [500 for i in range(0, 900)]
+# evehicle_x2 = [1000 for i in range(0, 900)]
 
 
-cpx = [750, 750, 1500, 1500]
-cpy = [0, 900, 900, 0]
+# x = [i for i in range(750, 1500)]
+# y_sl = [i*np.tan(np.deg2rad(11.3))-200 for i in x]
+# # plt.plot(x, y_sl)
+
+
+# cpx = [750, 750, 1500, 1500]
+# cpy = [0, 900, 900, 0]
+# plt.grid()
+# plt.plot(corridor_linex, y, 'r')
+# plt.plot(corridor_linex2, y, 'r', linewidth = 2, label = 'UAM Flight Corridor Border')
+# plt.plot(evehicle_x1, y, 'b--')
+# plt.plot(evehicle_x2, y, 'b--')
+# # plt.scatter(750, -100, marker = '^', color = 'green', s = 100, zorder = 20)
+# plt.scatter(750, 900, color = 'purple', marker = '*', s = 100, label = 'Goal Point', zorder = 20)
+# plt.scatter(750, 400, color = 'black', marker = '^', s = 100, zorder = 20, label = 'Emergency Aircraft') 
+# # plt.scatter(cpx, cpy, marker = 'o', color = 'orange', s=50)
+# plt.fill_betweenx(y, evehicle_x1, corridor_linex, color='green', alpha = 0.5, label = 'Area for Control Point Placement')
+# plt.fill_betweenx(y, evehicle_x2, corridor_linex2, color='green', alpha = 0.5)
+# plt.fill_betweenx(y, evehicle_x2, evehicle_x1, color='blue', alpha = 0.5, label = 'Emergency Vehicle Clearance')
+
+# plt.axvline(x=min(corridor_linex), color='none')
+# plt.axvline(x=max(evehicle_x1), color='none')
+# plt.axhline(y=min(y), color='none')
+# plt.axhline(y=max(y), color='none')
+# plt.xlim([730, 1600])
+# ax.add_patch(Circle((750, 400), 150, color='red', fill=True, label = 'Safety Radius'))
+# plt.legend(loc = 'lower left', fontsize = '7.5')
+# plt.axis('equal')
+# plt.xlabel('X (ft)')
+# plt.ylabel('Y (ft)')
+# plt.show()
+
+
+ac = [i for i in range(0, 20)]
+ETA = [300 + 30*i for i in range(0, 20)]
+ETA_Real = []
+ETA_Other = []
+j = 0
+for i in ETA:
+    ETA_Real.append(i+10*j)
+    ETA_Other.append((i**2)/300)
+    j+=1
+plt.scatter(ac, ETA, color = 'blue', label = 'Original ETA')
+plt.scatter(ac, ETA_Real, color = 'red', label = 'ETA with Bezier Curve', marker = '^')
+plt.scatter(ac, ETA_Other, label = 'ETA with Traditional Avoidance', marker = '*', color = 'green')
 plt.grid()
-plt.plot(corridor_linex, y, 'r')
-plt.plot(corridor_linex2, y, 'r', linewidth = 2, label = 'UAM Flight Corridor Border')
-plt.plot(evehicle_x1, y, 'b--')
-plt.plot(evehicle_x2, y, 'b--')
-
-plt.plot(750, 900, color = 'purple', marker = '*', markersize = 10, label = 'Vertiport')
-# plt.scatter(cpx, cpy, marker = 'o', color = 'orange', s=50)
-plt.fill_betweenx(y, evehicle_x1, corridor_linex, color='green', alpha = 0.5, label = 'Area for Control Point Placement')
-plt.fill_betweenx(y, evehicle_x2, corridor_linex2, color='green', alpha = 0.5)
-plt.fill_betweenx(y, evehicle_x2, evehicle_x1, color='blue', alpha = 0.5, label = 'Emergency Vehicle Clearance')
-plt.legend(loc = 'lower left', fontsize = '7.5')
-plt.axvline(x=min(corridor_linex), color='none')
-plt.axvline(x=max(evehicle_x1), color='none')
-plt.axhline(y=min(y), color='none')
-plt.axhline(y=max(y), color='none')
-plt.xlim([730, 1600])
-plt.axis('equal')
-plt.xlabel('X (ft)')
-plt.ylabel('Y (ft)')
+plt.legend()
+plt.title('ETA of Aircraft in Fleet')
+plt.xlabel('Aircraft ID #')
+plt.ylabel('ETA (s)')
 plt.show()
 
+# times = ['10:00', '11:00', '12:30', '10:30', '12:00', '2:00']
+# # plt.grid()
+# plt.scatter('10:00', 'Original', marker = '*', color = 'black', s = 100, label = 'Aircraft A', zorder = 20)
+# plt.scatter('10:30', 'Delayed', marker = '*', color = 'black', s = 100, zorder = 20)
 
-# ac = [i for i in range(0, 50)]
-# ETA = [300 + 30*i for i in range(0, 50)]
-# ETA_Real = []
-# j = 0
-# for i in ETA:
-#     ETA_Real.append(i+10*j)
-#     j+=1
-# plt.scatter(ac, ETA, color = 'blue', label = 'Original ETA')
-# plt.scatter(ac, ETA_Real, color = 'red', label = 'Actual ETA')
-# plt.grid()
+# plt.scatter('11:00', 'Original', marker = '*', color = 'red', s = 100, label = 'Aricraft B', zorder = 20)
+# plt.scatter('11:20', 'Delayed', marker = '*', color = 'red', s = 100, zorder = 20)
+
+# plt.scatter('12:00', 'Original', marker = '*', color = 'green', s = 100, label = 'Aircraft C', zorder = 20)
+# plt.scatter('12:10', 'Delayed', marker = '*', color = 'green', s = 100, zorder = 20)
 # plt.legend()
-# plt.title('ETA of Aircraft in Fleet')
-# plt.xlabel('Aircraft ID #')
-# plt.ylabel('ETA (s)')
+# plt.plot(['10:00', '10:30'], ['Delayed', 'Delayed'],'k--', zorder = 20)
+# plt.plot(['10:00', '10:00'], ['Original', 'Delayed'],'k', zorder = 20)
+
+# plt.plot(['11:00', '11:20'], ['Delayed', 'Delayed'],'r--', zorder = 20)
+# plt.plot(['11:00', '11:00'], ['Original', 'Delayed'],'r', zorder = 20)
+
+# plt.plot(['12:00', '12:10'], ['Delayed', 'Delayed'],'g--', zorder = 20)
+# plt.plot(['12:00', '12:00'], ['Original', 'Delayed'],'g', zorder = 20)
+# # ax.text('1:00', 'Delayed', r'60 Minute Delay', va = 'baseline')
+# ax.annotate('30 Minute Delay', xy=('10:30', 'Delayed'), xytext=(35, 10), textcoords='offset points', ha='center', color='black')
+# ax.annotate('20 Minute Delay', xy=('11:20', 'Delayed'), xytext=(35, 10), textcoords='offset points', ha='center', color='red')
+# ax.annotate('10 Minute Delay', xy=('12:10', 'Delayed'), xytext=(35, 10), textcoords='offset points', ha='center', color='green')
+# # ax.xaxis.set_major_formatter(md.DateFormatter('%H:%M'))
+# ax.invert_xaxis()
+# # plt.scatter(times, y_points)
+# plt.axis('equal')
+# plt.xlabel('ETA')
+# plt.ylabel('Status')
 # plt.show()

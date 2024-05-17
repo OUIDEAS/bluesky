@@ -212,20 +212,20 @@ if __name__ == "__main__":
     ax.plot(optimal_bez2[0],optimal_bez2[1], c='black')
  
     ax.scatter([nodes2[0][0], optim_sol2[0], nodes2[0][2]],[nodes2[1][0],optim_sol2[1],nodes2[1][2]], label='Bezier Curve 2 Control Points')
-    ax.text(nodes1[0][0]+0.25,nodes1[1][0],  r'$\bf{p_0}$')
-    ax.text(optim_sol1[0]+0.25,optim_sol1[1],  r'$\bf{p_1}$')
-    ax.text(nodes1[0][2]+0.25,nodes1[1][2],  r'$\bf{p_2/p_0}$')
+    ax.text(nodes1[0][0]+0.25,nodes1[1][0]-30,  r'$\bf{p_{01}}$')
+    ax.text(optim_sol1[0]+0.25,optim_sol1[1],  r'$\bf{p_{11}}$')
+    ax.text(nodes1[0][2]+0.25,nodes1[1][2],  r'$\bf{p_{21}/p_{02}}$')
     # ax.text(nodes2[0][0]+0.25,nodes2[1][0],  r'$\bf{p_0}$')
-    ax.text(optim_sol2[0]+0.25,optim_sol2[1],  r'$\bf{p_1}$')
-    ax.text(nodes2[0][2]+0.25,nodes2[1][2],  r'$\bf{p_2}$')
+    ax.text(optim_sol2[0]+0.25,optim_sol2[1],  r'$\bf{p_{12}}$')
+    ax.text(nodes2[0][2]+0.25,nodes2[1][2]+20,  r'$\bf{p_{22}}$')
  
     # ax.text(mx+0.25, my, r'$\bf{m}$')
     # ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')
     # ax.text(center2x+0.25, center2y, r'$\bf{C_2}$')
-    ax.plot(bx, y, color = 'red')
-    ax.plot(bxbot, ybot, color = 'red')
-    ax.plot(bxbot, ytop, color = 'red')
-    ax.plot(xwall, y2)
+    ax.plot(bx, y, color = 'red', linestyle = '--')
+    ax.plot(bxbot, ybot, color = 'red', linestyle = '--')
+    ax.plot(bxbot, ytop, color = 'red', label = 'Emergency Vehicle Clearence Area', linestyle = '--')
+    ax.plot(xwall, y2, label = 'Flight Corridor Bound', linestyle = ':')
     # ax.scatter(mx,my)
     # ax.scatter(center1x,center1y)
     # ax.scatter(center2x,center2y)
@@ -239,3 +239,5 @@ if __name__ == "__main__":
     ax.legend(loc = 'center left')
     # def
     plt.show()
+#line types for, dashed, solid, dots
+#

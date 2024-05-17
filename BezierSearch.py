@@ -229,7 +229,7 @@ path, control_points, wpts, wpts_x, wpts_y = find_bezier_cp(valid_points, start_
 # ax.set_aspect('equal')
 target_idx = -1
 AC0 = Aircraft('AC0', 220, np.deg2rad(90), 750, 0)
-EAC = Aircraft('EAC', 242, np.deg2rad(90), 750, -354) #330 = 15s
+EAC = Aircraft('EAC', 242, np.deg2rad(90), 750, -330) #330 = 15s
 TOI = np.abs(AC0.posy - EAC.posy)/(EAC.v - AC0.v)
 plt.scatter(750, 2200)
 dist = np.hypot(wpts[target_idx][0]-AC0.posx, wpts[target_idx][1]-AC0.posy)
@@ -260,10 +260,11 @@ for i in range(0, 3100):
         break
     # plt.pause(0.01)
 # plt.grid()
-plt.scatter(AC0.posx, AC0.posy, color = 'black')
-plt.scatter(EAC.posx, EAC.posy, color = 'red')
+plt.scatter(AC0.posx, AC0.posy, color = 'black', label = 'Agent')
+plt.scatter(EAC.posx, EAC.posy, color = 'red', label = 'EAC')
+plt.legend()
 stop_time = time.time()
-print("TOTAL TIME: ", stop_time-start_time)
+# print("TOTAL TIME: ", stop_time-start_time)
 
 
 
