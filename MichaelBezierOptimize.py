@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 from scipy.optimize import minimize
 import math
+import time
  
 def manual_bez(P0, P1, P2, points):
     t = np.linspace(0,1,points)
@@ -64,15 +65,13 @@ def path_length(P1, P0, P2, t):
     )
     return L
 
-def isWithin(x, bounds):
-
-    return
  
-def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity):#turn_radius,
+def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radius):#turn_radius,
     def path_cost(P1):
         return (np.abs(path_length(P1, P0, P2, 1) - target_toa*velocity))
     
     cons = (
+            {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
             {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
             {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
@@ -87,12 +86,13 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity):#turn_rad
  
     return val.x , curvature(P0,val.x,P2)
 
-def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity):#turn_radius,
+def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity, turn_radius):#turn_radius,
     def path_cost(P1):
         return (np.abs(path_length(P1, P0, P2, 1) - target_toa*velocity))
   
     cons = (
             
+            {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
             {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
             {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
@@ -106,28 +106,55 @@ def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity):#turn_rad
     val = minimize(path_cost,[guess[0],guess[1]], method='SLSQP', tol=1E-10, constraints=cons)
  
     # print(val)
- 
+    # enumerate()
     return val.x , curvature(P0,val.x,P2)
  
-def bez_to_wp(bez1, bez2):
+def bez_to_wp(bez1, bez2, num):
     path_wpts = []
+    point_marker = len(bez1[0])/num
+    point_marker = np.round(point_marker)
     for i in range(len(bez1[0])):
-        if i%15 == 0:
+        if i%point_marker == 0:
             path_wpts.append([bez1[0][i], bez1[1][i]]) #building list of waypoints
     for i in range(len(bez2[0])):
-        if i%15 == 0:
+        if i%point_marker == 0:
             path_wpts.append([bez2[0][i], bez2[1][i]]) #building list of waypoints
     wpts_x = [x[0] for x in path_wpts]
     wpts_y = [y[1] for y in path_wpts]
     return path_wpts, wpts_x, wpts_y
+
+def bez_to_wp_single(bez1, num):
+    path_wpts = []
+    point_marker = len(bez1[0])/num
+    point_marker = np.round(point_marker)
+    for i in range(len(bez1[0])):
+        if i%point_marker == 0:
+            path_wpts.append([bez1[0][i], bez1[1][i]]) #building list of waypoints
+    wpts_x = [x[0] for x in path_wpts]
+    wpts_y = [y[1] for y in path_wpts]
+    return path_wpts, wpts_x, wpts_y
+
+def validity_check(x, y1, y2, points):
+    points = np.array(points)
+    for i in range(len(points)):
+        if points[i][0]<=x and points[i][1]>=y1 and points[i][1]<=y2:
+            return False
+        # elif np.isclose(points[i][0], 1000, atol = 5) and (points[i][1] - y1) >= -20:
+        #     return False
+    return True
+        
  
 if __name__ == "__main__":
  
     velocity  = 220
-    # turn_rate = 10000000000 # RAD/s
-    # turn_radius = velocity / turn_rate
-   
-    target_toa = 5.2
+    turn_rate = 111111 # RAD/s
+    turn_radius = velocity / turn_rate
+    koz_bot = 0
+    koz_top = 850
+    koz_x = 1000
+
+    target_toa1 = 1.5*3.71
+    target_toa2 = 1.5*3.71
     uav_head = np.deg2rad(90)
  
     # target_length = target_toa/velocity
@@ -135,7 +162,8 @@ if __name__ == "__main__":
     print("VEHICLE VELOCITY:", velocity)
     # print("VEHICLE TURN RADIUS:", turn_radius)
     # print("TARGET LENGTH: ", target_length)
- 
+    valid1 = False
+    valid2 = False
     # GOAL: DESIGN P1 TO MEET CONSTRAINTS
     nodes1 = [np.array([750, 1400, 1475]).flatten(),np.array([-50, 0, 450]).flatten()]
     nodes2 = [np.array([1475, 1000, 750]).flatten(),np.array([450, 1000, 900]).flatten()]
@@ -143,33 +171,58 @@ if __name__ == "__main__":
     bezier_variny_1 = manual_bez([nodes1[0][0],nodes1[1][0]], [nodes1[0][1],nodes1[1][1]],[nodes1[0][2],nodes1[1][2]], 20)
     bezier_variny_2 = manual_bez([nodes2[0][0],nodes2[1][0]], [nodes2[0][1],nodes2[1][1]],[nodes2[0][2],nodes2[1][2]], 20)
     #OPTIMIZE TEST:
-    optim_sol1, curv1 = solve_optim1(P0=[nodes1[0][0],nodes1[1][0]],P2=[nodes1[0][2], nodes1[1][2]],
-                                  target_toa=target_toa,
-                                  guess=[nodes1[0][1], nodes1[1][1]],
-                                  target_heading=np.pi/2,
-                                  velocity=velocity)
-    optim_sol2, curv2 = solve_optim2(P0=[nodes2[0][0],nodes2[1][0]],P2=[nodes2[0][2], nodes2[1][2]],
-                                  target_toa=target_toa,
-                                  guess=[nodes2[0][1], nodes2[1][1]],
-                                  target_heading=np.pi,
-                                  velocity=velocity)
-    # print(optim_sol)
-    optimal_bez1 = manual_bez([nodes1[0][0],nodes1[1][0]],
-                             [optim_sol1[0],optim_sol1[1]],
-                             [nodes1[0][2],nodes1[1][2]], 200)
+    end = 0
+    start = time.time()
+    while not valid1 or not valid2:
+    # while end<5:
+
+        optim_sol1, curv1 = solve_optim1(P0=[nodes1[0][0],nodes1[1][0]],P2=[nodes1[0][2], nodes1[1][2]],
+                                    target_toa=target_toa1,
+                                    guess=[nodes1[0][1], nodes1[1][1]],
+                                    target_heading=np.pi/2,
+                                    velocity=velocity, turn_radius=turn_radius)
+        optim_sol2, curv2 = solve_optim2(P0=[nodes2[0][0],nodes2[1][0]],P2=[nodes2[0][2], nodes2[1][2]],
+                                    target_toa=target_toa2,
+                                    guess=[nodes2[0][1], nodes2[1][1]],
+                                    target_heading=np.pi,
+                                    velocity=velocity, turn_radius=turn_radius)
+        # print(optim_sol)
+        
+        optimal_bez1 = manual_bez([nodes1[0][0],nodes1[1][0]],
+                                [optim_sol1[0],optim_sol1[1]],
+                                [nodes1[0][2],nodes1[1][2]], 200)
+        
+        solved_heading = np.arctan2((optim_sol1[1]-nodes2[1][0]),(optim_sol1[1]-nodes2[0][0]))
+        optimal_bez2 = manual_bez([nodes2[0][0],nodes2[1][0]],
+                                [optim_sol2[0],optim_sol2[1]],
+                                [nodes2[0][2],nodes2[1][2]], 200)
+        # print(len(optimal_bez1[0]))
+
+        wpts, x_wpts, y_wpts = bez_to_wp(optimal_bez1, optimal_bez2, 15) 
+        wpts_all1, wpts_all1x, wpts_all1y = bez_to_wp_single(optimal_bez1, 100) 
+        # print(wpts_all1)
+        wpts_all2, wpts_all2x, wpts_all2y = bez_to_wp_single(optimal_bez2, 100) 
+        valid1 = validity_check(koz_x, koz_bot, koz_top, wpts_all1)
+        valid2 = validity_check(koz_x, koz_bot, koz_top, wpts_all2)
+        print(optim_sol1[0])
+        print(target_toa1)
+
+        print(valid1, valid2)
+        if valid1 == False:
+            target_toa1+=0.1
+        if valid2 == False:
+            target_toa2+=0.1
+        end = time.time()-start
+        
+        
     
-    solved_heading = np.arctan2((optim_sol1[1]-nodes2[1][0]),(optim_sol1[1]-nodes2[0][0]))
-    optimal_bez2 = manual_bez([nodes2[0][0],nodes2[1][0]],
-                             [optim_sol2[0],optim_sol2[1]],
-                             [nodes2[0][2],nodes2[1][2]], 200)
-    
-    wpts, x_wpts, y_wpts = bez_to_wp(optimal_bez1, optimal_bez2) 
     solved_heading1 = np.arctan2((optim_sol1[1]-nodes1[1][0]),(optim_sol1[1]-nodes1[0][0]))
     solved_heading2 = np.arctan2((optim_sol2[1]-nodes2[1][0]),(optim_sol2[1]-nodes2[0][0]))
     print(curv1, path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol1[0],optim_sol1[1]],P2=[nodes1[0][2], nodes1[1][2]], t=1)/velocity)
     print("HEADING TO P1", solved_heading)
     print("REQUESTED HEADING: ", uav_head)
     print('OPTIMAL POINT 1', optim_sol1)
+    
     print("SOLVED LENGTH: ", path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol1[0],optim_sol1[1]],P2=[nodes1[0][2], nodes1[1][2]], t=1)
                          + path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[optim_sol2[0],optim_sol2[1]],P2=[nodes2[0][2], nodes2[1][2]], t=1) )
     # print("UAV TURN RADIUS = ", turn_radius, "WHILE MIN RADIUS OF CURVATURE = ", curv)
@@ -191,7 +244,8 @@ if __name__ == "__main__":
     # circ1 = [center1x, center1y, r1]
     # circ2 = [center2x, center2y, r2]
  
- 
+    print(target_toa1, target_toa2)
+
     print("ToA:", (path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol1[0],optim_sol1[1]],P2=[nodes1[0][2], nodes1[1][2]], t=1)
                 + path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[optim_sol2[0],optim_sol2[1]],P2=[nodes2[0][2], nodes2[1][2]], t=1))/ velocity)
     # print(np.rad2deg(np.arctan2(optim_sol[1] - nodes1[1][0], optim_sol[0] - nodes1[0][0])))
@@ -204,9 +258,11 @@ if __name__ == "__main__":
     xwall = [1500 for i in range(-50, 950)]
     fig = plt.figure(1)
     ax = fig.add_subplot(111)
- 
+    ax.plot([400, 1000, 1600], [450, 450, 450], linestyle = 'dashdot', alpha = 0.5)
     ax.plot(optimal_bez1[0],optimal_bez1[1], c='black',label='Quadratic Bezier curve')
     ax.scatter(x_wpts, y_wpts, label = 'Waypoints', marker = '^', color = 'green')
+    # print(wpts_all1[0])
+    # ax.scatter(wpts_all1x, wpts_all1y, zorder = 30)
     ax.scatter([nodes1[0][0], optim_sol1[0], nodes1[0][2]],[nodes1[1][0],optim_sol1[1],nodes1[1][2]], label='Bezier Curve 1 Control Points')
     
     ax.plot(optimal_bez2[0],optimal_bez2[1], c='black')
@@ -218,13 +274,15 @@ if __name__ == "__main__":
     # ax.text(nodes2[0][0]+0.25,nodes2[1][0],  r'$\bf{p_0}$')
     ax.text(optim_sol2[0]+0.25,optim_sol2[1],  r'$\bf{p_{12}}$')
     ax.text(nodes2[0][2]+0.25,nodes2[1][2]+20,  r'$\bf{p_{22}}$')
- 
+    ax.text(nodes1[0][2]-250,nodes1[1][2]-100,  r'Curve 1')
+    ax.text(nodes1[0][2]-250,nodes1[1][2]+100,  r'Curve 2')
+
     # ax.text(mx+0.25, my, r'$\bf{m}$')
     # ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')
     # ax.text(center2x+0.25, center2y, r'$\bf{C_2}$')
     ax.plot(bx, y, color = 'red', linestyle = '--')
     ax.plot(bxbot, ybot, color = 'red', linestyle = '--')
-    ax.plot(bxbot, ytop, color = 'red', label = 'Emergency Vehicle Clearence Area', linestyle = '--')
+    ax.plot(bxbot, ytop, color = 'red', label = 'Emergency Vehicle Clearance Area', linestyle = '--')
     ax.plot(xwall, y2, label = 'Flight Corridor Bound', linestyle = ':')
     # ax.scatter(mx,my)
     # ax.scatter(center1x,center1y)
@@ -236,7 +294,7 @@ if __name__ == "__main__":
     ax.axis('equal')
     ax.set_xlabel('X (ft)')
     ax.set_ylabel('Y (ft)')
-    ax.legend(loc = 'center left')
+    ax.legend(loc = 'center left', fontsize = '8')
     # def
     plt.show()
 #line types for, dashed, solid, dots

@@ -152,38 +152,38 @@ if __name__ == "__main__":
     fig = plt.figure(1)
     ax = fig.add_subplot(111)
  
-    ax.plot(optimal_bez[0],optimal_bez[1], c='black',label='Quadratic Bezier curve')
+    ax.plot(optimal_bez[0],optimal_bez[1], c='black',label='Quadratic Bezier curve', linestyle = '--')
  
-    ax.scatter([nodes1[0][0], optim_sol[0], nodes1[0][2]],[nodes1[1][0],optim_sol[1],nodes1[1][2]], label='Control Points')
-    nodes1 = [np.array([0, 100, 350]).flatten(),np.array([0, 100, 150]).flatten()]
+    # ax.scatter([nodes1[0][0], optim_sol[0], nodes1[0][2]],[nodes1[1][0],optim_sol[1],nodes1[1][2]], label='Control Points')
+    # nodes1 = [np.array([0, 100, 350]).flatten(),np.array([0, 100, 150]).flatten()]
  
-    # curve1 = bezier.Curve(nodes1, degree=len(nodes1[0])-1)
-    bezier_moleski = manual_bez([nodes1[0][0],nodes1[1][0]], [nodes1[0][1],nodes1[1][1]],[nodes1[0][2],nodes1[1][2]], 200)
+    # # curve1 = bezier.Curve(nodes1, degree=len(nodes1[0])-1)
+    # bezier_moleski = manual_bez([nodes1[0][0],nodes1[1][0]], [nodes1[0][1],nodes1[1][1]],[nodes1[0][2],nodes1[1][2]], 200)
  
-    #OPTIMIZE TEST:
-    optim_sol, curv = solve_optim(P0=[nodes1[0][0],nodes1[1][0]],P2=[nodes1[0][2], nodes1[1][2]],
-                                  target_toa=target_toa,
-                                  turn_radius=turn_radius,
-                                  guess=[nodes1[0][1], nodes1[1][1]],
-                                  target_heading=np.pi/4,
-                                  velocity=velocity)
+    # #OPTIMIZE TEST:
+    # optim_sol, curv = solve_optim(P0=[nodes1[0][0],nodes1[1][0]],P2=[nodes1[0][2], nodes1[1][2]],
+    #                               target_toa=target_toa,
+    #                               turn_radius=turn_radius,
+    #                               guess=[nodes1[0][1], nodes1[1][1]],
+    #                               target_heading=np.pi/4,
+    #                               velocity=velocity)
    
-    optimal_bez = manual_bez([nodes1[0][0],nodes1[1][0]],
-                             [optim_sol[0],optim_sol[1]],
-                             [nodes1[0][2],nodes1[1][2]], 200)
-    # ax.plot([nodes1[0][0], nodes1[0][2]], [nodes1[1][0], nodes1[1][2]], label = 'Straight Line Path')
+    # optimal_bez = manual_bez([nodes1[0][0],nodes1[1][0]],
+    #                          [optim_sol[0],optim_sol[1]],
+    #                          [nodes1[0][2],nodes1[1][2]], 200)
+    ax.plot([nodes1[0][0], nodes1[0][2]], [nodes1[1][0], nodes1[1][2]], label = 'Straight Line Path')
     ax.scatter([nodes1[0][0], optim_sol[0], nodes1[0][2]],[nodes1[1][0],optim_sol[1],nodes1[1][2]], label='Control Points')
-    ax.plot(optimal_bez[0],optimal_bez[1], c='black',label='Quadratic Bezier curve')
-    print("ToA:", path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol[0],optim_sol[1]],P2=[nodes1[0][2], nodes1[1][2]], t=1) / velocity)
+    # ax.plot(optimal_bez[0],optimal_bez[1], c='black',label='Quadratic Bezier curve')
+    # print("ToA:", path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol[0],optim_sol[1]],P2=[nodes1[0][2], nodes1[1][2]], t=1) / velocity)
 
     ax.text(nodes1[0][0]+0.25,nodes1[1][0],  r'$\bf{p_0}$')
     ax.text(optim_sol[0]+0.25,optim_sol[1],  r'$\bf{p_1}$')
     ax.text(nodes1[0][2]+0.25,nodes1[1][2],  r'$\bf{p_2}$')
     ax.text(nodes1[0][2]-75,nodes1[1][2]+50,  r'Bezier TOA=5')
 
-    dist = np.hypot(nodes1[1][0]- nodes1[1][2], nodes1[0][0] - nodes1[0][2] )
-    t = dist/velocity
-    print(t)
+    # dist = np.hypot(nodes1[1][0]- nodes1[1][2], nodes1[0][0] - nodes1[0][2] )
+    # t = dist/velocity
+    # print(t)
     ax.text(nodes1[0][0],nodes1[1][0]-20,  r'Straight Line TOA=4.12')
     # ax.text(mx+0.25, my, r'$\bf{m}$')
     # ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')

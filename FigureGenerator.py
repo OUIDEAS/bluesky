@@ -97,3 +97,7 @@ plt.show()
 # plt.xlabel('ETA')
 # plt.ylabel('Status')
 # plt.show()
+
+evt = 900/242
+b1a = evt*1.5
+print((2*b1a)/(evt))
