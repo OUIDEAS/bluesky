@@ -60,7 +60,7 @@ class ActiveWaypoint(Entity, replaceable=True):
         self.flyturn[-n:]    = False    # Flyturn switch, when False, when False, use flyby/flyover
         self.turnrad[-n:]    = -999.    # [m] Flyturn turn radius (<0 => not specified)
         self.turnspd[-n:]    = -999.    # [m/s]Flyturn turn speed (<0 => not specified)
-        self.turnhdgr[-n:]   = -999.    # [deg/s]Flyturn turn heading rate (<0 => not specified)
+        self.turnhdgr[-n:]   = 20.    # [deg/s]Flyturn turn heading rate (<0 => not specified)
         self.oldturnspd[-n:] = -999.    # [TAS, m/s] Flyturn turn speed for previous turn (<=0 => not specified)
         self.turnfromlastwp[-n:] = False # Currently in flyturn-mode from last waypoint (old turn, beginning of leg)
         self.turntonextwp[-n:] = False  # Currently in flyturn-mode to next waypoint (new flyturn mode, end of leg)

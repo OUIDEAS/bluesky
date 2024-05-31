@@ -55,6 +55,7 @@ class Coefficient:
         allengines = pd.read_csv(bs.resource(bs.settings.perf_path_openap) / "fixwing/engines.csv", encoding="utf-8")
         allengines["name"] = allengines["name"].str.upper()
         acs = json.load(open(bs.resource(bs.settings.perf_path_openap) / "fixwing/aircraft.json", "r"))
+        # print(acs)
         acs.pop("__comment")
         acs_ = {}
 
@@ -70,7 +71,6 @@ class Coefficient:
                 if selengine.shape[0] >= 1:
                     engine = json.loads(selengine.iloc[-1, :].to_json())
                     acs_[mdl.upper()]["engines"][engine["name"]] = engine
-
         return acs_
 
     def _load_all_rotor_flavor(self):

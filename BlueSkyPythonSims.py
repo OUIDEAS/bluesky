@@ -7,9 +7,7 @@ from bluesky.simulation import ScreenIO
 import matplotlib.pyplot as plt
 from bluesky.tools import geo, aero, areafilter, plotter
 import re, sys, io
-# from PyQt5.QtCore import Qt, QTimer
-# from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
-
+from pyproj import Proj
 
 
 class ScreenDummy(ScreenIO):
@@ -21,14 +19,7 @@ class ScreenDummy(ScreenIO):
     def echo(self, text='', flags=0):
         """Just print echo messages"""
         print("BlueSky console:", text)
-    # def handle(self, cmdu):
-    #     """
-    #     Override the handle method to intercept and process commands.
-    #     """
-    #     if cmdu[:5] == 'ECHO ':
-    #         self.echo(cmdu[5:])
-    #     else:
-    #         super().handle(cmdu)
+
 
 
 def getWPLatLon(wpts):
@@ -224,6 +215,34 @@ def qdrdist(latd1, lond1, latd2, lond2):
 #         distance = float(match.group(1))
 #         # Append the distance value to the list
 #         return distance
+
+def Meters_To_WSG84(waypoints, home):
+        # convert position back to LAT/LONg
+        # from pyproj import Proj
+        p = Proj(proj='utm',zone=17, ellps='WGS84', preserve_units=False)
+        homeX, homeY = p(home[1], home[0])
+        waypoints = np.array(waypoints)
+        asize = waypoints.shape
+        if (len(asize) > 1):
+            waypoints_LongLat = []
+            for pt in waypoints:
+                x = (pt[0] + homeX)
+                y = (pt[1] + homeY)
+                lon, lat = p(x,y,inverse=True)
+                altitude = 150
+                if(len(pt)>2):
+                    altitude = pt[2]
+                waypoints_LongLat.append([lat, lon, altitude])
+            return waypoints_LongLat
+
+        else:
+            x = (waypoints[0] + homeX)
+            y = (waypoints[1] + homeY)
+            lon, lat = p(x,y,inverse=True)
+            altitude = 0
+            if(len(waypoints)>2):
+                altitude = waypoints[2]
+            return [lat, lon, altitude]
 
 nm  = 1852.  # m       1 nautical mile
 #Start the Sim

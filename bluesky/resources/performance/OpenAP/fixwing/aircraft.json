@@ -283,5 +283,16 @@
     "oew": 8573,
     "mfc": 3200,
     "engines": ["JT8D-11"]
+  },
+  "MV25": {
+    "name": "MVariny Custom Aircraft",
+    "n_engines": 1,
+    "engine_type": "TF",
+    "wa": 20.16,
+    "mtow": 3392, 
+    "mlw": 3392,
+    "oew": 6277,
+    "mfc": 3200,
+    "engines": ["JT15D-4"]
   }
 }

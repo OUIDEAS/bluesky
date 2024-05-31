@@ -90,6 +90,7 @@ class OpenAP(PerfBase):
 
             # populate fuel flow model
             es = self.coeff.acs_fixwing[actype]["engines"]
+            # print(es)
             e = es[list(es.keys())[0]]
             coeff_a, coeff_b, coeff_c = thrust.compute_eng_ff_coeff(
                 e["ff_idl"], e["ff_app"], e["ff_co"], e["ff_to"]
