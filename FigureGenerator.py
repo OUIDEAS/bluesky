@@ -48,8 +48,8 @@ fig, ax = plt.subplots()
 # plt.show()
 
 
-ac = [i for i in range(0, 20)]
-ETA = [300 + 30*i for i in range(0, 20)]
+ac = [i for i in range(0, 21)]
+ETA = [300 + 30*i for i in range(0, 21)]
 ETA_Real = []
 ETA_Other = []
 j = 0
@@ -57,12 +57,14 @@ for i in ETA:
     ETA_Real.append(i+10*j)
     ETA_Other.append((i**2)/300)
     j+=1
+ac_evens = [i for i in ac if i%2 == 0]
 plt.scatter(ac, ETA, color = 'blue', label = 'Original ETA')
 plt.scatter(ac, ETA_Real, color = 'red', label = 'ETA with Bezier Curve', marker = '^')
 plt.scatter(ac, ETA_Other, label = 'ETA with Traditional Avoidance', marker = '*', color = 'green')
 plt.grid()
 plt.legend()
-plt.title('ETA of Aircraft in Fleet')
+plt.xticks(ac_evens)
+# plt.title('ETA of Aircraft in Fleet')
 plt.xlabel('Aircraft ID #')
 plt.ylabel('ETA (s)')
 plt.show()

@@ -147,7 +147,7 @@ def validity_check(x, y1, y2, points):
 if __name__ == "__main__":
  
     velocity  = 220
-    turn_rate = 111111 # RAD/s
+    turn_rate = np.deg2rad(20) # RAD/s
     turn_radius = velocity / turn_rate
     koz_bot = 0
     koz_top = 850
