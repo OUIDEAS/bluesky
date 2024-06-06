@@ -225,9 +225,11 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
     valid1 = False
     valid2 = False
     if lr == 1:
-        corridor = nodes1[0][0]+0.002055
+        # corridor = nodes1[0][0]+0.002055
+        corridor = 1500
     else:
-        corridor = nodes1[0][0]-0.002055
+        corridor = -1500
+        # corridor = nodes1[0][0]-0.002055
     c = 0
     while not valid1 or not valid2:
         optim_sol1, curv1 = solve_optim1(P0=[nodes1[0][0],nodes1[1][0]],P2=[nodes1[0][2], nodes1[1][2]],
@@ -269,13 +271,13 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
         # print(target_toa2)
         # #     c+=1
         # # if c>=5:
-        # # y = [i for i in range(10)]
-        # # bx = [koz_x for i in range(10)]
-        # # ybot = [koz_bot for i in range(250)]
-        # # bxbot = [i for i in range(39)]
-        # ytop = [koz_top for i in range(2)]
-        # # y2 = [i for i in range(-50, 950)]
-        # # xwall = [1500 for i in range(-50, 950)]
+            y = [i for i in range(10)]
+            bx = [koz_x for i in range(10)]
+            ybot = [koz_bot for i in range(250)]
+            bxbot = [i for i in range(39)]
+            ytop = [koz_top for i in range(2)]
+            y2 = [i for i in range(-50, 950)]
+            xwall = [1500 for i in range(-50, 950)]
             fig = plt.figure(1)
             ax = fig.add_subplot(111)
             ax.scatter([nodes1[0][0], optim_sol1[0], nodes1[0][2]],[nodes1[1][0],optim_sol1[1],nodes1[1][2]], label='Bezier Curve 1 Control Points')
@@ -325,8 +327,7 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
     wpts, x_wpts, y_wpts = paths_to_wp(paths, 5)
 
 
-    return wpts, x_wpts, y_wpts
-
+    return wpts, x_wpts, y_wpts, optimal_bez1, optimal_bez2 
 
 def entryPath(velocity, ba, intersect):
     pi = np.pi
@@ -401,7 +402,7 @@ def exitPath2(velocity, t_start, path):
     realT = t_vals[mindex]
     centerFinal = center[mindex]
 
-    bezPosFinal = [optimal_bez2[0][tFinal], optimal_bez2[1][tFinal]]
+    bezPosFinal = [path[0][tFinal], path[1][tFinal]]
     trFinal = 111.6**2/(11.26*np.tan(np.deg2rad(angles[mindex])))
 
     x_l = [i for i in np.linspace(750, bezPosFinal[0], 200)] #Space between nominal path and bez
