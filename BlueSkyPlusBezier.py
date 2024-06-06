@@ -283,7 +283,7 @@ bs.stack.stack(f'DT .001')
 # print('DIST: ', toi_dist)
 # bs.stack.stack(f'DIST 39.42, -83.2, 39.415, -83.2')
 
-t_max = 2000
+t_max = 1000000
 mytraf2 = bs.traf.cre('EM0', 'EC35', 39.4075, -83.2, 0, 80, 124.422)
 ntraf = bs.traf.ntraf
 
@@ -333,7 +333,7 @@ for i in range(n_steps):
                     lr = 1
                     koz_x = bs.traf.lon[j]+.000686
                 else:
-                    lr = -1
+                    lr = 1
                     koz_x = bs.traf.lon[j]-.000686
                 print(lr)
                 target_toa1 = 1.5*3.71
