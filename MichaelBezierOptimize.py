@@ -333,6 +333,7 @@ def entryPath(velocity, ba, intersect):
     pi = np.pi
     '''Entry Into Bezier Curve'''
     tr = 111.6**2/(11.26*math.tan(np.deg2rad(ba)))
+    print('TR', tr)
     h, k  = tr+750, -1282
 
     x_entry = [i for i in np.linspace(750, intersect, 200)]
@@ -544,7 +545,7 @@ if __name__ == "__main__":
     t_start1 = 0.578786727511435
     partial_bez1 = manual_bez_partial([nodes1[0][0],nodes1[1][0]],
                                 [optim_sol1[0],optim_sol1[1]],
-                                [nodes1[0][2],nodes1[1][2]], 200, 0.601342376572023)
+                                [nodes1[0][2],nodes1[1][2]], 200, 0.601342376572023)#0.601342376572023
     
     t_start2 = 0.35678391959798994
     x_exit, y_exit, exit_int, exit_t, exitTOA, exit_bank, exitLength = exitPath2(velocity, t_start2, optimal_bez2)
