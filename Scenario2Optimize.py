@@ -593,8 +593,8 @@ if __name__ == "__main__":
     turn_rate = np.deg2rad(20) # RAD/s
     turn_radius = velocity / turn_rate
     h = 900
-    koz_bot = 50
-    koz_top = h-50
+    koz_bot = 600
+    koz_top = 200
 
     
     ev_toa = h/210
@@ -613,7 +613,7 @@ if __name__ == "__main__":
         corridor = 1500
         koz_x = 1000
         nodes1 = [np.array([750, 1450, 1475]).flatten(),np.array([0, h/20, h/2]).flatten()]
-        nodes2 = [np.array([1475, 1450, 720]).flatten(),np.array([h/2, h-100, h]).flatten()]
+        nodes2 = [np.array([1475, 1450, 720]).flatten(),np.array([h/2, h, h]).flatten()]
     
  
     print("VEHICLE VELOCITY:", velocity)
@@ -794,7 +794,7 @@ if __name__ == "__main__":
                                                                                             [optim_sol2[0],optim_sol2[1]],
                                                                                             [nodes2[0][2],nodes2[1][2]]])
     x_exit[0] = 750
-    print(y_exit[0])
+    # print(y_exit[0])
     # y_exit[0] = 2090
     head_ex = np.rad2deg(np.arctan2(y_exit[0]-y_exit[1], x_exit[0]- x_exit[1]))
     print('ACTUAL HEADING AT EXIT:', head_ex)
@@ -819,15 +819,20 @@ if __name__ == "__main__":
     pb1_length = optim1_length - path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol1[0],optim_sol1[1]],P2=[nodes1[0][2], nodes1[1][2]], t=t_entry)
     pb2_length = path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[optim_sol2[0],optim_sol2[1]], P2=[nodes2[0][2],nodes2[1][2]], t=t_start2)
 
-    y = [i for i in range(koz_bot, koz_top)]
-    bx = [500 for i in y]
+    y = [i for i in np.linspace(koz_bot, koz_top, 100)]
+    bx = [0 for i in y]
     bx2 = [1000 for i in y]
-    ybot = [koz_bot for i in range(500)]
-    bxbot = [i for i in range(500, 1000)]
-    ytop = [koz_top for i in range(500)]
-    y2 = [i for i in range(-1300, 2100)]
-    xwall = [0 for i in range(-1300, 2100)]
-    xwall2 = [1500 for i in range(-1300, 2100)]
+    ybot = [koz_bot for i in range(1000)]
+    bxbot = [i for i in range(0, 1000)]
+    ytop = [koz_top for i in range(1000)]
+    y2 = [i for i in range(-1300, h+100)]
+    xwall = [0 for i in range(-1300, h+100)]
+    xwall2 = [1500 for i in range(-1300, h+100)]
+    # y = [i for i in np.linspace(koz_bot, koz_top, 100)]
+    # bx = [0 for i in y]
+    # bx2 = [1000 for i in y]
+
+
     fig = plt.figure(1)
     ax = fig.add_subplot(111)
 
@@ -845,6 +850,7 @@ if __name__ == "__main__":
     ax.plot(optimal_bez1[0],optimal_bez1[1], c='black', label='Quadratic Bezier curve')
     # ax.scatter(x_wpts, y_wpts, label = 'Waypoints', marker = '^', color = 'green')
     # print(wpts_all1[0])
+    ax.scatter(720, 450, marker = '*', color = 'green', label = 'Landing Pad Goal Point')
     # ax.scatter(wpts_all1x, wpts_all1y, zorder = 30)
     print('ENTRY ANGLE:', np.rad2deg(np.arctan2(partial_bez1[1][1] - y_entry[-1], partial_bez1[0][1] - x_entry[-1])))
     ax.scatter([nodes1[0][0], optim_sol1[0], nodes1[0][2]],[nodes1[1][0],optim_sol1[1],nodes1[1][2]], label='Bezier Curve 1 Control Points')
@@ -884,6 +890,7 @@ if __name__ == "__main__":
     # ax.text(mx+0.25, my, r'$\bf{m}$')
     # ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')
     # ax.text(center2x+0.25, center2y, r'$\bf{C_2}$')
+    # print(bx2, y)
     ax.plot(bx, y, color = 'red', linestyle = '--')
     ax.plot(bx2, y, color = 'red', linestyle = '--')
 
