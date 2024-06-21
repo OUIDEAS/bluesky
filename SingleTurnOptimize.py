@@ -8,7 +8,7 @@ import time
 import scipy
 import sympy as sp
 from scipy.optimize import brentq
-import MichaelBezierOptimize as MBO
+import Scenario1Optimize as MBO
 from algebra_with_sympy import *
 
 '''
@@ -111,14 +111,13 @@ def solve_optimExit(guess, max_bank, min_bank, min_t, nodes, velocity):
     #t is also being minimized, so part of constraints
     def path_cost(guess, nodes, velocity):
         diff = find_diff_exit(guess, nodes, velocity)
-        print('DIFF FOR EXIT:', np.rad2deg(diff[0]))
+        print('DIFF FOR EXIT:', diff[0])
         return np.abs(diff[0]) 
 
     cons = (
             {'type': 'ineq', 'fun': lambda x: max_bank - x[0]},
             {'type': 'ineq', 'fun': lambda x: x[0] - min_bank},
-            {'type': 'ineq', 'fun': lambda x: x[1] - min_t},
-            {'type': 'ineq', 'fun': lambda x: 0.85 - x[1]}
+            {'type': 'ineq', 'fun': lambda x: x[1] - min_t}
     )
     val =  minimize(path_cost, guess, (nodes, velocity), method = 'SLSQP', tol = 1E-10, constraints=cons)
     return val.x
@@ -149,26 +148,26 @@ def find_diff_exit(guess, nodes, velocity):
     y_l = [i for i in np.linspace(900, S, 200)]
     x = [750 for i in y_l]
 
-    print(S)
+    # print(S)
     for i in S:
         if i > 0: 
             y = [i for i in np.linspace(S, By(t_guess))]
             x_l = [h(t_guess) - np.sqrt(tr**2 - (y_y - k(t_guess))**2) for y_y in y]
-            if x_l[-1] == 750:
+            if x_l[0] ==750:# <= 0.01:
                 # x_l = [i for i in np.linspace(750, Bx(t_guess))]
                 # y = [k(t_guess)-np.sqrt(tr**2 - (x-h(t_guess))**2) for x in x_l]
                 int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
                 diff = np.abs((np.pi/2) - int_angle)
                 guess_deg = np.rad2deg(ba)
-                plt.title(f'{guess_deg} {t_guess}')
-                plt.plot(x, y_l, linestyle = 'dashed')
-                plt.plot(path[0], path[1])
-                plt.plot(x_l, y)
-                plt.axis('equal')
-                plt.show()
+                # plt.title(f'{guess_deg} {t_guess}')
+                # plt.plot(x, y_l, linestyle = 'dashed')
+                # plt.plot(path[0], path[1])
+                # plt.plot(x_l, y)
+                # plt.axis('equal')
+                # plt.show()
                 if diff < mindiff:
                     mindiff = diff
-                    print(diff)
+                    print('BLARGY', diff)
                     t_final = t_guess
                 
 
@@ -192,9 +191,10 @@ if __name__=='__main__':
 
     nodes2 = [np.array([1475, 1500, 750]).flatten(),np.array([450, 900, 900]).flatten()]
     t_start2 = 0.35678391959798994
-    optim_sol2 = solve_optimExit([np.deg2rad(30), 0.3], np.deg2rad(35), np.deg2rad(25), t_start2, nodes2, velocity)
+    optim_sol2 = solve_optimExit([np.deg2rad(30), 0.3], np.deg2rad(30), np.deg2rad(25), t_start2, nodes2, velocity)
     print(np.rad2deg(optim_sol2[0]), optim_sol2[1])
+    print('DIFF', np.pi/2 - optim_sol2[0])
     end = time.time()
     print(end-start)
-    print(np.rad2deg(optim_sol[0]), t_val)
+    # print(np.rad2deg(optim_sol[0]), t_val)
    

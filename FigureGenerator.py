@@ -48,13 +48,13 @@ fig, ax = plt.subplots()
 # plt.show()
 
 
-ac = [i for i in range(0, 21)]
-ETA = [300 + 30*i for i in range(0, 21)]
+ac = [i for i in range(0, 6)]
+ETA = [300 + 30*i for i in range(0, 6)]
 ETA_Real = []
 ETA_Other = []
 j = 0
 for i in ETA:
-    ETA_Real.append(i+10*j)
+    ETA_Real.append(i+5*j)
     ETA_Other.append((i**2)/300)
     j+=1
 ac_evens = [i for i in ac if i%2 == 0]
@@ -100,6 +100,40 @@ plt.show()
 # plt.ylabel('Status')
 # plt.show()
 
-evt = 900/242
-b1a = evt*1.5
-print((2*b1a)/(evt))
+# evt = 900/242
+# b1a = evt*1.5
+# print((2*b1a)/(evt))
+
+# tr = 111.6**2/(11.26*np.tan(np.deg2rad(30)))
+# print('TR', tr)
+# h, k  = tr+750, -1282
+
+# x_entry = [i for i in np.linspace(750, 2*tr+750, 300)]
+
+# y_entry = [k+np.sqrt(tr**2 - (x-h)**2) for x in x_entry]
+# y_entry[-1] = -1282
+# y_entry[0] = -1282
+# print(y_entry[0])
+# print(len(y_entry))
+# d = 188*5
+
+# y_w = [i for i in np.linspace(y_entry[-1], y_entry[-1]-d, 2)]
+# x_sr = [x_entry[-1] for i in y_w]
+# x_sl = [x_entry[0] for i in y_w]
+
+# h2, k2  = tr+750, -1282-d
+# y_exit = [k2-np.sqrt(tr**2 - (x-h2)**2) for x in x_entry]
+# y_exit[-1] = -1282-d
+# y_exit[0] = -1282-d
+
+# plt.plot(x_entry, y_entry, color = 'blue', label = 'Maximum Bank Angle Turn')
+# # plt.scatter(h, k)
+# # plt.plot([750, h, h+tr], [-1282, k, -1282])
+# plt.grid()
+# plt.plot(x_sr, y_w, color = 'orange', label = 'Straight Segment')
+# plt.plot(x_sl, y_w, color = 'orange')
+# plt.plot(x_entry, y_exit, color = 'blue')
+# # plt.scatter(h2, k2)
+# plt.axis('equal')
+# plt.legend()
+# plt.show()
