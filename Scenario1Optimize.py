@@ -104,7 +104,7 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
                 # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P0[1]-x[1]), (P0[0]-x[0])))},
                 {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
                 # {'type': 'eq', 'fun': lambda x: x[0] - P2[0]}
-                {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
+                # {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
                 ) 
     else:
         cons = (
@@ -130,10 +130,10 @@ def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
                 
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-                {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
+                # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
                 {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
                 # {'type': 'ineq', 'fun': lambda x: np.deg2rad(10) - np.abs(np.arctan2(x[1]-P2[1], x[0] - P2[0]))},
-                {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
+                # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
                 {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
                 {'type': 'ineq', 'fun': lambda x: P2[1]-x[1]},
                 {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P2[1]-x[1]), (P2[0]-x[0]))-target_heading)}, 
@@ -572,7 +572,7 @@ def exitPath(velocity, t_exit, ba, intersect, nodes):
 
     x_exit = [i for i in np.linspace(750, intersect[0], 200)]
     y_exit = [k-np.sqrt(tr**2 - (x-h)**2) for x in x_exit]
-
+    # y_exit[0] = k
     central_angle = pi + np.arctan2(y_exit[-1]-k, x_exit[-1] - h)
 
     exitLength = 2*pi*tr * (central_angle/(2*pi))
@@ -753,7 +753,7 @@ if __name__ == "__main__":
     
     vel_knots = 111.6
     nodes1 = [np.array([nodes1[0][0], optim_sol1[0], nodes1[0][2]]).flatten(),np.array([nodes1[1][0], optim_sol1[1], nodes1[1][2]]).flatten()]
-    ba, t_entry = solve_optimEntry(np.deg2rad(20), np.deg2rad(30), np.deg2rad(20), nodes1, vel_knots)
+    ba, t_entry = solve_optimEntry(np.deg2rad(25), np.deg2rad(30), np.deg2rad(20), nodes1, vel_knots)
     print(np.rad2deg(ba), t_entry)
 
 
@@ -781,7 +781,7 @@ if __name__ == "__main__":
     t_start2 = 0.35678391959798994
 
     nodes2 = [np.array([nodes2[0][0], optim_sol2[0], nodes2[0][2]]).flatten(),np.array([nodes2[1][0], optim_sol2[1], nodes2[1][2]]).flatten()]
-    baEx, exit_t = solve_optimExit([np.deg2rad(30), 0.5], np.deg2rad(30), np.deg2rad(20), t_start2, nodes2, velocity)
+    baEx, exit_t = solve_optimExit([np.deg2rad(30), 0.3], np.deg2rad(30), np.deg2rad(20), t_start2, nodes2, velocity)
     print('EXIT BANK', np.rad2deg(baEx) )
 
     x_int_ex, y_int_ex = find_bez_xy([nodes2[0][0],nodes2[1][0]],
