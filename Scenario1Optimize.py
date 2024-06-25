@@ -97,14 +97,14 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
                 {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-                {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
+                # {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
                 # {'type': 'ineq', 'fun': lambda x: np.deg2rad(20) - np.abs(np.arctan2(x[1]-P0[1], x[0] - P0[0]))},
                 {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
                 {'type': 'ineq', 'fun': lambda x: x[1] -P0[1]},
                 # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P0[1]-x[1]), (P0[0]-x[0])))},
                 {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
-                # {'type': 'eq', 'fun': lambda x: x[0] - P2[0]}
-                # {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
+                {'type': 'eq', 'fun': lambda x: x[1] - P2[1]},
+                {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
                 ) 
     else:
         cons = (
@@ -131,7 +131,7 @@ def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
                 # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-                {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
+                # {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
                 # {'type': 'ineq', 'fun': lambda x: np.deg2rad(10) - np.abs(np.arctan2(x[1]-P2[1], x[0] - P2[0]))},
                 # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
                 {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
@@ -249,7 +249,7 @@ def find_diff_exit(guess, nodes, velocity):
     By = lambda t: nodes[1][1] + (nodes[1][0] - nodes[1][1]) * (1 - t)**2 + (nodes[1][2] - nodes[1][1]) * t**2
     bezHead = np.arctan2(By(t_guess)-By(t_guess-0.01), Bx(t_guess)-Bx(t_guess-0.01))
 
-    tr = velocity**2 / (11.26*math.tan(ba))
+    tr = 111.6**2 / (11.26*math.tan(ba))
     h = lambda t: Bx(t) - tr*math.cos(bezHead)
     k = lambda t: By(t) + tr*math.sin(bezHead)
 
@@ -590,7 +590,7 @@ def exitPath(velocity, t_exit, ba, intersect, nodes):
 if __name__ == "__main__":
  
     velocity  = 188 #ft/s
-    turn_rate = np.deg2rad(20) # RAD/s
+    turn_rate = np.deg2rad(4.50) # RAD/s
     turn_radius = velocity / turn_rate
     h = 900
     koz_bot = 50
@@ -613,7 +613,7 @@ if __name__ == "__main__":
         corridor = 1500
         koz_x = 1000
         nodes1 = [np.array([750, 1450, 1475]).flatten(),np.array([0, h/20, h/2]).flatten()]
-        nodes2 = [np.array([1475, 1450, 750]).flatten(),np.array([h/2, h-100, h]).flatten()]
+        nodes2 = [np.array([1475, 1450, 750]).flatten(),np.array([h/2, h, h]).flatten()]
     
  
     print("VEHICLE VELOCITY:", velocity)
@@ -781,7 +781,7 @@ if __name__ == "__main__":
     t_start2 = 0.35678391959798994
 
     nodes2 = [np.array([nodes2[0][0], optim_sol2[0], nodes2[0][2]]).flatten(),np.array([nodes2[1][0], optim_sol2[1], nodes2[1][2]]).flatten()]
-    baEx, exit_t = solve_optimExit([np.deg2rad(30), 0.3], np.deg2rad(30), np.deg2rad(20), t_start2, nodes2, velocity)
+    baEx, exit_t = solve_optimExit([np.deg2rad(27.5), t_start2], np.deg2rad(30), np.deg2rad(20), t_start2, nodes2, velocity)
     print('EXIT BANK', np.rad2deg(baEx) )
 
     x_int_ex, y_int_ex = find_bez_xy([nodes2[0][0],nodes2[1][0]],
@@ -794,6 +794,7 @@ if __name__ == "__main__":
                                                                                             [optim_sol2[0],optim_sol2[1]],
                                                                                             [nodes2[0][2],nodes2[1][2]]])
     x_exit[0] = 750
+    y_exit[0] = 2150
     print(y_exit[0])
     # y_exit[0] = 2090
     head_ex = np.rad2deg(np.arctan2(y_exit[0]-y_exit[1], x_exit[0]- x_exit[1]))
