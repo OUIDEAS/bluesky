@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from bluesky.tools import geo, aero, areafilter, plotter
 import re, sys, io
 from pyproj import Proj
-import MichaelBezierOptimizeLatLon as MBO
+import Scenario1OutsideUse as MBO
 
 class ScreenDummy(ScreenIO):
     """
@@ -212,8 +212,7 @@ def qdrdist(latd1, lond1, latd2, lond2):
 
 def Meters_To_WSG84(waypoints, home):
         # convert position back to LAT/LONg
-        # from pyproj import Proj
-        p = Proj(proj='utm',zone=17, ellps='WGS84', preserve_units=False)
+        p = Proj("EPSG:32667")
         homeX, homeY = p(home[1], home[0])
         waypoints = np.array(waypoints)
         asize = waypoints.shape
@@ -238,9 +237,51 @@ def Meters_To_WSG84(waypoints, home):
                 altitude = waypoints[2]
             return [lat, lon, altitude]
 
+
+def LongLat_To_WSG84_Meters(waypoints, home):
+    p = Proj(proj='utm',zone=17,ellps='WGS84', preserve_units=False)
+    waypoints = np.array(waypoints)
+    asize = waypoints.shape
+    
+    waypoints_meters = []
+    if(len(asize) > 1): #m x 3 matrix       
+        for pt in waypoints:
+            if len(pt) > 2:
+                newpt = __WSG84_To_Meters_Single(pt[0], home,projobject=p)
+                if(asize[1]==3):#altitude
+                    newpt=[newpt[0],newpt[1],pt[1], pt[2]]
+            else:
+                newpt = __WSG84_To_Meters_Single(pt, home, projobject=p)
+                if(asize[1]==3):#altitude
+                    newpt=[newpt[0],newpt[1],pt[1]]
+
+            waypoints_meters.append(newpt)
+    else:
+        waypoints_meters=(__WSG84_To_Meters_Single([waypoints[0],waypoints[1]], home,projobject=p))
+        altitude=0
+        if(len(waypoints)==3):
+            altitude = waypoints[2]
+        waypoints_meters=[waypoints_meters[0],waypoints_meters[1], altitude]
+
+    return waypoints_meters
+
+def __WSG84_To_Meters_Single(waypoint, home, projobject):
+    p = projobject
+    homeX, homeY = p(home[1], home[0])
+
+    lon = waypoint[0]
+    lat = waypoint[1]
+    x,y = p(lat, lon)
+    x = (x - homeX)
+    y = (y - homeY)
+        
+    return [x, y]
+
+
+
 nm  = 1852.  # m       1 nautical mile\
-tr = 111.6**2/(11.26*math.tan(np.deg2rad(25)))
-print(tr)
+# tr = 111.6**2/(11.26*math.tan(np.deg2rad(25)))
+# print(tr)
 #Start the Sim
 start_time = time.time()
 bs.init(mode ='sim', detached=True)
@@ -305,6 +346,18 @@ TOI = np.zeros((len(bs.traf.id)-1, n_steps))
 counter = [0, 0, 0, 0, 0]
 wpts_xac = {}
 wpts_yac = {}
+nodes = np.zeros((len(bs.traf.id)-1, 2), dtype = object)
+
+#Handy Conversions
+nmFeet = 6076.12
+msFeet = 3.28084
+knotsFeet = 1.68781
+
+# print(nodes)
+# nodes = np.array([[[0], [0]], [[0],[0]]], dtype = object)
+# print(nodes[0][0])
+# nodes[0][0][0]= [1, 2, 23, 4, 53]
+# print(nodes[0][0])
 #The sim
 for i in range(n_steps):
     # print(i)
@@ -325,39 +378,60 @@ for i in range(n_steps):
         for j in range(len(bs.traf.id)-1):
             
             h, toi_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], bs.traf.lat[-1], bs.traf.lon[-1])
-            TOI[j][i] = toi_dist/((bs.traf.tas[-1] - bs.traf.tas[j])/1.94384)
+            # print(h, toi_dist)
+            TOI[j][i] = (toi_dist*nmFeet)/((bs.traf.tas[-1] - bs.traf.tas[j])*msFeet)
             # print(TOI[j][i], bs.traf.id[j])
             if TOI[j][i] <= 10 and counter[j] == 0:
+                print('TOIDIST', toi_dist)
                 counter[j] = 1
                 if j%2 == 0:
                     lr = 1
-                    koz_x = bs.traf.lon[j]+.000686
+                    koz_x = Meters_To_WSG84([250, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1]
+                    print(koz_x)
                 else:
                     lr = 1
-                    koz_x = bs.traf.lon[j]-.000686
+                    koz_x = Meters_To_WSG84([-250, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1]
                 print(lr)
-                target_toa1 = 1.5*3.71
-                target_toa2 = 1.5*3.71
+                target_toa1 = 1.5*(900/210)
+                target_toa2 = 1.5*(900/210)
                 #2200 ft = .00604 lat 750ft = .002055 lon 690ft = .0019 lon 450ft = .001234 lat 250ft = .000686 lon 50ft = .0001375 lat
-                nodes1 = [np.array([bs.traf.lon[j], bs.traf.lon[j]+(lr*.0018), bs.traf.lon[j]+(lr*.0019)]).flatten(), 
-                          np.array([bs.traf.lat[j]+.00604, bs.traf.lat[j]+.00604, bs.traf.lat[j]+.00604+.001234]).flatten()]
-                nodes2 = [np.array([bs.traf.lon[j]+(lr*.0019), bs.traf.lon[j]+(lr*.0015), bs.traf.lon[j]]).flatten(), 
-                          np.array([bs.traf.lat[j]+.00604+.001234, bs.traf.lat[j]+.00604+.0015, bs.traf.lat[j]+.00604+(2*.001234)]).flatten()]
-                
-                koz_bot = bs.traf.lat[j]+.00604+.0001375
-                koz_top = bs.traf.lat[j]+.00604+(2*.001234)-.0001375
-                print(koz_x, koz_bot, koz_top)
-                wpts, wpts_x, wpts_y = MBO.toCallOutside(bs.traf.tas[j]/1.94384, np.deg2rad(20), target_toa1, target_toa2,
-                                                          bs.traf.hdg[j], nodes1, nodes2, koz_x, koz_bot, koz_top, lr)
-                # bs.stack.stack(f'DELWPT {bs.traf.id[j]} 40.4 -83.2')
-                wpts.append([40.4, -83.2])
-                wpts_xac[f'AC{j}'] = wpts_x
-                wpts_yac[f'AC{j}'] = wpts_y
+                                #p01x                                                    p11x                                                         p21x
+                nodes1 = [np.array([bs.traf.lon[j],        Meters_To_WSG84([lr*690, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],     Meters_To_WSG84([lr*737.5, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1]    ]).flatten(), # x 
+                                #p01y                                                                                            p11y                                                                             p21y 
+                          np.array([Meters_To_WSG84([0, 1800], [bs.traf.lat[j], bs.traf.lon[j]])[0],       Meters_To_WSG84([0, 1950], [bs.traf.lat[j], bs.traf.lon[j]])[0],      Meters_To_WSG84([0, 2250], [bs.traf.lat[j], bs.traf.lon[j]])[0]]).flatten()] # y
 
-            # if toi_dist <= 46 and count[j] == 1:
-            #     count[j] = 2
-                for k in range(5, len(wpts_xac[bs.traf.id[j]])):
-                    bs.stack.stack(f'ADDWPT {bs.traf.id[j]} {wpts[k][0]} {wpts[k][1]} 150')
+                                #p02x = p21x                                                                                    p12x                                                        p22x
+                nodes2 = [np.array([Meters_To_WSG84([lr*737.5, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],    Meters_To_WSG84([lr*762.5, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],       bs.traf.lon[j]]).flatten(), # x
+                          
+                                #p02y = p21y
+                          np.array([Meters_To_WSG84([0, 2250], [bs.traf.lat[j], bs.traf.lon[j]])[0],    Meters_To_WSG84([0, 2700], [bs.traf.lat[j], bs.traf.lon[j]])[0], Meters_To_WSG84([0, 2700], [bs.traf.lat[j], bs.traf.lon[j]])[0]]).flatten()] # y
+                
+                plt.scatter(nodes1[0], nodes1[1])
+                plt.scatter(nodes2[0], nodes2[1])
+                plt.show()
+
+                
+                koz_bot = Meters_To_WSG84([0, 1850], [bs.traf.lat[j], bs.traf.lon[j]])[0]
+                koz_top = Meters_To_WSG84([0, 2650], [bs.traf.lat[j], bs.traf.lon[j]])[0]
+                print(koz_x, koz_bot, koz_top)
+                wpts, wpts_x, wpts_y, b1, b2, nodes1, nodes2 = MBO.toCallOutside(bs.traf.tas[j]/1.94384, np.deg2rad(4.5), target_toa1, target_toa2,
+                                                          bs.traf.hdg[j], nodes1, nodes2, koz_x, koz_bot, koz_top, lr, [bs.traf.lat[j], bs.traf.lon[j]])
+                nodes[j][0] = nodes1
+                nodes[j][1] = nodes2
+            #     # bs.stack.stack(f'DELWPT {bs.traf.id[j]} 40.4 -83.2')
+            #     wpts.append([40.4, -83.2])
+            #     wpts_xac[f'AC{j}'] = wpts_x
+            #     wpts_yac[f'AC{j}'] = wpts_y
+
+            # # if toi_dist <= 46 and count[j] == 1:
+            # #     count[j] = 2
+            #     for k in range(5, len(wpts_xac[bs.traf.id[j]])):
+            #         bs.stack.stack(f'ADDWPT {bs.traf.id[j]} {wpts[k][0]} {wpts[k][1]} 150')
+            if toi_dist <= 250 and counter[j] ==1:
+                print('TOIDIST', toi_dist)
+                counter[j] = 2
+                entry, exit = MBO.EntryExitOutside(nodes1=nodes[j][0], nodes2=nodes[j][1], latlon = [bs.traf.lat[j], bs.traf.lon[j]])
+                break
 
     
 

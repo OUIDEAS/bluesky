@@ -96,14 +96,14 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
         cons = (
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-                {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-                {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
+                # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
+                # {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
                 # {'type': 'ineq', 'fun': lambda x: np.deg2rad(20) - np.abs(np.arctan2(x[1]-P0[1], x[0] - P0[0]))},
-                {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
-                {'type': 'ineq', 'fun': lambda x: x[1] -P0[1]},
+                # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
+                # {'type': 'ineq', 'fun': lambda x: x[1] -P0[1]},
                 # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P0[1]-x[1]), (P0[0]-x[0])))},
                 {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
-                # {'type': 'eq', 'fun': lambda x: x[0] - P2[0]}
+                # {'type': 'eq', 'fun': lambda x: x[1] - P2[1]},
                 {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
                 ) 
     else:
@@ -131,13 +131,13 @@ def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
                 # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-                {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
+                # {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
                 # {'type': 'ineq', 'fun': lambda x: np.deg2rad(10) - np.abs(np.arctan2(x[1]-P2[1], x[0] - P2[0]))},
                 # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
-                {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
+                # {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
                 {'type': 'ineq', 'fun': lambda x: P2[1]-x[1]},
-                {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P2[1]-x[1]), (P2[0]-x[0]))-target_heading)}, 
-                # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]}
+                # {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P2[1]-x[1]), (P2[0]-x[0]))-target_heading)}, 
+                {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
                 {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
             ) 
     else:

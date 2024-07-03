@@ -266,7 +266,7 @@ datasets = [wptdata, aptdata]
 #Make Aircraft
 # n = 20
 # mytraf = bs.traf.mcre(n, 'B737', 150, 300 )
-mytraf = bs.traf.cre('AC0', 'B737', 2, -83.2, 0, 150, 250)
+mytraf = bs.traf.cre('AC0', 'B737', 39.83, -83.2, 0, 150, 250)
 mytraf = bs.traf.cre('AC1', 'B737', 39.78, -83.195, 0, 150, 250)
 mytraf = bs.traf.cre('AC2', 'B737', 39.73, -83.19, 0, 150, 250)
 mytraf = bs.traf.cre('AC3', 'B737', 39.68, -83.185, 0, 150, 250)
@@ -324,8 +324,8 @@ bs.stack.stack(f'DT 0.025') #Set DT to 1 second
 bs.stack.stack(f'ECHO TEST')
 # we'll run the simulation for up to 4000 seconds
 t_max = 12000
-mytraf2 = bs.traf.cre('EM0', 'B737', 39.25, -83.2, 0, 150, 500)
-bs.stack.stack(f'EM0 ADDWPT JASLO 5000')
+# mytraf2 = bs.traf.cre('EM0', 'B737', 39.25, -83.2, 0, 150, 500)
+# bs.stack.stack(f'EM0 ADDWPT JASLO 5000')
 ntraf = bs.traf.ntraf
 
 n_steps = int(t_max + 1)
