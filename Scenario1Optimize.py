@@ -97,14 +97,14 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
         cons = (
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-                {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-                # {'type': 'ineq', 'fun': lambda x: x[0]-457.2},
+                # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
+                # {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
                 # {'type': 'ineq', 'fun': lambda x: np.deg2rad(20) - np.abs(np.arctan2(x[1]-P0[1], x[0] - P0[0]))},
                 # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
                 # {'type': 'ineq', 'fun': lambda x: x[1] -P0[1]},
                 # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P0[1]-x[1]), (P0[0]-x[0])))},
                 {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
-                # {'type': 'eq', 'fun': lambda x: P2[1]-x[1]},
+                {'type': 'eq', 'fun': lambda x: x[1] - P2[1]},
                 {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
                 ) 
     else:
@@ -129,16 +129,16 @@ def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
     if lr == 1:
         cons = (
                 
-               {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
+                {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
                 {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
                 # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
                 # {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
                 # {'type': 'ineq', 'fun': lambda x: np.deg2rad(10) - np.abs(np.arctan2(x[1]-P2[1], x[0] - P2[0]))},
                 # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
                 # {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
-                {'type': 'ineq', 'fun': lambda x: P2[1]-x[1]},
-                {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P2[1]-x[1]), (P2[0]-x[0]))-target_heading)}, 
-                {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
+                # {'type': 'eq', 'fun': lambda x: (P2[1]) - x[1]},
+                # {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P2[1]-x[1]), (P2[0]-x[0]))-target_heading)}, 
+                # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]}
                 {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
             ) 
     else:
@@ -181,7 +181,8 @@ def solve_optimExit(guess, max_bank, min_bank, min_t, nodes, velocity):
     cons = (
             {'type': 'ineq', 'fun': lambda x: max_bank - x[0]},
             {'type': 'ineq', 'fun': lambda x: x[0] - min_bank},
-            {'type': 'ineq', 'fun': lambda x: x[1] - min_t}
+            {'type': 'ineq', 'fun': lambda x: x[1] - min_t},
+            {'type': 'ineq', 'fun': lambda x: 1-x[1]},
     )
     val =  minimize(path_cost, guess, (nodes, velocity), method = 'SLSQP', tol = 1E-10, constraints=cons)
     return val.x
@@ -203,7 +204,7 @@ def find_diff_entry(ba, nodes, velocity):
     circle_eq = lambda t: (Bx(t)-h)**2+(By(t)-k)**2 - tr**2
 
     S = fsolve(circle_eq, t_guess)
-    print(S)
+    # print(S)
     t_final = 0
 
     for i in S:
@@ -694,10 +695,11 @@ def exitPath(velocity, t_exit, ba, intersect, nodes):
 
 if __name__ == "__main__":
  
-    velocity  = 57.3024 #ft/s
+    velocity  = 57.3024 #m/s
     turn_rate = np.deg2rad(4.50) # RAD/s
-    turn_radius = velocity / turn_rate
-    h = int(np.round(275/2))
+    turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(30)))
+    turn_radius*=0.3048
+    h = 275
     koz_bot = 15
     koz_top = h-15
 
@@ -736,13 +738,13 @@ if __name__ == "__main__":
     #OPTIMIZE TEST:
     start = time.time()
     while not valid1 or not valid2:
-        # if not valid1:
+
         optim_sol1, curv1 = solve_optim1(P0=[nodes1[0][0],nodes1[1][0]],P2=[nodes1[0][2], nodes1[1][2]],
                                     target_toa=target_toa1,
                                     guess=[nodes1[0][1], nodes1[1][1]],
                                     target_heading=np.pi/2,
                                     velocity=velocity, turn_radius=turn_radius, lr=lr, line = lines_coeffs2)
-    
+        
         m_p12 = (nodes1[1][2]-optim_sol1[1])/(nodes1[0][2]-optim_sol1[0])
         # print(m_p12)
         mark = True
@@ -757,7 +759,7 @@ if __name__ == "__main__":
         
         
         # print(lines_coeffs)
-        # if not valid2:
+
         optim_sol2, curv2 = solve_optim2(P0=[nodes2[0][0],nodes2[1][0]],P2=[nodes2[0][2], nodes2[1][2]],
                                     target_toa=target_toa2,
                                     guess=[nodes2[0][1], nodes2[1][1]],
@@ -767,7 +769,7 @@ if __name__ == "__main__":
         b2 = optim_sol2[1] - m_p21*optim_sol2[0]
         lines_coeffs2 = [m_p21, b2]
         if mark == True:
-            x_slope = [nodes1[0][2] for i in np.linspace(427, 500, 50)]
+            x_slope = [nodes1[0][2] for i in np.linspace(427, 472, 50)]
             y_slope = [i for i in np.linspace(optim_sol1[1]-50, optim_sol2[1]+50, 50)]
 
         
@@ -793,12 +795,11 @@ if __name__ == "__main__":
         # print(valid1, valid2)
         if valid1 == False:
             target_toa1+=0.1
-            nodes1[0][1]+=2
+            # nodes1[1][1]+=-25
             c+=1
         if valid2 == False:
             target_toa2+=0.1
-            # nodes2[1][1]+=5
-            # nodes2[0][1]+=1
+            # nodes2[1][1]+=25
             c+=1
         if c>30:
        
@@ -941,31 +942,31 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111)
 
     # ax.scatter(x_wpts, y_wpts, zorder = 100, marker = '^')
-    # ax.plot(x_exit, y_exit, color = 'orange', label = 'Exit Path')
+    ax.plot(x_exit, y_exit, color = 'orange', label = 'Exit Path')
     # ax.scatter(h_ex, k_ex, marker = 's', color = 'green', label = 'Exit Circle Center')
-    # ax.scatter(x_exit[-1], y_exit[-1], color = 'red', marker = '*', s = 100, zorder = 100, label = 'Exit Point')
+    ax.scatter(x_exit[-1], y_exit[-1], color = 'red', marker = '*', s = 100, zorder = 100, label = 'Exit Point')
     # print('EXIT COORDS:', x_exit, y_exit)
-    # ax.scatter(x_exit[0], y_exit[0], color = 'purple', marker = '*', s = 100, zorder = 100, label = 'Interception Point')
+    ax.scatter(x_exit[0], y_exit[0], color = 'purple', marker = '*', s = 100, zorder = 100, label = 'Interception Point')
     # ax.scatter(pb2[0], pb2[1], c = 'magenta', zorder = 100)
     ax.plot([122, 305, 488], [h/2, h/2, h/2], linestyle = 'dashdot', alpha = 0.5)
     # ax.plot(optimal_bez2[0], optimal_bez2[1])
-    # ax.plot(partial_bez1[0], partial_bez1[1], c = 'magenta', label = 'Partial QBC')
-    # ax.plot(partial_bez2[0], partial_bez2[1], c = 'magenta')#, label = 'Partial QBC')
-    ax.plot(optimal_bez1[0],optimal_bez1[1], c='black', label='Quadratic Bezier curve')
+    ax.plot(partial_bez1[0], partial_bez1[1], c = 'magenta', label = 'Partial QBC')
+    ax.plot(partial_bez2[0], partial_bez2[1], c = 'magenta')#, label = 'Partial QBC')
+    # ax.plot(optimal_bez1[0],optimal_bez1[1], c='black', label='Quadratic Bezier curve')
     # ax.scatter(x_wpts, y_wpts, label = 'Waypoints', marker = '^', color = 'green')
     # print(wpts_all1[0])
     # ax.scatter(wpts_all1x, wpts_all1y, zorder = 30)
     print('ENTRY ANGLE:', np.rad2deg(np.arctan2(partial_bez1[1][1] - y_entry[-1], partial_bez1[0][1] - x_entry[-1])))
     ax.scatter([nodes1[0][0], optim_sol1[0], nodes1[0][2]],[nodes1[1][0],optim_sol1[1],nodes1[1][2]], label='Bezier Curve 1 Control Points')
     
-    ax.plot(optimal_bez2[0],optimal_bez2[1], c='black')
+    # ax.plot(optimal_bez2[0],optimal_bez2[1], c='black')
 
     # ax.scatter(h_c, k_c, color = 'green', marker = 's', label = 'Entry Circle Center')
     ax.scatter(x_entry[0], y_entry[0], marker = '^', color = 'black', label = 'Fleet Aircraft Start Position')
 
 
-    # ax.plot(x_entry, y_entry, label = 'Entry Arc', color = 'cyan')
-    # ax.scatter(x_entry[-1], y_entry[-1], marker = '*', color = 'purple', label = 'Intersection Point', s = 100, zorder = 100)
+    ax.plot(x_entry, y_entry, label = 'Entry Arc', color = 'cyan')
+    ax.scatter(x_entry[-1], y_entry[-1], marker = '*', color = 'purple', label = 'Intersection Point', s = 100, zorder = 100)
     # print(y_circ[0])
     
 
@@ -977,11 +978,9 @@ if __name__ == "__main__":
     # print("SOLVED LENGTH WITH ENTRY/EXIT: ", pb1_length + optim2_length + entryLength+exitLength)
     print("TOTAL TOA:", entryTOA + exitTOA + (pb1_length+pb2_length)/velocity)
 
-    # y_slope[-1] = optim_sol2[1]+50
-    # x_slope[-1] = optim_sol2[0]+50
+
     ax.plot(x_slope, y_slope, color = 'purple', linestyle = 'dashed', label = 'G1 Continuity Line')
     
-    # ax.plot(x_slope, y_slope, color = 'purple', linestyle = 'dashed', label = 'G1 Continuity Line')
     ax.scatter([nodes2[0][0], optim_sol2[0], nodes2[0][2]],[nodes2[1][0],optim_sol2[1],nodes2[1][2]], label='Bezier Curve 2 Control Points')
     ax.text(nodes1[0][0]+0.25,nodes1[1][0]-10,  r'$\bf{p_{01}}$')
     ax.text(optim_sol1[0]+0.25,optim_sol1[1],  r'$\bf{p_{11}}$')

@@ -212,7 +212,7 @@ def qdrdist(latd1, lond1, latd2, lond2):
 
 def Meters_To_WSG84(waypoints, home):
         # convert position back to LAT/LONg
-        p = Proj("EPSG:32667")
+        p = Proj(proj='utm',zone=17,ellps='WGS84', preserve_units=False)  
         homeX, homeY = p(home[1], home[0])
         waypoints = np.array(waypoints)
         asize = waypoints.shape
