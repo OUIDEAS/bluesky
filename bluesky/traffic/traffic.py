@@ -404,7 +404,7 @@ class Traffic(Entity):
 
         #---------- Fly the Aircraft --------------------------
         self.ap.update()  # Autopilot logic
-        self.update_asas()  # Airborne Separation Assurance
+        # self.update_asas()  # Airborne Separation Assurance
         self.aporasas.update()   # Decide to use autopilot or ASAS for commands
 
         #---------- Performance Update ------------------------

@@ -104,7 +104,7 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
                 # {'type': 'ineq', 'fun': lambda x: x[1] -P0[1]},
                 # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P0[1]-x[1]), (P0[0]-x[0])))},
                 {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
-                # {'type': 'eq', 'fun': lambda x: P2[1]-x[1]},
+                # {'type': 'eq', 'fun': lambda x: x[1] - P2[1]},
                 {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
                 ) 
     else:

@@ -267,17 +267,26 @@ def LongLat_To_WSG84_Meters(waypoints, home):
 
 def __WSG84_To_Meters_Single(waypoint, home, projobject):
     p = projobject
-    homeX, homeY = p(home[1], home[0])
-
-    lon = waypoint[0]
-    lat = waypoint[1]
-    x,y = p(lat, lon)
+    homeX, homeY = p(home[1], home[0])  # Note the order: lon, lat
+    lon = waypoint[1]
+    lat = waypoint[0]
+    x, y = p(lon, lat)  # Note the order: lon, lat
     x = (x - homeX)
     y = (y - homeY)
-        
     return [x, y]
 
+class gnss_converter():
+    def __init__(self):
+        self.R = 6378137.0
+ 
+    def merc_y(self, lat):
+        return math.log(math.tan(math.pi / 4 + math.radians(lat) / 2)) * self.R
+ 
+    def merc_x(self, lon):
+        return math.radians(lon) * self.R
 
+def get_utm_zone(longitude):
+    return int((longitude + 180) / 6) + 1
 
 nm  = 1852.  # m       1 nautical mile\
 # tr = 111.6**2/(11.26*math.tan(np.deg2rad(25)))
@@ -302,30 +311,35 @@ datasets = [wptdata, aptdata]
 
 #Make Aircraft
 
-mytraf = bs.traf.cre('AC0', 'EC35', 39.42, -83.2, 0, 80, 111.6)
-mytraf = bs.traf.cre('AC1', 'EC35', 39.4172, -83.2, 0, 80, 111.6)
-mytraf = bs.traf.cre('AC2', 'EC35', 39.4144 , -83.2, 0, 80, 111.6)
-mytraf = bs.traf.cre('AC3', 'EC35', 39.4116, -83.2, 0, 80, 111.6)
-mytraf = bs.traf.cre('AC4', 'MV25', 39.4088 , -83.2, 0, 80, 111.6)
+mytraf = bs.traf.cre('AC0', 'EC35', 39.42, -82.2, 0, 80, 57.412)
+mytraf = bs.traf.cre('AC1', 'EC35', 39.4172, -82.2, 0, 80, 57.412)
+mytraf = bs.traf.cre('AC2', 'EC35', 39.4144 , -82.2, 0, 80, 57.412)
+mytraf = bs.traf.cre('AC3', 'EC35', 39.4116, -82.2, 0, 80, 57.412)
+mytraf = bs.traf.cre('AC4', 'EC35', 39.4088 , -82.2, 0, 80, 57.412)
 
 for acid in bs.traf.id:
-    bs.stack.stack(f'BANK {acid} 45')
+    bs.stack.stack(f'BANK {acid} 30')
+    bs.stack.stack(f'ASAS OFF')
+    bs.stack.stack(f'RESOOFF {acid}')
+    bs.stack.stack(f'CONFLICTDETECTION {acid} OFF')
 
 # bs.stack.stack(f'MANUALPOSOrderedFlightAttempt add traf.id, traf.lat, traf.lon, traf.alt, traf.tas, traf.hdg')
 # bs.stack.stack(f'MANUALPOSOrderedFlightAttempt ON')
 
 
 
-bs.stack.stack(f'DT .001')
+bs.stack.stack(f'DT .01')
+
 #bs.stack.stack(f'DT 0.025') #Set DT to .025 second
 
 # we'll run the simulation for up to 4000 seconds
 # h, toi_dist = qdrdist(39.42, -83.2, 39.422055, -83.2)
 # print('DIST: ', toi_dist)
 # bs.stack.stack(f'DIST 39.42, -83.2, 39.415, -83.2')
-
+utm_zone = get_utm_zone(-82.2)
+p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
 t_max = 1000000
-mytraf2 = bs.traf.cre('EM0', 'EC35', 39.4075, -83.2, 0, 80, 124.422)
+mytraf2 = bs.traf.cre('EM0', 'EC35', 39.4075, -82.2, 0, 80, 64)
 ntraf = bs.traf.ntraf
 
 n_steps = int(t_max + 1)
@@ -336,6 +350,8 @@ t = np.linspace(0, t_max, n_steps)
 res = np.zeros((n_steps, 5, ntraf))
 em = np.zeros((n_steps, 1))
 
+homexy = [0, 0, 0, 0, 0]
+homell = [0, 0, 0, 0, 0]
 
 count = np.zeros(len(bs.traf.id))
 
@@ -351,8 +367,9 @@ nodes = np.zeros((len(bs.traf.id)-1, 2), dtype = object)
 #Handy Conversions
 nmFeet = 6076.12
 msFeet = 3.28084
-knotsFeet = 1.68781
+nmMeters = 1852
 
+sp_diff = 64-57.412
 # print(nodes)
 # nodes = np.array([[[0], [0]], [[0],[0]]], dtype = object)
 # print(nodes[0][0])
@@ -373,49 +390,64 @@ for i in range(n_steps):
                 bs.traf.tas,
                 bs.traf.hdg]
     if i!=0:
-
-        
-        for j in range(len(bs.traf.id)-1):
+        # if i%25==0 or i ==1:
+        #     plt.scatter(bs.traf.lon[4], bs.traf.lat[4])
+        #     plt.scatter(bs.traf.lon[-1], bs.traf.lat[-1], marker = '^')
+            # plt.pause(0.1)
             
+        for j in range(len(bs.traf.id)-1):
+            bs.stack.stack(f'SPD {bs.traf.id[j]}, 111.6')
+            # plt.figure()
             h, toi_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], bs.traf.lat[-1], bs.traf.lon[-1])
+            # d2 = __WSG84_To_Meters_Single([bs.traf.lat[j], bs.traf.lon[j]], [bs.traf.lat[-1], bs.traf.lon[-1]], projobject = p)
             # print(h, toi_dist)
-            TOI[j][i] = (toi_dist*nmFeet)/((bs.traf.tas[-1] - bs.traf.tas[j])*msFeet)
+            # print(bs.traf.tas[j])
+            # print((toi_dist), 'SPEED DIFFERENCE:', ((bs.traf.tas[-1] - bs.traf.tas[j])), 'EV0 SPD', bs.traf.tas[-1], 'ACS SPD', bs.traf.tas[j])
+            TOI[j][i] = (toi_dist)/(sp_diff)
             # print(TOI[j][i], bs.traf.id[j])
+            # print('AIRCRAFT:', bs.traf.id[j], 'DIST TO EV:', toi_dist, 'NONQDRDIST:', np.hypot(d2[0], d2[1]), 'TOI:', TOI[j][i])
             if TOI[j][i] <= 10 and counter[j] == 0:
                 print('TOIDIST', toi_dist)
                 counter[j] = 1
                 if j%2 == 0:
                     lr = 1
-                    koz_x = Meters_To_WSG84([250, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1]
+                    koz_x = 76#Meters_To_WSG84([76, 0], [bs.traf.lat[j], bs.traf.lon[j]])
                     print(koz_x)
                 else:
-                    lr = 1
-                    koz_x = Meters_To_WSG84([-250, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1]
+                    lr = -1
+                    koz_x = -76#Meters_To_WSG84([-76, 0], [bs.traf.lat[j], bs.traf.lon[j]])
                 print(lr)
-                target_toa1 = 1.5*(900/210)
-                target_toa2 = 1.5*(900/210)
+                target_toa1 = 1.5*(275/64.008)
+                target_toa2 = 1.5*(275/64.008)
+                homexy[j] = [0, 0]
+                homell[j] = [bs.traf.lat[j], bs.traf.lon[j]] #save as lonlat for WSG84
+                
                 #2200 ft = .00604 lat 750ft = .002055 lon 690ft = .0019 lon 450ft = .001234 lat 250ft = .000686 lon 50ft = .0001375 lat
                                 #p01x                                                    p11x                                                         p21x
-                nodes1 = [np.array([bs.traf.lon[j],        Meters_To_WSG84([lr*690, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],     Meters_To_WSG84([lr*737.5, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1]    ]).flatten(), # x 
-                                #p01y                                                                                            p11y                                                                             p21y 
-                          np.array([Meters_To_WSG84([0, 1800], [bs.traf.lat[j], bs.traf.lon[j]])[0],       Meters_To_WSG84([0, 1950], [bs.traf.lat[j], bs.traf.lon[j]])[0],      Meters_To_WSG84([0, 2250], [bs.traf.lat[j], bs.traf.lon[j]])[0]]).flatten()] # y
-
+                # nodes1 = [np.array([bs.traf.lon[j],        Meters_To_WSG84([lr*213, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],     Meters_To_WSG84([lr*221, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1]    ]).flatten(), # x 
+                #                 #p01y                                                                                            p11y                                                                             p21y 
+                #           np.array([Meters_To_WSG84([0, 574.12], [bs.traf.lat[j], bs.traf.lon[j]])[0],       Meters_To_WSG84([0, (574.12+275)/60+574.12], [bs.traf.lat[j], bs.traf.lon[j]])[0],      Meters_To_WSG84([0, 711.62], [bs.traf.lat[j], bs.traf.lon[j]])[0]]).flatten()] # y
+                nodes1 = [np.array([homexy[j][0], lr*213, lr*221]).flatten(), np.array([574.12, (574.12+275)/60+574.12, 711.62])]
                                 #p02x = p21x                                                                                    p12x                                                        p22x
-                nodes2 = [np.array([Meters_To_WSG84([lr*737.5, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],    Meters_To_WSG84([lr*762.5, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],       bs.traf.lon[j]]).flatten(), # x
+                # nodes2 = [np.array([Meters_To_WSG84([lr*221, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],    Meters_To_WSG84([lr*229, 0], [bs.traf.lat[j], bs.traf.lon[j]])[1],       bs.traf.lon[j]]).flatten(), # x
                           
-                                #p02y = p21y
-                          np.array([Meters_To_WSG84([0, 2250], [bs.traf.lat[j], bs.traf.lon[j]])[0],    Meters_To_WSG84([0, 2700], [bs.traf.lat[j], bs.traf.lon[j]])[0], Meters_To_WSG84([0, 2700], [bs.traf.lat[j], bs.traf.lon[j]])[0]]).flatten()] # y
-                
-                plt.scatter(nodes1[0], nodes1[1])
-                plt.scatter(nodes2[0], nodes2[1])
-                plt.show()
+                #                 #p02y = p21y
+                #           np.array([Meters_To_WSG84([0, 711.62], [bs.traf.lat[j], bs.traf.lon[j]])[0],    Meters_To_WSG84([0, 800], [bs.traf.lat[j], bs.traf.lon[j]])[0], Meters_To_WSG84([0, 849.12], [bs.traf.lat[j], bs.traf.lon[j]])[0]]).flatten()] # y
+                nodes2 = [np.array([lr*221, lr*236,homexy[j][0]]).flatten(), np.array([711.62, 849.12, 849.12])]
+                # plt.scatter(nodes1[0], nodes1[1])
+                # plt.scatter(nodes2[0], nodes2[1])
+                # plt.show()
 
                 
-                koz_bot = Meters_To_WSG84([0, 1850], [bs.traf.lat[j], bs.traf.lon[j]])[0]
-                koz_top = Meters_To_WSG84([0, 2650], [bs.traf.lat[j], bs.traf.lon[j]])[0]
-                print(koz_x, koz_bot, koz_top)
-                wpts, wpts_x, wpts_y, b1, b2, nodes1, nodes2 = MBO.toCallOutside(bs.traf.tas[j]/1.94384, np.deg2rad(4.5), target_toa1, target_toa2,
-                                                          bs.traf.hdg[j], nodes1, nodes2, koz_x, koz_bot, koz_top, lr, [bs.traf.lat[j], bs.traf.lon[j]])
+                # koz_bot = Meters_To_WSG84([0, 589.12], [bs.traf.lat[j], bs.traf.lon[j]])
+                koz_bot = 589.12
+                # koz_top = Meters_To_WSG84([0, 834.12], [bs.traf.lat[j], bs.traf.lon[j]])
+                koz_top = 834.12
+                # corridor = Meters_To_WSG84([lr*229+9, 0],  [bs.traf.lat[j], bs.traf.lon[j]])
+                corridor = lr*228
+                # print(koz_x, koz_bot, koz_top)
+                wpts, wpts_x, wpts_y, b1, b2, nodes1, nodes2 = MBO.toCallOutside(bs.traf.tas[j], np.deg2rad(4.5), target_toa1, target_toa2,
+                                                          bs.traf.hdg[j], nodes1, nodes2, koz_x, koz_bot, koz_top, lr, [bs.traf.lat[j], bs.traf.lon[j]], corridor)
                 nodes[j][0] = nodes1
                 nodes[j][1] = nodes2
             #     # bs.stack.stack(f'DELWPT {bs.traf.id[j]} 40.4 -83.2')
@@ -427,11 +459,15 @@ for i in range(n_steps):
             # #     count[j] = 2
             #     for k in range(5, len(wpts_xac[bs.traf.id[j]])):
             #         bs.stack.stack(f'ADDWPT {bs.traf.id[j]} {wpts[k][0]} {wpts[k][1]} 150')
-            if toi_dist <= 250 and counter[j] ==1:
+            if toi_dist <= 45.72 and counter[j] ==1:
                 print('TOIDIST', toi_dist)
                 counter[j] = 2
-                entry, exit = MBO.EntryExitOutside(nodes1=nodes[j][0], nodes2=nodes[j][1], latlon = [bs.traf.lat[j], bs.traf.lon[j]])
+                pos = [bs.traf.lat[j], bs.traf.lon[j]]
+                new = __WSG84_To_Meters_Single(waypoint =pos, home = homell[j], projobject=p)
+                print('POSITION IS:', new, 'POSITION IN LATLON IS:', pos, 'HOME IS:', homell[j])
+                entry, exit = MBO.EntryExitOutside(nodes1=nodes[j][0], nodes2=nodes[j][1], pos = new, velocity = bs.traf.tas[j])
                 break
+    time.sleep(0.025)
 
     
 
