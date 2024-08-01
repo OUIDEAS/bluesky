@@ -700,9 +700,14 @@ def exitPath(velocity, t_exit, ba, intersect, nodes):
 if __name__ == "__main__":
  
     velocity  = 57.412 #m/s
-    turn_rate = np.deg2rad(4.50) # RAD/s
-    turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(30)))
+    # turn_rate = np.deg2rad(20) # RAD/s
+    # turn_radius = velocity/turn_rate
+    # print(turn_radius)
+    turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(60)))
     turn_radius*=0.3048
+    # print(np.rad2deg(velocity/turn_radius))
+    # print(np.rad2deg(np.arctan(57.412**2/(11.26*turn_radius))))
+
     h = 275
     koz_bot = 15
     koz_top = h-15
@@ -934,13 +939,13 @@ if __name__ == "__main__":
     # print(entry_path)
     # print(entry_path[0][0])
     # exit_path = [x_exit, y_exit]
-    # paths = [entry_path, partial_bez1, partial_bez2, exit_path]
+    # paths = [partial_bez1, partial_bez2]
     # print(len(paths))
     # print(paths[0][0])
-    # wpts, x_wpts, y_wpts = paths_to_wp(paths, 20)
+    # wpts, x_wpts, y_wpts = paths_to_wp(paths, 10)
     # print(wpts)
 
-
+    print('CURVHSADHAKSD',curvature(P0 = [nodes1[0][0],nodes1[1][0]], P1 = [optim_sol1[0], optim_sol1[1]], P2 = [nodes1[0][2], nodes1[1][2]]), turn_radius)  
     pb1_length = optim1_length - path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[optim_sol1[0],optim_sol1[1]],P2=[nodes1[0][2], nodes1[1][2]], t=t_entry)
     pb2_length = path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[optim_sol2[0],optim_sol2[1]], P2=[nodes2[0][2],nodes2[1][2]], t=t_start2)
 
@@ -956,6 +961,7 @@ if __name__ == "__main__":
     fig = plt.figure(1)
     ax = fig.add_subplot(111)
 
+    # ax.scatter(x_wpts, y_wpts)
     # ax.scatter(x_wpts, y_wpts, zorder = 100, marker = '^')
     ax.plot(x_exit, y_exit, color = 'orange', label = 'Exit Path')
     # ax.scatter(h_ex, k_ex, marker = 's', color = 'green', label = 'Exit Circle Center')

@@ -166,6 +166,23 @@
       "h_max": 2500,
       "d_range_max": 5      
    }
+  },
+  "Vampire": {
+    "name": "MVariny Custom eVTOL",
+    "n_engines": 6,
+    "engine_type": "TS",
+    "mtow": 3175,
+    "oew": 2720,
+    "mfc": 0,
+    "engines": [["Motor-1", 60], ["Motor-2", 60], ["Motor-3", 60], ["Motor-4", 60], ["Motor-5", 60], ["Motor-6", 60]],
+    "envelop": {
+      "v_min": 0,
+      "v_max": 70,
+      "vs_min": -7.5,
+      "vs_max": 7.5,
+      "h_max": 800,
+      "d_range_max": 5000
+   }
   }
 }  
       

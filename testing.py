@@ -119,18 +119,29 @@ def get_utm_zone(longitude):
 # plt.scatter(0, 0)
 # plt.show()
 
-home = [39.4149676440383, -82.2]
-pos = [39.4165484267517, -82.2]
+# home = [39.4149676440383, -82.2]
+# pos = [39.4165484267517, -82.2]
 
-# Get the UTM zone based on the longitude
-utm_zone = get_utm_zone(home[1])
-print(utm_zone)
+# # Get the UTM zone based on the longitude
+# utm_zone = get_utm_zone(home[1])
+# print(utm_zone)
 
-# Define the projection
-p = Proj(proj='utm', zone=17, ellps='WGS84')
+# # Define the projection
+# p = Proj(proj='utm', zone=17, ellps='WGS84')
 
 
 
-# Call the function
-new = __WSG84_To_Meters_Single(pos, home, p)
-print(new)
+# # Call the function
+# new = __WSG84_To_Meters_Single(pos, home, p)
+# print(new)
+
+velocity  = 111.6 #m/s
+turn_rate = np.deg2rad(20) # RAD/s
+print(velocity/turn_rate)
+tr = velocity/turn_rate
+ba = np.arctan(111.6**2/(tr*11.6))
+print(np.rad2deg(ba))
+# turn_rate = np.deg2rad(4.50) # RAD/s
+turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(60)))
+turn_radius*=0.3048
+print(np.rad2deg(velocity/turn_radius))

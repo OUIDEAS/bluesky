@@ -284,7 +284,7 @@
     "mfc": 3200,
     "engines": ["JT8D-11"]
   },
-  "MV250": {
+  "M250": {
     "name": "MVariny Custom Aircraft",
     "n_engines": 1,
     "engine_type": "TF",
@@ -293,6 +293,6 @@
     "mlw": 3392,
     "oew": 6277,
     "mfc": 3200,
-    "engines": ["JT15D-4"]
+    "engines": ["JT15D-1"]
   }
 }

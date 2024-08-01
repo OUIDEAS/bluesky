@@ -86,7 +86,7 @@ class OpenAP(PerfBase):
                 # warn = f"Warning: {actype} replaced by B744"
                 # print(warn)
                 # bs.scr.echo(warn)
-                actype = "B744"
+                actype = "M250"
 
             # populate fuel flow model
             es = self.coeff.acs_fixwing[actype]["engines"]
@@ -140,7 +140,7 @@ class OpenAP(PerfBase):
 
         else:
             if actype not in self.coeff.limits_fixwing.keys():
-                actype = "B744"
+                actype = "M250"
 
             self.vminic[-n:] = self.coeff.limits_fixwing[actype]["vminic"]
             self.vminer[-n:] = self.coeff.limits_fixwing[actype]["vminer"]
@@ -281,6 +281,7 @@ class OpenAP(PerfBase):
         Returns:
             floats or 1D-arrays: Allowed TAS, Allowed vetical rate, Allowed altitude
         """
+        
         allow_h = np.where(intent_h > self.hmax, self.hmax, intent_h)
 
         intent_v_cas = aero.vtas2cas(intent_v_tas, allow_h)
@@ -292,7 +293,7 @@ class OpenAP(PerfBase):
             aero.vmach2tas(self.mmo, allow_h),
             allow_v_tas,
         )  # maximum cannot exceed MMO
-
+        allow_v_tas = intent_v_tas
         vs_max_with_acc = (1 - ax / self.axmax) * self.vsmax
         allow_vs = np.where(
             (intent_vs > 0) & (intent_vs > self.vsmax), vs_max_with_acc, intent_vs
@@ -318,7 +319,7 @@ class OpenAP(PerfBase):
         allow_vs[ir] = np.where(
             (intent_vs[ir] > self.vsmax[ir]), self.vsmax[ir], allow_vs[ir]
         )
-
+        
         return allow_v_tas, allow_vs, allow_h
 
     def currentlimits(self, id=None):
@@ -371,6 +372,7 @@ class OpenAP(PerfBase):
         )
         vminfw = np.where(self.phase[ifw] == ph.AP, self.vminap[ifw], vminfw)
         vminfw = np.where(self.phase[ifw] == ph.GD, 0, vminfw)
+        
 
         # --- maximum speed ---
         vmaxfw = np.where(self.phase[ifw] == ph.NA, self.vmaxer[ifw], vmaxfw)
@@ -380,7 +382,7 @@ class OpenAP(PerfBase):
         )
         vmaxfw = np.where(self.phase[ifw] == ph.AP, self.vmaxap[ifw], vmaxfw)
         vmaxfw = np.where(self.phase[ifw] == ph.GD, self.vmaxic[ifw], vmaxfw)
-
+        
         # rotor
         ir = np.where(np.logical_and(self.lifttype == coeff.LIFT_ROTOR, mask))[0]
         vminr = self.vmin[ir]

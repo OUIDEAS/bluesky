@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<procedure_file>
+  <!--generated from http://www.skybrary.aero/index.php/A319-->
+  <aircraft>M250</aircraft>
+  <engine>1</engine>
+  <speeds>
+    <to_cas unit="kts">111.6</to_cas>
+    <ic_cas unit="kts">111.6 </ic_cas>
+    <ic2_cas unit="kts">112 </ic2_cas>
+    <cl_Ma unit="none">0.167</cl_Ma>
+    <cr_Ma unit="none">0.167</cr_Ma>
+    <cr_tas unit="kts">57.412 </cr_tas>
+    <ds_Ma unit="none">0.2</ds_Ma>
+    <ds_cas unit="kts">111.6 </ds_cas>
+    <ap_cas unit="kts">111.6</ap_cas>
+  </speeds>
+  <ROCD>
+    <ic_roc unit="fpm">2000</ic_roc>
+    <ic2_roc unit="fpm">1700</ic2_roc>
+    <ic3_roc unit="fpm">1000</ic3_roc>
+    <Ma_roc unit="fpm">500</Ma_roc>
+    <ds_rod unit="fpm">500</ds_rod>
+    <ds2_rod unit="fpm">3000</ds2_rod>
+  </ROCD>
+</procedure_file>
