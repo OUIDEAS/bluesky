@@ -10,6 +10,7 @@ from bluesky.tools import geo, aero, areafilter, plotter
 import re, sys, io
 from pyproj import Proj
 import Scenario1OutsideUse as MBO
+import scipy.io
 
 class ScreenDummy(ScreenIO):
     """
@@ -214,7 +215,7 @@ Hold -> Uses a holding pattern to avoid emergency aircraft
 
 '''
 
-scenario = 'BezAM'
+scenario = 'Hold'
 subscen = 'Single'
 
 nm  = 1852.  # m       1 nautical mile\
@@ -268,7 +269,7 @@ bs.stack.stack(f'DT .01')
 # bs.stack.stack(f'DIST 39.42, -83.2, 39.415, -83.2')
 utm_zone = get_utm_zone(-82.2)
 p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
-t_max = 3900
+t_max = 5600
 # t_max = 4000
 if subscen == 'NotSingle':
     mytraf2 = bs.traf.cre('EM0', 'M250', 39.4075, -82.2, 0, 80, 64)
@@ -727,8 +728,8 @@ ax = fig.add_subplot(111)
 # for i in range(0, len(exp)):
 #     expx.append(exp[i][1])
 #     expy.append(exp[i][0])    
-# # expx.append(goalx[-1])
-# # expy.append(goaly[-1])
+# expx.append(goalx[-1])
+# expy.append(goaly[-1])
 # ax.plot(goalx, goaly, color = 'magenta', label = 'Partial Bezier Path')
 # ax.plot(enpx, enpy,  color = 'cyan', label = 'Interception Path')
 # ax.plot(expx, expy,  color = 'cyan')
@@ -757,25 +758,28 @@ used_colors = []
 #         plt.plot(res[::25, 1, idx], res[::25, 0, idx], marker = marker, label=f'{acid}', color=color
 # bez1_ll = Meters_To_WSG84(waypts[4], homell[4])
 
-for idx, acid in enumerate(bs.traf.id):
-    available_colors = [color for color in range(1, 101) if color not in used_colors]
-    color_idx = np.random.choice(available_colors)
-    color = plt.cm.tab20(color_idx)
-    used_colors.append(color_idx)
-    # plt.scatter(bez1_ll[1], bez1_ll[0])
-    marker = 'o' if idx % 2 == 0 else '^' if idx % 3 == 0 else 'x' if idx == 1 else '*'
-    color = np.random.rand(3,)
+# for idx, acid in enumerate(bs.traf.id):
+#     available_colors = [color for color in range(1, 101) if color not in used_colors]
+#     color_idx = np.random.choice(available_colors)
+#     color = plt.cm.tab20(color_idx)
+#     used_colors.append(color_idx)
+#     # plt.scatter(bez1_ll[1], bez1_ll[0])
+#     marker = 'o' if idx % 2 == 0 else '^' if idx % 3 == 0 else 'x' if idx == 1 else '*'
+#     color = np.random.rand(3,)
 
 
-    # if acid == 'AC4' or acid == 'EM0':
-    if acid == 'EM0':
-        plt.plot(res[::10, 1, idx], res[::10, 0, idx], marker=marker, label=f'{acid}', color=color, zorder = 0)
-    else:
-        plt.plot(res[::5, 1, idx], res[::5, 0, idx], marker=marker, label=f'{acid}', color=color, zorder = 50)
+# if acid == 'AC4' or acid == 'EM0':
+
+plt.plot(res[::10, 1, -1], res[::10, 0, -1], marker='x', label='Emergency Vehicle', color='red', zorder = 10)
+plt.plot(res[::10, 1, 0], res[::10, 0, 0], marker='o', label='Aircraft 0', color='blue', zorder = 10)
+plt.plot(res[::10, 1, 1], res[::10, 0, 1], marker='o', label='Aircraft 1', color='green', zorder = 10)
+plt.plot(res[::10, 1, 2], res[::10, 0, 2], marker='o', label='Aircraft 2', color='orange', zorder = 10)
+plt.plot(res[::10, 1, 3], res[::10, 0, 3], marker='o', label='Aircraft 3', color='purple', zorder = 10)
+plt.plot(res[::10, 1, 4], res[::10, 0, 4], marker='o', label='Aircraft 4', color='brown', zorder = 10)
+
 
 h, toi_dist = qdrdist(bs.traf.lat[0], bs.traf.lon[0], bs.traf.lat[-1], bs.traf.lon[-1])
 
-plt.axis('equal')
 # ax.text(bs.traf.lon[-1]-0.005, bs.traf.lat[-1]+0.001, f'Emergency Vehicle TOA To Goal {ev_TOA:.3g}', fontsize = 7)
 # ax.text(bs.traf.lon[0]+0.0005, bs.traf.lat[0]+0.0005, f'AC0 Resumes Flight On The Nominal Path At t = {k/100}', fontsize = 10)
 # ax.plot([bs.traf.lon[0]+0.001, bs.traf.lon[0]], [bs.traf.lat[0], bs.traf.lat[0]], linestyle = 'dashed', color = 'black', linewidth = 2)
@@ -805,3 +809,16 @@ plt.legend()
 
 plt.show()
 
+
+data = {
+    'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
+    'AC1': np.array([res[::10, 1, 1], res[::10, 0, 1], res[::10, 3, 1], res[::10, 4, 1]]),
+    'AC2': np.array([res[::10, 1, 2], res[::10, 0, 2], res[::10, 3, 2], res[::10, 4, 2]]),
+    'AC3': np.array([res[::10, 1, 3], res[::10, 0, 3], res[::10, 3, 3], res[::10, 4, 3]]),
+    'AC4': np.array([res[::10, 1, 4], res[::10, 0, 4], res[::10, 3, 4], res[::10, 4, 4]]),
+    'EM0': np.array([res[::10, 1, 5], res[::10, 0, 5], res[::10, 3, 5], res[::10, 4, 5]]),
+    # 'Waypts': np.array([goalx, goaly]),
+    # 'Entry': np.array([enpx, enpy]),
+    # 'Exit': np.array([expx, expy])
+}
+scipy.io.savemat('Scen1DataHold.mat', data)
