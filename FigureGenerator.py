@@ -48,26 +48,26 @@ fig, ax = plt.subplots()
 # plt.show()
 
 
-ac = [i for i in range(0, 6)]
-ETA = [300 + 30*i for i in range(0, 6)]
-ETA_Real = []
-ETA_Other = []
-j = 0
-for i in ETA:
-    ETA_Real.append(i+5*j)
-    ETA_Other.append((i**2)/300)
-    j+=1
-ac_evens = [i for i in ac if i%2 == 0]
-plt.scatter(ac, ETA, color = 'blue', label = 'Original ETA')
-plt.scatter(ac, ETA_Real, color = 'red', label = 'ETA with Bezier Curve', marker = '^')
-plt.scatter(ac, ETA_Other, label = 'ETA with Traditional Avoidance', marker = '*', color = 'green')
-plt.grid()
-plt.legend()
-plt.xticks(ac_evens)
-# plt.title('ETA of Aircraft in Fleet')
-plt.xlabel('Aircraft ID #')
-plt.ylabel('ETA (s)')
-plt.show()
+# ac = [i for i in range(0, 6)]
+# ETA = [300 + 30*i for i in range(0, 6)]
+# ETA_Real = []
+# ETA_Other = []
+# j = 0
+# for i in ETA:
+#     ETA_Real.append(i+5*j)
+#     ETA_Other.append((i**2)/300)
+#     j+=1
+# ac_evens = [i for i in ac if i%2 == 0]
+# plt.scatter(ac, ETA, color = 'blue', label = 'Original ETA')
+# plt.scatter(ac, ETA_Real, color = 'red', label = 'ETA with Bezier Curve', marker = '^')
+# plt.scatter(ac, ETA_Other, label = 'ETA with Traditional Avoidance', marker = '*', color = 'green')
+# plt.grid()
+# plt.legend()
+# plt.xticks(ac_evens)
+# # plt.title('ETA of Aircraft in Fleet')
+# plt.xlabel('Aircraft ID #')
+# plt.ylabel('ETA (s)')
+# plt.show()
 
 # times = ['10:00', '11:00', '12:30', '10:30', '12:00', '2:00']
 # # plt.grid()
@@ -137,3 +137,52 @@ plt.show()
 # plt.axis('equal')
 # plt.legend()
 # plt.show()
+x_labels = ['AC0', 'AC1', 'AC2', 'AC3', 'AC4']
+
+ETA = [[348.5412648256665, 350.4037558669337, 364.8412648256665], 
+       [353.9630462925526, 353.9630462925526, 370.3830462925526], 
+       [359.3848286351499, 359.3848286351499, 375.92482863514994], 
+       [364.806611843445, 364.806611843445, 381.46661184344504], 
+       [370.2283959266545, 370.2283959266545, 387.0083959266545]]
+pc = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+
+for i in range(0, 5):
+    pc[i][0] = 100*((ETA[i][1]-ETA[i][0])/ETA[i][0])
+    pc[i][1] = 100*((ETA[i][2]-ETA[i][0])/ETA[i][0])
+
+
+
+# Separate the data for each column
+eta_0 = [row[0] for row in ETA]
+eta_1 = [row[1] for row in ETA]
+eta_2 = [row[2] for row in ETA]
+
+# Bar width
+bar_width = 0.35
+
+# X positions for the bars
+x = np.arange(len(x_labels))
+
+
+bars0 = ax.bar(x-bar_width/3, eta_0, width=bar_width, color='green', label='Nominal ETA')
+bars1 = ax.bar(x+1*bar_width/3, eta_1, width=bar_width, color='blue', label='Bezier Alternate Maneuver ETA')
+bars2 = ax.bar(x+bar_width, eta_2, width=bar_width, color='red', label='Holding Pattern Alternate Maneuver ETA')
+
+# Adding the ETA[row][0] values as text on both bars
+# for i in range(len(x_labels)):
+#     ax.text(x[i] - bar_width/2, eta_1[i] + 0.1, f'{eta_0[i]:.1f}', ha='center', color='white', fontweight='bold')
+#     ax.text(x[i] + bar_width/2, eta_2[i] + 0.1, f'{eta_0[i]:.1f}', ha='center', color='white', fontweight='bold')
+
+# Set x-ticks and labels
+ax.set_xticks(x)
+ax.set_xticklabels(x_labels)
+
+
+# Labeling
+ax.set_xlabel('AC')
+ax.set_ylabel('ETA Values')
+ax.set_title('Bar Chart with Different Colored Bars')
+ax.legend()
+
+# Display the plot
+plt.show()

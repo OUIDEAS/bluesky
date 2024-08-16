@@ -11,6 +11,7 @@ import re, sys, io
 from pyproj import Proj
 from matplotlib.patches import Circle
 import Scenario2Outside as MBO
+import scipy.io
 
 class ScreenDummy(ScreenIO):
     """
@@ -379,7 +380,7 @@ bs.stack.stack(f'DT .01')
 # bs.stack.stack(f'DIST 39.42, -83.2, 39.415, -83.2')
 utm_zone = get_utm_zone(-82.2)
 p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
-t_max = 4046
+t_max = 7000
 # t_max = 4000
 # mytraf2 = bs.traf.cre('EM0', 'M250', 39.4075, -82.2, 0, 80, 64)
 mytraf2 = bs.traf.cre('EM0', 'M250', 39.6, -82.225, 90, 80, 64)
@@ -447,6 +448,7 @@ ev_Goal = [39.6, -82.1994]
 
 h, ev_dist = qdrdist(bs.traf.lat[-1], bs.traf.lon[-1], ev_Goal[0], ev_Goal[1])
 print('EV GOAL STUFF', ev_dist, ev_dist/64)
+ev_TOA = ev_dist/64
 
 h, ac0_dist = qdrdist(bs.traf.lat[0], bs.traf.lon[0], home_end[0], home_end[1])
 print('AC GOAL STUFF', ac0_dist, ac0_dist/57.412)
@@ -581,6 +583,7 @@ if scenario == 'BezAM':
                                                             bs.traf.hdg[j], nodes1, nodes2, koz_x, koz_bot, koz_top, lr, [bs.traf.lat[j], bs.traf.lon[j]], corridor, ev_TOA)
                     nodes[j][0] = nodes1
                     nodes[j][1] = nodes2
+
                 if toi_dist <= 45.72:
                     violation_count[j]+=1
                     dist_to_EV[j].append(toi_dist)
@@ -632,6 +635,7 @@ if scenario == 'BezAM':
                     bs.stack.stack(f'BANK {bs.traf.id[j]} 73')
                     counter[j] = 3
                     print(f'INITIATING PURE PURSUIT GUIDANCE FOR {bs.traf.id[j]}')
+                    print(ev_TOA)
                 # elif lr == -1 and np.isclose(90-req_head[j][0], bs.traf.hdg[j]-360, atol = 0.1) and counter[j] == 2:
                 #     guide[j] = 1
                 #     bs.stack.stack(f'BANK {bs.traf.id[j]} 30')
@@ -749,6 +753,7 @@ elif scenario == 'Hold':
                     print(f'INITIATING HOLDING PATTERN FOR {bs.traf.id[j]} AT TIMESTAMP {i}')
                     k = i
                     evT = ev_TOA
+                    print(ev_TOA)
                 elif j!=0 and counter[j] == 1:
                     k = i
                     counter[j] =2
@@ -762,6 +767,7 @@ elif scenario == 'Hold':
                     else:
                         bs.stack.stack(f'HDG {bs.traf.id[j]} -90; HDG {bs.traf.id[j]} -180')
                     print(f'INITIATING HOLDING PATTERN FOR {bs.traf.id[j]} AT TIMESTAMP {i}')
+                    print(ev_TOA)
                 
                 # if counter[j] == 2:
                 #     print(i/100 - times[j][0], bs.traf.hdg[j], bs.traf.id[j])
@@ -774,6 +780,7 @@ elif scenario == 'Hold':
                 if subscen == 'Single':
                     if j!=0 and np.isclose(180.0, bs.traf.hdg[j], atol = 0.01) and counter[j] == 3 and bs.traf.lat[j]<bs.traf.lat[j-1]:
                         print(f'{bs.traf.id[j]} RETURNING TO NOMINAL PATH AT TIMESTAMP {i}')
+                        print(ev_TOA)
                         k = i
                         counter[j] = 4
                         if lr ==1:
@@ -783,6 +790,7 @@ elif scenario == 'Hold':
                         
                     elif j ==0 and np.isclose(180.0, bs.traf.hdg[j], atol = 0.01) and i/100 - times[j][1] >= 5 and counter[j] == 3:
                         print(f'{bs.traf.id[j]} RETURNING TO NOMINAL PATH AT TIMESTAMP {i}')
+                        print(ev_TOA)
                         k = i
                         counter[j] = 4
                         if lr ==1:
@@ -792,6 +800,7 @@ elif scenario == 'Hold':
                 else:
                     if np.isclose(180.0, bs.traf.hdg[j], atol = 0.01) and i/100 - times[j][1] >= 5 and counter[j] == 3:
                         print(f'{bs.traf.id[j]} RETURNING TO NOMINAL PATH')
+                        print(ev_TOA)
                         counter[j] = 4
                         if lr ==1:
                             bs.stack.stack(f'HDG {bs.traf.id[j]} 270; HDG {bs.traf.id[j]} 0')
@@ -802,7 +811,7 @@ elif scenario == 'Hold':
                 # if counter[j] == 4:
                     # print(start_end[j][0][0], bs.traf.lat[j])
 
-                if np.isclose(start_end[j][0][0], bs.traf.lat[j], atol = 0.01) and counter[j] == 4 and bs.traf.hdg[j] == 0:
+                if np.isclose(start_end[j][0][0], bs.traf.lat[j], atol = 0.0001) and counter[j] == 4 and bs.traf.hdg[j] == 0:
                     start_end[j][1] = [bs.traf.lat[j], bs.traf.lon[j]]
                     times[j][2] = i/100
                     print(f'HOLDING PATTERN FOR {bs.traf.id[j]} ENDED AT TIMESTAMP {i}')
@@ -813,7 +822,21 @@ elif scenario == 'Hold':
                     pick = j
                     start_end[j][1][0], start_end[j][1][1]  = bs.traf.lat[j], bs.traf.lon[j]
                     times[j][1] = i/100
+                    pos_now = __WSG84_To_Meters_Single(start_end[j][1], start_end[j][0], p)
+                    goal = __WSG84_To_Meters_Single(home_end, start_end[j][0], p)
+                    head = np.rad2deg(np.arctan2(goal[1]-pos_now[1], goal[0]-pos_now[1]))
+                    bs.stack.stack(f'HDG {bs.traf.id[j]} {0-head+90}')
 
+                if guide[j] == 1 and np.isclose(home_end[0],bs.traf.lat[j], atol = 1e-20) and np.isclose(home_end[1], bs.traf.lon[j], atol= 1e-20):
+                    # bs.stack.stack(f'ALT {bs.traf.id[j]} 0 10000; SPD {bs.traf.id[j]} 0; HDG {bs.traf.id[j]} 0')
+                    # bs.traf.tas[j] = 0
+                    # bs.traf.alt[j] = 0
+                    print(f'INITIATING LANDING FOR {bs.traf.id[j]} at {i}')
+                    guide[j] = 4
+                    g0 = guide[j]
+                    pick = j
+                    # start_end[j][1][0], start_end[j][1][1]  = bs.traf.lat[j], bs.traf.lon[j]
+                    # times[j][1] = i/100
                 
 
         # time.sleep(0.0025)
@@ -845,15 +868,17 @@ if scenario == 'BezAM':
         nominal_time[i] = point_dist[i]/57.412
         real_time[i] = times[i][1]-times[i][0]
         delay[i] = real_time[i]-nominal_time[i]
+        ETA[i][1] = ETA[i][0]+delay[i]
         print(f'DATA FOR {bs.traf.id[i]}')
         print(f'ALTERNATE MANEUVER START/END LATLON{start_end[i]}, DISTANCE BETWEEN POINTS {point_dist[i]}, STRAIGHT LINE TRAVEL TIME {nominal_time[i]}, ALTERNATE MANEUVER TRAVEL TIME {real_time[i]}, ABSORBED DELAY {delay[i]}')
 else:
     for i in range(0,5):
         delay[i] = times[i][2] - times[i][0] 
         print(f'DATA FOR {bs.traf.id[i]}, {delay[i]}')
+        ETA[i][1] = ETA[i][0]+delay[i]
         print(start_end[j])
         print(times[j])
-
+print('ETA FOR EACH AIRCRAFT:', ETA)
 # for i in range(len(violation_count)):
 #     violation_count[i]/=100
 # mins = []
@@ -878,7 +903,32 @@ else:
 # print(res[4])
 # print(res[5])
 # markers = ['o', 's', '^', 'v', '>', '<', 'P', 'X', 'D', '*', '+', 'x', '|', '_', '1', '2', '3', '4', 'h', 'H']
-used_colors = []
+
+# gpts = []
+# j = 1
+# for i in range(0, len(waypts[j][0])):
+#     gpts.append([waypts[j][0][i], waypts[j][1][i]])
+# # print(gpts)
+# goal = Meters_To_WSG84(gpts, homell[j])
+# goalx = []
+# goaly = []
+# for i in range(0, len(goal)):
+#     goalx.append(goal[i][1])
+#     goaly.append(goal[i][0])
+
+# enpts = []
+# for i in range(0, len(entry[0])):
+#     enpts.append([entry[0][i], entry[1][i]])
+# enp = Meters_To_WSG84(enpts, homell[j])
+# enpx = []
+# enpy = []
+# for i in range(0, len(enp)):
+#     enpx.append(enp[i][1])
+#     enpy.append(enp[i][0])
+
+
+
+
 # for idx, acid in enumerate(bs.traf.id):
 #     available_colors = [color for color in range(1, 101) if color not in used_colors]
 #     color_idx = np.random.choice(available_colors)
@@ -900,32 +950,40 @@ goalAC = plt.Circle((-82.20158972364715,39.599988478353495), 0.0005, color = 'g'
 goalEV = plt.Circle((-82.1994, 39.6), 0.0005, color = 'r', fill = True, label = 'Emergency Vehicle Landing Pad')
 fig = plt.figure(1)
 ax = fig.add_subplot(111)
-for idx, acid in enumerate(bs.traf.id):
-    available_colors = [color for color in range(1, 101) if color not in used_colors]
-    color_idx = np.random.choice(available_colors)
-    color = plt.cm.tab20(color_idx)
-    used_colors.append(color_idx)
-    # plt.scatter(bez1_ll[1], bez1_ll[0])
-    marker = 'o' if idx % 2 == 0 else '^' if idx % 3 == 0 else 'x'
-    color = np.random.rand(3,)
+# for idx, acid in enumerate(bs.traf.id):
+#     available_colors = [color for color in range(1, 101) if color not in used_colors]
+#     color_idx = np.random.choice(available_colors)
+#     color = plt.cm.tab20(color_idx)
+#     used_colors.append(color_idx)
+#     # plt.scatter(bez1_ll[1], bez1_ll[0])
+#     marker = 'o' if idx % 2 == 0 else '^' if idx % 3 == 0 else 'x'
+#     color = np.random.rand(3,)
 
-    # if acid == 'AC4' or acid == 'EM0':
-    ax.plot(res[::10, 1, idx], res[::10, 0, idx], marker=marker, label=f'{acid}', color=color, zorder = 100)
+#     # if acid == 'AC4' or acid == 'EM0':
+#     ax.plot(res[::10, 1, idx], res[::10, 0, idx], marker=marker, label=f'{acid}', color=color, zorder = 100)
 # goal = 
+
+plt.plot(res[::10, 1, -1], res[::10, 0, -1], marker='x', label='Emergency Vehicle', color='red', zorder = 10)
+plt.plot(res[::10, 1, 0], res[::10, 0, 0], marker='o', label='Aircraft 0', color='blue', zorder = 10)
+plt.plot(res[::10, 1, 1], res[::10, 0, 1], marker='o', label='Aircraft 1', color='green', zorder = 10)
+plt.plot(res[::10, 1, 2], res[::10, 0, 2], marker='o', label='Aircraft 2', color='orange', zorder = 10)
+plt.plot(res[::10, 1, 3], res[::10, 0, 3], marker='o', label='Aircraft 3', color='purple', zorder = 10)
+plt.plot(res[::10, 1, 4], res[::10, 0, 4], marker='o', label='Aircraft 4', color='brown', zorder = 10)
+
 # ax.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
 ax.add_patch(goalEV)
 ax.add_patch(goalAC)
 ax.text(bs.traf.lon[-1]-0.005, bs.traf.lat[-1]+0.001, f'Emergency Vehicle TOA To Goal {ev_TOA:.3g}', fontsize = 7)
-# ax.text(bs.traf.lon[0]-0.0075, bs.traf.lat[0]-0.001, f'AC0 Begins Return To Nominal Path At t = {k/100}', fontsize = 7)
-ax.text(bs.traf.lon[1]-0.0075, bs.traf.lat[1]-0.001, f'AC1 Begins Return To Nominal Path At t = {k/100}, After AC0 Has Passed It', fontsize = 7)
-ax.text(bs.traf.lon[2]-0.0075, bs.traf.lat[2]+0.001, f'AC2 Begins Holding Pattern At t = 35.21, After It Has Passed AC1', fontsize = 7)
+# # ax.text(bs.traf.lon[0]-0.0075, bs.traf.lat[0]-0.001, f'AC0 Begins Return To Nominal Path At t = {k/100}', fontsize = 7)
+# ax.text(bs.traf.lon[1]-0.0075, bs.traf.lat[1]-0.001, f'AC1 Begins Return To Nominal Path At t = {k/100}, After AC0 Has Passed It', fontsize = 7)
+# ax.text(bs.traf.lon[2]-0.0075, bs.traf.lat[2]+0.001, f'AC2 Begins Holding Pattern At t = 35.21, After It Has Passed AC1', fontsize = 7)
 
-# ax.scatter()\size = 7)
-# ax.scatter()\
-# ax.plot([bs.traf.lon[0]-0.001, bs.traf.lon[1]+0.001], [bs.traf.lat[0], bs.traf.lat[1]], color = 'blue', linestyle = 'dashed', linewidth = 2)
-ax.plot([bs.traf.lon[1]-0.005, bs.traf.lon[1]], [39.595, 39.595], color = 'black', linestyle = 'dashed', linewidth = 2)
-ax.plot([bs.traf.lon[1]-0.005, bs.traf.lon[1]], [bs.traf.lat[1], bs.traf.lat[1]], color = 'black', linestyle = 'dashed', linewidth = 2)
-ax.text(bs.traf.lon[1]-0.005, (bs.traf.lat[1]+39.595)/2, f'5 Second Travel Time', fontsize = 7)
+# # ax.scatter()\size = 7)
+# # ax.scatter()\
+# # ax.plot([bs.traf.lon[0]-0.001, bs.traf.lon[1]+0.001], [bs.traf.lat[0], bs.traf.lat[1]], color = 'blue', linestyle = 'dashed', linewidth = 2)
+# ax.plot([bs.traf.lon[1]-0.005, bs.traf.lon[1]], [39.595, 39.595], color = 'black', linestyle = 'dashed', linewidth = 2)
+# ax.plot([bs.traf.lon[1]-0.005, bs.traf.lon[1]], [bs.traf.lat[1], bs.traf.lat[1]], color = 'black', linestyle = 'dashed', linewidth = 2)
+# ax.text(bs.traf.lon[1]-0.005, (bs.traf.lat[1]+39.595)/2, f'5 Second Travel Time', fontsize = 7)
 # ax.text(bs.traf.lon[1]+0.001, bs.traf.lat[1]-0.001, f'AC1 Is Passing AC0', fontsize = 7)
 plt.axis('equal')
 # shape4PlotAirport('COJEZ', 'NIKOE')
@@ -938,3 +996,25 @@ plt.legend()
 
 plt.show()
 
+# if scenario == 'Hold':
+#     data = {
+#         'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
+#         'AC1': np.array([res[::10, 1, 1], res[::10, 0, 1], res[::10, 3, 1], res[::10, 4, 1]]),
+#         'AC2': np.array([res[::10, 1, 2], res[::10, 0, 2], res[::10, 3, 2], res[::10, 4, 2]]),
+#         'AC3': np.array([res[::10, 1, 3], res[::10, 0, 3], res[::10, 3, 3], res[::10, 4, 3]]),
+#         'AC4': np.array([res[::10, 1, 4], res[::10, 0, 4], res[::10, 3, 4], res[::10, 4, 4]]),
+#         'EM0': np.array([res[::10, 1, 5], res[::10, 0, 5], res[::10, 3, 5], res[::10, 4, 5]])
+#     }
+#     scipy.io.savemat('Scen2DataHold.mat', data)
+# else:
+#     data = {
+#     'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
+#     'AC1': np.array([res[::10, 1, 1], res[::10, 0, 1], res[::10, 3, 1], res[::10, 4, 1]]),
+#     'AC2': np.array([res[::10, 1, 2], res[::10, 0, 2], res[::10, 3, 2], res[::10, 4, 2]]),
+#     'AC3': np.array([res[::10, 1, 3], res[::10, 0, 3], res[::10, 3, 3], res[::10, 4, 3]]),
+#     'AC4': np.array([res[::10, 1, 4], res[::10, 0, 4], res[::10, 3, 4], res[::10, 4, 4]]),
+#     'EM0': np.array([res[::10, 1, 5], res[::10, 0, 5], res[::10, 3, 5], res[::10, 4, 5]]),
+#     'Waypts': np.array([goalx, goaly]),
+#     'Entry': np.array([enpx, enpy])
+#     }
+#     scipy.io.savemat('Scen2Data.mat', data)

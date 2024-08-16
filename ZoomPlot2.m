@@ -120,17 +120,17 @@ while(rect_axis.Selected )
         
         %copy all children of parent axes except the ROIs and lines we created.
         Pax_children=copy(p_ax.Children);
-        for i=1:length(Pax_children)
-            if(isa(Pax_children(i),'images.roi.Rectangle'))
-                if(~contains(Pax_children(i).Label,'ZoomPlot'))
-                    copyobj(Pax_children(i),ch_ax)
+        for i = 1:length(Pax_children)
+            if isa(Pax_children(i), 'images.roi.Rectangle')
+                if ~contains(Pax_children(i).Label, 'ZoomPlot')
+                    copyobj(Pax_children(i), ch_ax);
                 end
-            elseif(isa(Pax_children(i),'matlab.graphics.chart.primitive.Line'))
-                if(~contains(Pax_children(i).DisplayName,'ZoomPlot'))
-                    copyobj(Pax_children(i),ch_ax)
+            elseif isa(Pax_children(i), 'matlab.graphics.chart.primitive.Line')
+                if ~contains(Pax_children(i).DisplayName, 'ZoomPlot')
+                    copyobj(Pax_children(i), ch_ax);
                 end
-            else
-                copyobj(Pax_children(i),ch_ax)
+            elseif ~isa(Pax_children(i), 'matlab.graphics.primitive.Text')  % Exclude text objects
+                copyobj(Pax_children(i), ch_ax);
             end
         end
         %update the child axis
@@ -139,6 +139,12 @@ while(rect_axis.Selected )
         r1pos_old=rect_zoom.Position;
         r2pos_old=rect_axis.Position;
     end
+    % Set the limits of the zoomed axes
+% xlim(ch_ax, [rect_zoom.Position(1) rect_zoom.Position(1) + rect_zoom.Position(3)]);
+% ylim(ch_ax, [rect_zoom.Position(2) rect_zoom.Position(2) + rect_zoom.Position(4)]);
+
+% Remove the axis ticks
+% set(ch_ax, 'XTick', [], 'YTick', []);
 end
 
 % remove second ROI
