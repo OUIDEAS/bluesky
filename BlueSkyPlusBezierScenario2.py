@@ -326,7 +326,7 @@ Hold -> Uses a holding pattern to avoid emergency aircraft
 
 '''
 
-scenario = 'Hold'
+scenario = 'BezAM'
 subscen = 'Single'
 
 nm  = 1852.  # m       1 nautical mile\

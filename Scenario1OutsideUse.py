@@ -421,7 +421,7 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
     start_time = time.time()
     # turn_rate = np.deg2rad(4.50) # RAD/s
     # turn_radius = velocity / turn_rate
-    turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(60)))
+    turn_radius = (velocity*1.94384)**2/(11.26*math.tan(np.deg2rad(70)))
     turn_radius*=0.3048
     valid1 = False
     valid2 = False
@@ -598,7 +598,7 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
     wpts, x_wpts, y_wpts = paths_to_wp(paths, 20)
     # print(x_wpts)
     # plt.scatter(x_wpts, y_wpts)
-    # plt.show()
+    plt.show()
     
     return wpts, x_wpts, y_wpts, optimal_bez1, optimal_bez2, nodes1, nodes2 
 

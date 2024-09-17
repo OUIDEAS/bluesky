@@ -215,8 +215,8 @@ Hold -> Uses a holding pattern to avoid emergency aircraft
 
 '''
 
-scenario = 'Hold'
-subscen = 'Single'
+scenario = 'BezAM'
+subscen = 'NotSingle'
 
 nm  = 1852.  # m       1 nautical mile\
 # tr = 111.6**2/(11.26*math.tan(np.deg2rad(25)))
@@ -232,8 +232,8 @@ pattern = r'Dist = (\d+\.\d+) nm'
 #Create Log
 # bs.stack.stack(f'CRELOG HoldFullTestScen1 1')
 # bs.stack.stack(f'SCEN HoldFullTestScen1; SAVEIC HoldFullTestScen1')
-bs.stack.stack(f'CRELOG HoldSingleBypass 1')
-bs.stack.stack(f'SCEN HoldSingleBypass; SAVEIC HoldSingleBypass')
+# bs.stack.stack(f'CRELOG HoldSingleBypass 1')
+# bs.stack.stack(f'SCEN HoldSingleBypass; SAVEIC HoldSingleBypass')
 #Set Sim Time
 
 #Read from datasets
@@ -269,7 +269,7 @@ bs.stack.stack(f'DT .01')
 # bs.stack.stack(f'DIST 39.42, -83.2, 39.415, -83.2')
 utm_zone = get_utm_zone(-82.2)
 p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
-t_max = 5500
+t_max = 24000
 # t_max = 22500
 if subscen == 'NotSingle':
     mytraf2 = bs.traf.cre('EM0', 'M250', 39.4075, -82.2, 0, 80, 64)
