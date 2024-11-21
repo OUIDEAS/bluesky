@@ -3,17 +3,17 @@ clc;
 clear;
 close all;
 set(gcf, 'Position', [1000 500 750 700])
-x_labels = {'AC0', 'AC1'};%, 'AC2', 'AC3', 'AC4'};
+x_labels = {'AX0', 'AX1'};%, 'AC2', 'AC3', 'AC4'};
 ETA = [
     %Scen1
     % 348.5412648256665, 350.4037558669337, 368.8912648256665; 
     % 353.9630462925526, 353.9630462925526, 374.55304629255255;]; 
     %Scen2
-    348.5412648256665, 350.40354299908756, 368.89126482566644;
-    353.9630462925526, 356.00908149753207, 374.3130462925526;];
+    % 348.5412648256665, 350.40354299908756, 368.89126482566644;
+    % 353.9630462925526, 356.00908149753207, 374.3130462925526;];
     %Scen3
-    % 34.13963219284771, 43.234879048968935, 54.48963219284771;
-    % 39.55005658715413, 47.10494388093571, 60.140056587154135;];
+    34.13963219284771, 43.234879048968935, 54.48963219284771;
+    39.55005658715413, 47.10494388093571, 60.140056587154135;];
 
 % Extract columns for plotting
 eta_0 = ETA(:, 1);
@@ -27,7 +27,7 @@ bar_width = 0.35;
 x = 1:length(x_labels);
 
 % Create a figure
-% figure;
+% figure;5
 
 
 % Plot the bars
@@ -38,6 +38,7 @@ bar2 = bar(x-0.175 + bar_width, eta_1-eta_0, bar_width, 'FaceColor', 'blue');   
 plot([0, x(1)-bar_width/2], [eta_2(1)-eta_0(1), eta_2(1)-eta_0(1)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 plot([0, x(2)-bar_width/2], [eta_2(2)-eta_0(2), eta_2(2)-eta_0(2)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 plot([0, x(1)+bar_width/2], [eta_1(1)-eta_0(1), eta_1(1)-eta_0(1)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
+% text(x(2)+bar_width/1.25, 2.5, sprintf('No\ndelay\nabosrbed'), 'FontSize', 25, FontName='Times', FontWeight= 'bold', HorizontalAlignment= 'center', VerticalAlignment = 'middle')
 plot([0, x(2)+bar_width/2], [eta_1(2)-eta_0(2), eta_1(2)-eta_0(2)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 plot([0, 0], [eta_1(2)-eta_0(2), eta_1(2)-eta_0(2)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 
@@ -83,7 +84,7 @@ xlim([x(1)-2*bar_width, x(2)+2*bar_width])
 % Labeling
 xlabel('Aircraft', 'FontSize', 18);
 ylabel('Aircraft Delay (s)', 'FontSize', 18);
-title('Scenario 2 Aircraft Delays', 'FontSize', 18);
+title('Scenario 3 Aircraft Delays', 'FontSize', 18);
 legend({'Holding Pattern Alternate Maneuver Delay', 'Bezier Alternate Maneuever Delay'}, 'Location','northwest', 'FontSize', 13);%'Nominal ETA', 
 
 
@@ -99,7 +100,7 @@ hold off;
 % clear;
 % close all;
 % set(gcf, 'Position', [1000 500 750 700])
-% x_labels = {'AC0', 'AC1'};%, 'AC2', 'AC3', 'AC4'};
+% x_labels = {'AX0', 'AX1'};%, 'AC2', 'AC3', 'AC4'};
 % ETA = [
 %     348.5412648256665, 350.4037558669337, 368.8912648256665; 
 %     353.9630462925526, 353.9630462925526, 374.55304629255255;]; 

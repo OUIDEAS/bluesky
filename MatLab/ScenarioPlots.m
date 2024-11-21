@@ -1,7 +1,7 @@
 clc;
 clear;
 close all;
-load Scen1DataHold.mat;
+load Scen1Data.mat;
 brown = [0.75, 0.16, 0.16];
 orange = [0.4940 0.1840 0.5560];
 purple = [0.900 0.50 0.10];

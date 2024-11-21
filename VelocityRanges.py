@@ -243,7 +243,7 @@ datasets = [wptdata, aptdata]
 
 #Make Aircraft
 
-mytraf = bs.traf.cre('AC0', 'M250', 39.42, -82.2, 0, 80, 57.412)
+mytraf = bs.traf.cre('AC0', 'M250', 39.42, -82.2, 0, 80, 86)
 mytraf = bs.traf.cre('AC1', 'M250', 39.4172, -82.2, 0, 80, 57.412)
 mytraf = bs.traf.cre('AC2', 'M250', 39.4144 , -82.2, 0, 80, 57.412)
 mytraf = bs.traf.cre('AC3', 'M250', 39.4116, -82.2, 0, 80, 57.412)
@@ -272,9 +272,9 @@ p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
 t_max = 24000
 # t_max = 22500
 if subscen == 'NotSingle':
-    mytraf2 = bs.traf.cre('EM0', 'M250', 39.4075, -82.2, 0, 80, 64)
+    mytraf2 = bs.traf.cre('EM0', 'M250', 39.4075, -82.2, 0, 80, 87)
 if subscen == 'Single':
-    mytraf2 = bs.traf.cre('EM0', 'M250', 39.4186, -82.2, 0, 80, 64)
+    mytraf2 = bs.traf.cre('EM0', 'M250', 39.4186, -82.2, 0, 80, 87)
 
 ntraf = bs.traf.ntraf
 
@@ -324,14 +324,13 @@ nmMeters = 1852
 
 lr = 0
 
-sp_diff = 64-57.412
-# print(nodes)
+sp_diff = bs.traf.tas[-1]-bs.traf.tas[0]
 # nodes = np.array([[[0], [0]], [[0],[0]]], dtype = object)
 # print(nodes[0][0])
 # nodes[0][0][0]= [1, 2, 23, 4, 53]
 # print(nodes[0][0])
 #The sim
-
+stamp = 100000
 #home will be end point:
 home_end = [39.6, -82.2]
 k = 0
@@ -342,7 +341,7 @@ Initial ETAS
 for i in range(len(bs.traf.id)-1):
     goalHead, goalDist = qdrdist(bs.traf.lat[i], bs.traf.lon[i], home_end[0], home_end[1])
     print(goalDist)
-    ETA[i][0] = goalDist/57.412
+    ETA[i][0] = goalDist/bs.traf.tas[i]
     print('INITIAL ETA:', ETA[i][0], bs.traf.id[i])
 
 if scenario == 'BezAM':
@@ -374,6 +373,7 @@ if scenario == 'BezAM':
                     counter[j] = 1
                 if TOI[j][i] <= 10 and counter[j] == 0:
                     print(f'GENERATING BEZIER PATH AT TIME STEP {i}')
+                    print(TOI[j][i], toi_dist)
                     # print('TOIDIST', toi_dist)
                     k = i
                     counter[j] = 1
@@ -384,41 +384,49 @@ if scenario == 'BezAM':
                         lr = -1
                         koz_x = -76
                     print(lr)
-                    target_toa1 = 4*((toi_dist+275)/bs.traf.tas[-1])
-                    target_toa2 = 4*((toi_dist+275)/bs.traf.tas[-1])
-                    print(target_toa1, target_toa2)
-                    print(toi_dist, bs.traf.tas[-1])
-                    # target_toa1 = 2*(275/64)
-                    # target_toa2 = 2*(275/64)
+                    target_toa1 = 1.5*(275/bs.traf.tas[-1])
+                    target_toa2 = 1.5*(275/bs.traf.tas[-1])
                     homexy[j] = [0, 0]
                     homell[j] = [bs.traf.lat[j], bs.traf.lon[j]] #save as lonlat for WSG84
-                    
-                    nodes1 = [np.array([homexy[j][0], lr*213+8, lr*221]).flatten(), np.array([574.12, (574.12+275)/60+574.12, 711.62])]
-                    nodes2 = [np.array([lr*221, lr*225-8,homexy[j][0]]).flatten(), np.array([711.62, 750, 849.12])]
+                    stamp = i
+                    print('TAS', bs.traf.tas[j])
+                    start = 10*bs.traf.tas[j]
+                    h = 275
 
-                    koz_bot = 589.12
-                    koz_top = 834.12
+                    nodes1 = [np.array([homexy[j][0], lr*213, lr*221]).flatten(), np.array([start, start+(h/60), start+h/2])]
+                    nodes2 = [np.array([lr*221, lr*225,homexy[j][0]]).flatten(), np.array([start+h/2, start+(5*h/6), start+h])]
+
+                    koz_bot = start+10
+                    koz_top = start+h-10
                     corridor = lr*228
                     wpts, wpts_x, wpts_y, b1, b2, nodes1, nodes2 = MBO.toCallOutside(bs.traf.tas[j], np.deg2rad(4.5), target_toa1, target_toa2,
                                                             bs.traf.hdg[j], nodes1, nodes2, koz_x, koz_bot, koz_top, lr, [bs.traf.lat[j], bs.traf.lon[j]], corridor)
                     nodes[j][0] = nodes1
                     nodes[j][1] = nodes2
                     waypts[j] = [wpts_x, wpts_y]
+                    
                 if toi_dist <= 45.72:
                     violation_count[j]+=1
                     dist_to_EV[j].append(toi_dist)
                     # violation_count[j][1] = toi_dist
                     # print(toi_dist)
                 
+
                 if toi_dist <= 45.72 and counter[j] ==1:
-                    print(f'GENERATING INTERCEPTION PATHS AT TIME STEP: {i}')
+                    print(f'GENERATING INTERCEPTION PATHS AT TIME STEP: {i} {toi_dist}')
                     # print('TOIDIST', toi_dist)
                     k = i
                     counter[j] = 2
                     start_end[j][0] = [bs.traf.lat[j], bs.traf.lon[j]]
                     times[j][0] = i/100
                     pos = [bs.traf.lat[j], bs.traf.lon[j]]
+                    
                     new = __WSG84_To_Meters_Single(waypoint =pos, home = homell[j], projobject=p)
+                    plt.axis('equal')
+                    plt.plot(b1[0], b1[1])
+                    plt.plot(b2[0], b2[1])
+                    plt.scatter(new[0], new[1])
+                    plt.show()
                     # print('POSITION IS:', new, 'POSITION IN LATLON IS:', pos, 'HOME IS:', homell[j])
                     entry, exit, toa, wpts_x, wpts_y = MBO.EntryExitOutside(nodes1=nodes[j][0], nodes2=nodes[j][1], pos = new, velocity = bs.traf.tas[j], lr = lr, id = j)
                     end_point = [exit[0][0], exit[1][0]]
@@ -817,15 +825,15 @@ plt.legend()
 plt.show()
 
 
-data = {
-    'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
-    'AC1': np.array([res[::10, 1, 1], res[::10, 0, 1], res[::10, 3, 1], res[::10, 4, 1]]),
-    'AC2': np.array([res[::10, 1, 2], res[::10, 0, 2], res[::10, 3, 2], res[::10, 4, 2]]),
-    'AC3': np.array([res[::10, 1, 3], res[::10, 0, 3], res[::10, 3, 3], res[::10, 4, 3]]),
-    'AC4': np.array([res[::10, 1, 4], res[::10, 0, 4], res[::10, 3, 4], res[::10, 4, 4]]),
-    'EM0': np.array([res[::10, 1, 5], res[::10, 0, 5], res[::10, 3, 5], res[::10, 4, 5]]),
-    # 'Waypts': np.array([goalx, goaly]),
-    # 'Entry': np.array([enpx, enpy]),
-    # 'Exit': np.array([expx, expy])
-}
-scipy.io.savemat('Scen1Data2Hold.mat', data)
+# data = {
+#     'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
+#     'AC1': np.array([res[::10, 1, 1], res[::10, 0, 1], res[::10, 3, 1], res[::10, 4, 1]]),
+#     'AC2': np.array([res[::10, 1, 2], res[::10, 0, 2], res[::10, 3, 2], res[::10, 4, 2]]),
+#     'AC3': np.array([res[::10, 1, 3], res[::10, 0, 3], res[::10, 3, 3], res[::10, 4, 3]]),
+#     'AC4': np.array([res[::10, 1, 4], res[::10, 0, 4], res[::10, 3, 4], res[::10, 4, 4]]),
+#     'EM0': np.array([res[::10, 1, 5], res[::10, 0, 5], res[::10, 3, 5], res[::10, 4, 5]]),
+#     # 'Waypts': np.array([goalx, goaly]),
+#     # 'Entry': np.array([enpx, enpy]),
+#     # 'Exit': np.array([expx, expy])
+# }
+# scipy.io.savemat('Scen1Data2Hold.mat', data)

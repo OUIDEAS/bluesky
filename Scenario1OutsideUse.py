@@ -4,7 +4,7 @@ from matplotlib.patches import Circle
 from scipy.optimize import minimize
 import math
 import time
-import scipy
+import scipy.io
 import sympy as sp
 from scipy.optimize import brentq
 from scipy.optimize import fsolve
@@ -95,32 +95,13 @@ def path_length(P1, P0, P2, t):
 def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radius, lr, line):#turn_radius,
     def path_cost(P1):
         return (np.abs(path_length(P1, P0, P2, 1) - target_toa*velocity))
-    # if lr == 1:
     cons = (
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-            # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-            # {'type': 'ineq', 'fun': lambda x: 1500 - x[0]},
-            # {'type': 'ineq', 'fun': lambda x: np.deg2rad(20) - np.abs(np.arctan2(x[1]-P0[1], x[0] - P0[0]))},
-            # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
-            # {'type': 'ineq', 'fun': lambda x: x[1] -P0[1]},
-            # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P0[1]-x[1]), (P0[0]-x[0])))},
             {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
-            # {'type': 'ineq', 'fun': lambda x: P2[1] - x[1]},
             {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
             ) 
-    # else:
-    #     cons = (
-    #             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
-    #             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-    #             {'type': 'ineq', 'fun': lambda x: x[0]-P0[0]},
-    #             {'type': 'ineq', 'fun': lambda x: 0-x[0]},
-    #             # {'type': 'ineq', 'fun': lambda x: np.deg2rad(20) - np.abs(np.arctan2(x[1]-P0[1], x[0] - P0[0]))},
-    #             {'type': 'ineq', 'fun': lambda x: 500 - x[0]},
-    #             {'type': 'ineq', 'fun': lambda x: x[1] -P0[1]},
-    #             # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P0[1]-x[1]), (P0[0]-x[0])))},
-    #             {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))}
-    #             ) 
+
     val = minimize(path_cost,[guess[0],guess[1]], method='SLSQP', tol=1E-10, constraints=cons)
  
     return val.x , curvature(P0,val.x,P2)
@@ -128,33 +109,15 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
 def solve_optim2(P0, P2, target_toa,  guess, target_heading, velocity, turn_radius, lr, line):#turn_radius,
     def path_cost(P1):
         return (np.abs(path_length(P1, P0, P2, 1) - target_toa*velocity))
-    # if lr == 1:
+
     cons = (
             
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-            # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-            # {'type': 'ineq', 'fun': lambda x: c - x[0]},
-            # {'type': 'ineq', 'fun': lambda x: np.deg2rad(10) - np.abs(np.arctan2(x[1]-P2[1], x[0] - P2[0]))},
-            # {'type': 'ineq', 'fun': lambda x: x[0] - 1000},
             # {'type': 'ineq', 'fun': lambda x: x[1] - P0[1]},
-            # {'type': 'eq', 'fun': lambda x: (P2[1]) - x[1]},
-            # {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P2[1]-x[1]), (P2[0]-x[0]))-target_heading)}, 
-            # {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]}
             {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
         ) 
-    # else:
-    #     cons = (
-                
-    #             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
-    #             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-    #             {'type': 'ineq', 'fun': lambda x: x[0] - P0[0]},
-    #             {'type': 'ineq', 'fun': lambda x: 0-x[0]},
-    #             # {'type': 'ineq', 'fun': lambda x: np.deg2rad(10) - np.abs(np.arctan2(x[1]-P2[1], x[0] - P2[0]))},
-    #             {'type': 'ineq', 'fun': lambda x: 500 - x[0]},
-    #             {'type': 'ineq', 'fun': lambda x: P2[1] - x[1]},
-    #             {'type': 'ineq', 'fun': lambda x: np.abs(np.arctan2((P2[1]-x[1]), (P2[0]-x[0]))-target_heading)}
-    #         ) 
+
     val = minimize(path_cost,[guess[0],guess[1]], method='SLSQP', tol=1E-10, constraints=cons)
 
     return val.x , curvature(P0,val.x,P2)
@@ -281,12 +244,12 @@ def find_diff_exit(guess, nodes, velocity, lr):
                 diff = np.abs((np.pi/2) - int_angle)
                 guess_deg = np.rad2deg(ba)
                 # plt.title(f'{guess_deg} {t_guess}')
-                plt.plot(x, y_l, linestyle = 'dashed')
-                plt.plot(path[0], path[1])
-                plt.plot(x_l, y)
-                plt.scatter(h(t_guess), k(t_guess))
-                plt.axis('equal')
-                plt.show()
+                # plt.plot(x, y_l, linestyle = 'dashed')
+                # plt.plot(path[0], path[1])
+                # plt.plot(x_l, y)
+                # plt.scatter(h(t_guess), k(t_guess))
+                # plt.axis('equal')
+                # plt.show()
                 if diff < mindiff:
                     mindiff = diff
                     # print('BLARGY', diff)
@@ -555,8 +518,8 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
         # # ax.text(nodes2[0][0]+0.25,nodes2[1][0],  r'$\bf{p_0}$')
         # ax.text(optim_sol2[0]+0.25,optim_sol2[1],  r'$\bf{p_{12}}$')
         # ax.text(nodes2[0][2]+0.25,nodes2[1][2]+20,  r'$\bf{p_{22}}$')
-        # ax.text(nodes1[0][2]-250,nodes1[1][2]-100,  r'Curve 1')
-        # ax.text(nodes1[0][2]-250,nodes1[1][2]+100,  r'Curve 2')
+        # ax.text(nodes1[0][2]-250/2,nodes1[1][2]-100/2,  r'Curve 1', fontsize = 12)
+        # ax.text(nodes1[0][2]-250/2,nodes1[1][2]+100/2,  r'Curve 2', fontsize=12)
         
         # # y = [i for i in range(koz_top)]
         # # bx = [500 for i in range(koz_top)]
@@ -568,16 +531,21 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
         # # ax.plot(bxbot, ytop, color = 'red', label = 'Emergency Vehicle Clearance Area', linestyle = '--')
         # plt.plot([koz_x, koz_x], [koz_bot, koz_top], color = 'red', linestyle = '--')
         # plt.plot([nodes1[0][0], koz_x], [koz_bot, koz_bot], color = 'red', linestyle = '--')
-        # plt.plot([nodes1[0][0], koz_x], [koz_top, koz_top], color = 'red', linestyle = '--')
-        # plt.plot([corridor, corridor], [nodes1[1][0], nodes2[1][2]], color = 'orange', linestyle = 'dashed')
-        
+        # plt.plot([nodes1[0][0], koz_x], [koz_top, koz_top], color = 'red', linestyle = '--', label = 'Emergency Vehicle Clearance Area')
+        # plt.plot([corridor, corridor], [nodes1[1][0], nodes2[1][2]], color = 'orange', linestyle = 'dashed', label = 'Flight Corridor Bound')
+        # ax.plot([-50, 100, 250], [711.62, 711.62, 711.62], linestyle = 'dashdot', alpha = 0.5, color = 'cyan')
 
+        
+        
+        # ax.set_xlabel('X (m)')
+        # ax.set_ylabel('Y (m)')
         # ax.grid(True)
         # ax.axis('equal')
         
-        # # ax.legend(loc = 'center left', fontsize = '8')
+        # ax.legend(loc = 'center left', fontsize = '8')
+        # # plt.show()
+        # # plt.pause(.5)
         # plt.show()
-        # plt.pause(.5)
 
     # print(valid1, valid2)
     # latlong_XY = __WSG84_To_Meters_Single(latlon, [nodes1[0][0], nodes1[1][0]], Proj("EPSG:32667"))
@@ -598,8 +566,30 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
     wpts, x_wpts, y_wpts = paths_to_wp(paths, 20)
     # print(x_wpts)
     # plt.scatter(x_wpts, y_wpts)
-    plt.show()
+
+    print(f'\n\n\n TOA OF B1: {path_length(optim_sol1, [nodes1[0][0], nodes1[1][0]], [nodes1[0][2],nodes1[1][2]], 1)/velocity} TARGET TOA: {target_toa1}, RATIO: {(path_length(optim_sol1, [nodes1[0][0], nodes1[1][0]], [nodes1[0][2],nodes1[1][2]], 1)/velocity)/target_toa1}')
+    print(f'\n\n\n TOA OF B2: {path_length(optim_sol2, [nodes2[0][0], nodes2[1][0]], [nodes2[0][2],nodes2[1][2]], 1)/velocity} TARGET TOA: {target_toa2}, RATIO: {(path_length(optim_sol2, [nodes2[0][0], nodes2[1][0]], [nodes2[0][2],nodes2[1][2]], 1)/velocity/target_toa2)}')
     
+    bez_data = {
+        'Bez1X': optimal_bez1[0],
+        'Bez1Y': optimal_bez1[1],
+        'B1_NodeX': nodes1[0],
+        'B1_NodeY': nodes1[1],
+        'Bez2X': optimal_bez2[0],
+        'Bez2Y': optimal_bez2[1],
+        'B2_NodeX': nodes2[0],
+        'B2_NodeY': nodes2[1],
+    }
+    # other_data = {
+    #     'koz_x': koz_x,
+    #     'koz_top': koz_top,
+    #     'koz_bot': koz_bot,
+    #     'corridor': corridor,
+    #     'op_corridor': corridor-228,
+    # }
+    scipy.io.savemat('4XBez.mat', bez_data)
+
+    print('SAVED')
     return wpts, x_wpts, y_wpts, optimal_bez1, optimal_bez2, nodes1, nodes2 
 
 def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id):
@@ -610,9 +600,9 @@ def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id):
     optim2_length = path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[nodes2[0][1],nodes2[1][1]],P2=[nodes2[0][2], nodes2[1][2]], t=1)
     
     if id!= 0:
-        ba, t_entry = solve_optimEntry(np.deg2rad(27.5), np.deg2rad(30), np.deg2rad(20), nodes1, vel_knots, pos, lr)
+        ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
     else:
-        ba, t_entry = solve_optimEntry(np.deg2rad(26), np.deg2rad(30), np.deg2rad(20), nodes1, vel_knots, pos, lr)
+        ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
 
     x_int_en, y_int_en = find_bez_xy([nodes1[0][0],nodes1[1][0]],
                                 [nodes1[0][1],nodes1[1][1]],
@@ -764,8 +754,8 @@ if __name__ == "__main__":
     else:
         corridor = 457
         koz_x = 305
-        nodes1 = [np.array([229, 442, 450]).flatten(),np.array([0, h/60, h/2]).flatten()]
-        nodes2 = [np.array([450, 465, 229]).flatten(),np.array([h/2, h, h]).flatten()]
+        nodes1 = [np.array([229, 450, 450]).flatten(),np.array([0, -10, h/2]).flatten()]
+        nodes2 = [np.array([450, 450, 229]).flatten(),np.array([h/2, h, h]).flatten()]
     
  
     print("VEHICLE VELOCITY:", velocity)
@@ -840,11 +830,13 @@ if __name__ == "__main__":
         # print(valid1, valid2)
         if valid1 == False:
             target_toa1+=0.1
-            # nodes1[1][1]+=-25
+            nodes1[1][1]+=-.5
+            nodes1[0][1]+=.5*lr
             c+=1
         if valid2 == False:
             target_toa2+=0.1
-            # nodes2[1][1]+=25
+            nodes2[0][1]+=-.5*lr
+            nodes2[1][1]+=.5
             c+=1
         if c>30:
        
@@ -854,11 +846,11 @@ if __name__ == "__main__":
             ax.plot(optimal_bez1[0],optimal_bez1[1], c='black',label='Quadratic Bezier curve')
             ax.plot(optimal_bez2[0],optimal_bez2[1], c='black')
             # ax.plot(optimal_bezPre[0], optimal_bezPre[1], c = 'black')
-            valid1 = validity_check(koz_x, koz_bot, koz_top, wpts_all1, corridor, 'Curve 1', lr)
-            valid2 = validity_check(koz_x, koz_bot, koz_top, wpts_all2, corridor, 'Curve 2', lr)
+            # valid1 = validity_check(koz_x, koz_bot, koz_top, wpts_all1, corridor, 'Curve 1', lr)
+            # valid2 = validity_check(koz_x, koz_bot, koz_top, wpts_all2, corridor, 'Curve 2', lr)
             # print([nodes2[0][0], optim_sol2[0], nodes2[0][2]],[nodes2[1][0],optim_sol2[1],nodes2[1][2]])
             ax.scatter([nodes2[0][0], optim_sol2[0], nodes2[0][2]],[nodes2[1][0],optim_sol2[1],nodes2[1][2]], label='Bezier Curve 2 Control Points')
-            ax.scatter(optim_sol2[0], optim_sol2[1], marker = '*', s = 1000, zorder = 1000)
+            # ax.scatter(optim_sol2[0], optim_sol2[1], marker = '*', s = 1000, zorder = 1000)
             ax.plot([corridor, corridor, corridor], [nodes1[1][0], nodes1[1][2], nodes2[1][2]], linestyle = '--')
             ax.text(nodes1[0][0]+0.25,nodes1[1][0]-30,  r'$\bf{p_{01}}$')
             ax.text(optim_sol1[0]+0.25,optim_sol1[1],  r'$\bf{p_{11}}$')

@@ -67,9 +67,9 @@ scatter(AC0_lon(i), AC0_lat(i), 100, 'o', 'filled', 'blue')
 scatter(EM0_lon(i), EM0_lat(i), 100, '^',  'filled', 'red')
 scatter(AC1_lon(i), AC1_lat(i), 100, 'o', 'filled', 'green')
 
-text(AC0_lon(i)+0.00055, AC0_lat(i), sprintf('AC0, t_1'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(AC1_lon(i)+0.00055, AC1_lat(i), sprintf('AC1, t_1'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(EM0_lon(i)-0.00075, EM0_lat(i)-.0025, sprintf('EM0, t_1\nGoal TOA\n34.2s'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC0_lon(i)+0.00055, AC0_lat(i), sprintf('AX0, t_1'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC1_lon(i)+0.00055, AC1_lat(i), sprintf('AX1, t_1'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(EM0_lon(i)-0.00075, EM0_lat(i)-.0025, sprintf('EX0, t_1\nGoal TOA\n34.2s'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
 
 
 
@@ -85,9 +85,9 @@ scatter(AC0_lon(i), AC0_lat(i), 100, 'o', 'filled', 'blue')
 scatter(EM0_lon(i), EM0_lat(i), 100, '^',  'filled', 'red')
 scatter(AC1_lon(i), AC1_lat(i), 100, 'o', 'filled', 'green')
 
-text(AC0_lon(i)+0.00045, AC0_lat(i)-0.00035, sprintf('AC0, t_2'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(AC1_lon(i)+0.00075, AC1_lat(i), sprintf('AC1, t_2'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(EM0_lon(i)-0.004, EM0_lat(i)-.0025, sprintf('EM0, t_2\nGoal TOA\n10s'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC0_lon(i)+0.00045, AC0_lat(i)-0.00035, sprintf('AX0, t_2'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC1_lon(i)+0.00075, AC1_lat(i), sprintf('AX1, t_2'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(EM0_lon(i)-0.004, EM0_lat(i)-.0025, sprintf('EX0, t_2\nGoal TOA\n10s'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
 
 
 
@@ -114,9 +114,9 @@ plot([-82.202, -82.201], [39.5885, 39.595], 'LineStyle', '--', 'Color', 'k')
 % plot([-82.2, -82.2021], [EM0_lat(i), EM0_lat(i)], 'LineStyle', '--', 'Color', 'black', 'LineWidth', 3)
 text(-82.205, 39.5875, sprintf('Sequenc\nViolation\nat t_3'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
 
-text(AC0_lon(i)-8.5*r, AC0_lat(i), sprintf('AC0, t_3'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(AC1_lon(i)+0.00045, AC1_lat(i)+0.0003, sprintf('AC1, t_3'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(EM0_lon(i)-0.003, EM0_lat(i)-.0025, sprintf('EM0, t_3\nGoal TOA\n4.4s'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC0_lon(i)-8.5*r, AC0_lat(i), sprintf('AX0, t_3'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC1_lon(i)+0.00045, AC1_lat(i)+0.0003, sprintf('AX1, t_3'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(EM0_lon(i)-0.003, EM0_lat(i)-.0025, sprintf('EX0, t_3\nGoal TOA\n4.4s'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
 
 i = 352;
 rectangle('Position', [EM0_lon(i)-r, EM0_lat(i)-r, 2*r, 2*r], 'Curvature', [1, 1], 'EdgeColor','r', 'LineWidth',2)
@@ -129,9 +129,9 @@ scatter(EM0_lon(i), EM0_lat(i), 100, '^',  'filled', 'red')
 scatter(AC1_lon(i), AC1_lat(i), 100, 'o', 'filled', 'green')
 
 
-text(AC0_lon(i)-8.5*r, AC0_lat(i), sprintf('AC0, t_4'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(AC1_lon(i)-8.5*r, AC1_lat(i), sprintf('\n\nAC1, t_4'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(EM0_lon(i)+2*r, EM0_lat(i), sprintf('\nEM0\nt_4, t_5'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC0_lon(i)-8.5*r, AC0_lat(i), sprintf('AX0, t_4'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC1_lon(i)-8.5*r, AC1_lat(i), sprintf('\n\nAX1, t_4'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(EM0_lon(i)+2*r, EM0_lat(i), sprintf('\nEX0\nt_4, t_5'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
 
 % 
 % 
@@ -155,8 +155,8 @@ scatter(AC1_lon(i), AC1_lat(i), 100, 'o', 'filled', 'green')
 plot([AC0_lon(i)-2*r, AC0_lon(i)], [AC0_lat(i)+8.5*r, AC0_lat(i)], 'LineStyle', '--', 'Color', 'k')
 plot([AC1_lon(i)+5*r, AC1_lon(i)], [AC1_lat(i), AC1_lat(i)], 'LineStyle', '--', 'Color', 'k')
 
-text(AC0_lon(i)-8.5*r, AC0_lat(i)+10*r, sprintf('AC0, t_5'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
-text(AC1_lon(i)+5*r, AC1_lat(i), sprintf('AC1, t_5'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC0_lon(i)-8.5*r, AC0_lat(i)+10*r, sprintf('AX0, t_5'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
+text(AC1_lon(i)+5*r, AC1_lat(i), sprintf('AX1, t_5'), 'FontSize', 18, FontName='Times', FontWeight= 'bold')
 
 %
 xlim([EM0_lon(1)-0.002, EM0_lon(701)+0.005])
