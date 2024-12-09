@@ -188,7 +188,7 @@ def find_diff_entry(ba, nodes, velocity):
 
             int_angle = np.arctan2(y[-1]-y[198], x_l[-1] - x_l[198])
             diff = np.abs(bez_angle-int_angle)
-            if diff < mindiff and np.abs(y[-1] - By(i))<=.00001 and np.abs(x_l[-1]-Bx(i))<=0.00001:
+            if diff < mindiff and np.abs(y[-1] - By(i))<=.001 and np.abs(x_l[-1]-Bx(i))<=0.001:
                 mindiff = diff
                 # plt.plot(path[0], path[1])
                 # plt.plot(x_l, y)
@@ -535,7 +535,7 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
 def entryPath(velocity, ba, intersect):
     if intersect[0] == 229:
         intersect[0] = 400
-        ba = 25
+        # ba = 25
     pi = np.pi
     '''Entry Into Bezier Curve'''
     tr = 111.6**2/(11.26*math.tan(np.deg2rad(ba)))
@@ -543,19 +543,19 @@ def entryPath(velocity, ba, intersect):
     print('TR', tr)
     h, k  = tr+229, -391
     print('INTERSECT', intersect)
-    
+    print('BABABABABA',ba)
     x_entry = [i for i in np.linspace(229, intersect[0], 200)]
     
     y_entry = [k+np.sqrt(tr**2 - (x-h)**2) for x in x_entry]
 
     # y_entry[-1] = intersect[1]
-    central_angle = pi - np.arctan2(y_entry[-1]-k, x_entry[-1] - h)
-    entryLength = tr*central_angle #entryLength = 2*pi*tr * (central_angle/(2*pi))
-    
-    entryTOA = entryLength/velocity
+    # central_angle = np.arctan2(y_entry[-1]-k, x_entry[-1] - 229)
+    ar, ad = central_angle([h, k], [x_entry[0], y_entry[0]], [x_entry[-1], y_entry[-1]])
+    entryLength = 2*pi*tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
+    entryTOA = entryLength/(velocity**2/(9.81*np.tan(np.deg2rad(ba))))
     print('ENTRY ToA: ', entryTOA)
 
-    return x_entry, y_entry, central_angle, entryLength, entryTOA, h, k
+    return x_entry, y_entry, ad, entryLength, entryTOA, h, k
 
 
 def exitPath2(velocity, t_start, path):
@@ -642,23 +642,96 @@ def exitPath(velocity, t_exit, ba, intersect, nodes):
     bezHead = np.arctan2(By(t_exit)-By(t_exit-0.01), Bx(t_exit)-Bx(t_exit-0.01))
 
     h, k = intersect[0] - tr*math.cos(bezHead), intersect[1]+tr*math.sin(bezHead)
-
+    # h = int(h)
+    # k = int(k)
     x_exit = [i for i in np.linspace(229, intersect[0], 200)]
     y_exit = [k-np.sqrt(tr**2 - (x-h)**2) for x in x_exit]
+    # x_exit[0] = int(x_exit[0])
+    # x_exit[-1] = int(x_exit[-1])
+    # y_exit[0] = int(y_exit[0])
+    # y_exit[-1] = int(y_exit[-1])
     # y_exit[0] = 650
     # y_exit[0] = k
-    central_angle = pi + np.arctan2(y_exit[-1]-k, x_exit[-1] - h)
+    # central_angle = pi + np.arctan2(y_exit[-1]-k, x_exit[-1] - h)
 
-    exitLength = 2*pi*tr * (central_angle/(2*pi))
+    ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[0]])
+    print(ar, ad, ba)
+    exitLength = 2*pi*tr*ar
 
-    exitTOA = exitLength/velocity
+    exitTOA = exitLength/(velocity**2/(9.81*np.tan(ba)))
     
     print('EXIT ToA:', exitTOA)
 
-    return x_exit, y_exit, central_angle, exitLength, exitTOA, h, k
+    return x_exit, y_exit, ad, exitLength, exitTOA, h, k
+
+def central_angle(center, point1, point2):
+    # Calculate vectors
+    v1 = (point1[0] - center[0], point1[1] - center[1])
+    v2 = (point2[0] - center[0], point2[1] - center[1])
+    
+    # Compute the angle using atan2
+    angle_radians = np.arctan2(v2[1]-v1[1], v2[0]-v1[0])# - math.atan2(v1[1], v1[0])
+    
+    # Normalize the angle to [0, 2*pi] if necessary
+    angle_radians = (angle_radians + 2 * math.pi) % (2 * math.pi)
+    
+    # Convert to degrees (optional)
+    angle_degrees = np.rad2deg(angle_radians)
+    print('CA:', angle_radians, angle_degrees)
+    
+    return angle_radians, angle_degrees
+
+def hp():
+    OG_TOA = 5.3
+    ev_toa = 1.5*OG_TOA
+    hdg = 90
+    velocity = 57.412
+    turn_radius = (velocity*1.94384)**2/(11.26*math.tan(np.deg2rad(73)))
+    turn_radius*=0.3048
+
+    x1 = np.linspace(229, 229+2*turn_radius-.001, 100)
+    x2 = np.linspace(229+2*turn_radius-.001, 229, 100)
+    h = turn_radius+229
+    # print(h)
+    k = -391
+    # y =[]
+    y1 = [k+np.sqrt(turn_radius**2 - (i-h)**2) for i in x1]
 
 
+    y1[0] = y1[-1]
+    yStraight1 = []
+    yStraight1.append(y1[-1])
+    xStraight1 = []
+    xStraight1.append(x1[-1])
+    xStraight2 = []
+    xStraight2.append(x1[0])
+    toa = 0
 
+    while toa <= 5:
+        yNew = yStraight1[-1] - 1
+        dist = yNew-yStraight1[0]
+        yStraight1.append(yNew)
+        xStraight1.append(x1[-1])
+        xStraight2.append(x1[0])
+        toa = np.abs(dist/velocity)
+        # print(toa)
+        # yStraight1.
+    print(toa)
+    # central_angle1 = np.pi + np.arctan2(yStraight1[-1]-k, xStraight1[-1] - h)
+
+    exitLength = math.pi*turn_radius
+    exitTOA = exitLength/(velocity**2/(9.81*math.tan(np.deg2rad(73))))
+    print(exitLength, exitTOA)
+    # print(exitTOA)
+    # print(k- np.sqrt(turn_radius**2 - (0-h)**2))
+    y2 = [k- np.sqrt(turn_radius**2 - (i-h)**2) + dist for i in x1]
+    y2[0] = y2[-1]
+    # print(y2)
+
+    toa = (2*toa)+2*exitTOA
+    print('HP TOA', toa)
+
+    return x1, x2, y1, y2, xStraight1, xStraight2, yStraight1
 
 
 if __name__ == "__main__":
@@ -678,11 +751,11 @@ if __name__ == "__main__":
     koz_top = h-15
 
     
-    ev_toa = 275/64.008
+    ev_toa = h/64.008
     
     c=0
-    target_toa1 = 2*ev_toa
-    target_toa2 = 2*ev_toa
+    target_toa1 = 1.5*ev_toa
+    target_toa2 = 1.5*ev_toa
     uav_head = np.deg2rad(90)
     lr = 1
     # if lr == -1:
@@ -693,8 +766,8 @@ if __name__ == "__main__":
     # else:
     corridor = 457
     koz_x = 305
-    nodes1 = [np.array([229, 442, 450]).flatten(),np.array([0, 5/60, h/2]).flatten()]
-    nodes2 = [np.array([450, 454, 229]).flatten(),np.array([h/2, h-100, h]).flatten()]
+    nodes1 = [np.array([229, 442, 450]).flatten(),np.array([0, -15, h/2]).flatten()]
+    nodes2 = [np.array([450, 465, 229]).flatten(),np.array([h/2, h+20, h]).flatten()]
     
  
     print("VEHICLE VELOCITY:", velocity)
@@ -779,13 +852,13 @@ if __name__ == "__main__":
         # print(valid1, valid2)
         if valid1 == False:
             target_toa1+=0.1
-            nodes1[1][1]+=-1
-            nodes1[0][1]+=1
+            nodes1[1][1]+=-.1
+            nodes1[0][1]+=.1
             c+=1
         if valid2 == False:
             target_toa2+=0.1
-            nodes2[0][1]+=-1
-            nodes2[1][1]+=1
+            nodes2[0][1]+=-.1
+            nodes2[1][1]+=.1
             c+=1
         # if c>30:
         # if valid1 or valid2:
@@ -860,7 +933,7 @@ if __name__ == "__main__":
     
     vel_knots = 111.6
     nodes1 = [np.array([nodes1[0][0], optim_sol1[0], nodes1[0][2]]).flatten(),np.array([nodes1[1][0], optim_sol1[1], nodes1[1][2]]).flatten()]
-    ba, t_entry = solve_optimEntry(np.deg2rad(28), np.deg2rad(30), np.deg2rad(20), nodes1, vel_knots)
+    ba, t_entry = solve_optimEntry(np.deg2rad(28), np.deg2rad(50), np.deg2rad(20), nodes1, vel_knots)
     print(np.rad2deg(ba), t_entry)
 
 
@@ -875,7 +948,7 @@ if __name__ == "__main__":
     print('REQUIRED HEADING AT ENTRY:', req_ent)
     
     
-    x_entry, y_entry, central_angle, entryLength, entryTOA, h_c, k_c = entryPath(velocity, np.rad2deg(ba), [x_int_en, y_int_en])
+    x_entry, y_entry, central_angle_en, entryLength, entryTOA, h_c, k_c = entryPath(velocity, np.rad2deg(ba), [x_int_en, y_int_en])
     act_ent = np.rad2deg(np.arctan2(y_entry[-1]-y_entry[198], x_entry[-1]-x_entry[198]))
     print('ACTUAL HEADING AT INTERSECT:', act_ent)
     
@@ -942,30 +1015,36 @@ if __name__ == "__main__":
 
 
     # ax.plot(x_exit, y_exit, color = 'orange', label = 'Exit Path')
+    ax.plot(x_exit, y_exit, color = 'black')
+
     # ax.scatter(h_ex, k_ex, marker = 's', color = 'green', label = 'Exit Circle Center')
     # ax.scatter(x_exit[-1], y_exit[-1], color = 'red', marker = '*', s = 100, zorder = 100, label = 'Exit Point')
 
     # # print('EXIT COORDS:', x_exit, y_exit)
-    # ax.scatter(x_exit[0], y_exit[0], color = 'purple', marker = '*', s = 100, zorder = 100, label = 'Interception Point')
+    ax.scatter(x_exit[0], y_exit[0], color = 'purple', marker = '*', s = 100, zorder = 100, label = 'Goal Point')
 
-    ax.plot([122, 305, 488], [h/2, h/2, h/2], linestyle = 'dashdot', alpha = 0.5)
+    # ax.plot([122, 305, 488], [h/2, h/2, h/2], linestyle = 'dashdot', alpha = 0.5)
 
     # ax.plot(partial_bez1[0], partial_bez1[1], c = 'magenta', label = 'Partial QBC')
+    ax.plot(partial_bez1[0], partial_bez1[1], c = 'black', label = 'Final Trajectory')
     # ax.plot(partial_bez2[0], partial_bez2[1], c = 'magenta')#, label = 'Partial QBC')
+    ax.plot(partial_bez2[0], partial_bez2[1], c = 'black')#, label = 'Partial QBC')
 
-    ax.plot(optimal_bez1[0],optimal_bez1[1], c='black', label='Quadratic Bezier curve')
+    # ax.plot(optimal_bez1[0],optimal_bez1[1], c='black', label='Bezier Trajectory')
 
 
     # print('ENTRY ANGLE:', np.rad2deg(np.arctan2(partial_bez1[1][1] - y_entry[-1], partial_bez1[0][1] - x_entry[-1])))
-    ax.scatter([nodes1[0][0], optim_sol1[0], nodes1[0][2]],[nodes1[1][0],optim_sol1[1],nodes1[1][2]], label='Bezier Curve 1 Control Points')
+    # ax.scatter([nodes1[0][0], optim_sol1[0], nodes1[0][2]],[nodes1[1][0],optim_sol1[1],nodes1[1][2]], label='Bezier Curve 1 Control Points')
     
-    ax.plot(optimal_bez2[0],optimal_bez2[1], c='black')
+    # ax.plot(optimal_bez2[0],optimal_bez2[1], c='black')
 
-    # # ax.scatter(h_c, k_c, color = 'green', marker = 's', label = 'Entry Circle Center')
-    # ax.scatter(x_entry[0], y_entry[0], marker = '^', color = 'black', label = 'Fleet Aircraft Start Position')
+    # ax.scatter(h_c, k_c, color = 'green', marker = 's', label = 'Entry Circle Center')
+    ax.scatter(x_entry[0], y_entry[0], marker = '^', color = 'black', label = 'Fleet Aircraft\nStart Position', zorder = 10, s=100)
 
 
     # ax.plot(x_entry, y_entry, label = 'Entry Arc', color = 'cyan')
+    ax.plot(x_entry, y_entry, color = 'black')
+
     # ax.scatter(x_entry[-1], y_entry[-1], marker = '*', color = 'purple', label = 'Intersection Point', s = 100, zorder = 100)
     # # print(y_circ[0])
     
@@ -973,75 +1052,84 @@ if __name__ == "__main__":
 
     # print("ENTRY TOA:", entryTOA)
     # print("EXIT TOA:", exitTOA)
-    # print("SOLVED BEZIER LEGNTH: ", pb1_length + pb2_length)
+    print("SOLVED BEZIER LEGNTH: ", pb1_length + pb2_length, pb1_length, pb2_length)
     # print("PARTIAL BEZIER TRAVEL TIME:", (pb1_length+pb2_length)/velocity)
 
     # print("SOLVED LENGTH WITH ENTRY/EXIT: ", pb1_length + optim2_length + entryLength+exitLength)
     # print("TOTAL TOA:", entryTOA + exitTOA + (pb1_length+pb2_length)/velocity)
 
 
-    ax.plot(x_slope, y_slope, color = 'purple', linestyle = 'dashed', label = 'G1 Continuity Line')
+    # ax.plot(x_slope, y_slope, color = 'purple', linestyle = 'dashed', label = 'G1 Continuity Line')
     
-    ax.scatter([nodes2[0][0], optim_sol2[0], nodes2[0][2]],[nodes2[1][0],optim_sol2[1],nodes2[1][2]], label='Bezier Curve 2 Control Points')
-    ax.text(nodes1[0][0]+1,nodes1[1][0]-35,  r'$\bf{p_{01}}$', fontsize=16)
-    ax.text(optim_sol1[0]+10,optim_sol1[1],  r'$\bf{p_{11}}$', fontsize=16)
-    ax.text(nodes1[0][2]+10,nodes1[1][2],  r'$\bf{p_{21}/p_{02}}$', fontsize=16)
-    # ax.text(nodes2[0][0]+0.25,nodes2[1][0],  r'$\bf{p_0}$')
-    ax.text(optim_sol2[0]+10,optim_sol2[1],  r'$\bf{p_{12}}$', fontsize=16)
-    ax.text(nodes2[0][2]+25,nodes2[1][2]+25,  r'$\bf{p_{22}}$', fontsize=16)
-    ax.text(nodes1[0][2]-137,nodes1[1][2]-35,  r'Curve 1', fontsize = 18)
-    ax.text(nodes1[0][2]-137,nodes1[1][2]+20,  r'Curve 2', fontsize = 18)
-
+    # ax.scatter([nodes2[0][0], optim_sol2[0], nodes2[0][2]],[nodes2[1][0],optim_sol2[1],nodes2[1][2]], label='Bezier Curve 2 Control Points')
+    # ax.text(nodes1[0][0]+1,nodes1[1][0]-35,  r'$\bf{p_{01}}$', fontsize=16)
+    # ax.text(optim_sol1[0]+10,optim_sol1[1],  r'$\bf{p_{11}}$', fontsize=16)
+    # ax.text(nodes1[0][2]+10,nodes1[1][2],  r'$\bf{p_{21}/p_{02}}$', fontsize=16)
+    # # ax.text(nodes2[0][0]+0.25,nodes2[1][0],  r'$\bf{p_0}$')
+    # ax.text(optim_sol2[0]+10,optim_sol2[1],  r'$\bf{p_{12}}$', fontsize=16)
+    # ax.text(nodes2[0][2]+25,nodes2[1][2]+25,  r'$\bf{p_{22}}$', fontsize=16)
+    # ax.text(nodes1[0][2]-137,nodes1[1][2]-35,  r'Curve 1', fontsize = 18)
+    # ax.text(nodes1[0][2]-137,nodes1[1][2]+20,  r'Curve 2', fontsize = 18)
+    ax.text(500, 115, r'$\bf{Goal   TOA: 23s}$')
+    ax.text(-250, 215, r'$\bf{Goal   TOA: 18s}$')
+    ax.text(500, -500, r'$\bf{Goal   TOA: 34s}$')
     # ax.text(mx+0.25, my, r'$\bf{m}$')
     # ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')
     # ax.text(center2x+0.25, center2y, r'$\bf{C_2}$')
     ax.plot(bx, y, color = 'red', linestyle = '--')
     ax.plot(bx2, y, color = 'red', linestyle = '--')
-
+    # ax.text(300, -200, r'$\bf{35\degree Bank}$', fontsize=18)
     ax.plot(bxbot, ybot, color = 'red', linestyle = '--')
-    ax.plot(bxbot, ytop, color = 'red', label = 'Emergency Vehicle Clearance Area', linestyle = '--')
+    ax.plot(bxbot, ytop, color = 'red', label = 'Emergency Vehicle\nClearance Area', linestyle = '--')
     ax.plot(xwall, y2, label = 'Flight Corridor Bound', linestyle = ':', color = 'orange')
     ax.plot(xwall2, y2, linestyle = ':', color = 'orange')
-    # y_nom = [i for i in range(-1282, int(y_exit[0]))]
-    # x_nom = [750 for i in y_nom]
+    y_nom = [i for i in range(-1282, int(y_exit[0]))]
+    x_nom = [750 for i in y_nom]
     # ax.plot(x_nom, y_nom, color = 'black', label = 'Nominal Path')
 
-    ax.plot([229, 229], [-396, 600+50], color = 'green', label = 'Nominal Path')
-
+    ax.plot([229, 229], [-396, 650], color = 'green', label = 'Nominal Path')
+    nom_toa = (y_exit[0]-y_entry[0])/velocity
+    path_toa = (pb1_length+pb2_length)/velocity + entryTOA+exitTOA
+    print(nom_toa, path_toa, ev_toa)
     # ax.scatter(mx,my)
     # ax.scatter(center1x,center1y)
     # ax.scatter(center2x,center2y)
     # ax.add_patch(Circle((center1x, center1y), r1, color='black', fill=False))
     # ax.add_patch(Circle((center2x, center2y), r2, color='black', fill=False))
- 
+    x1, x2, y1, y2, xStraight1, xStraight2, yStraight1 = hp()
+    ax.plot(x1, y1, '--', color = 'blue', label = 'Holding Pattern')
+    ax.plot(xStraight1, yStraight1, '--', color = 'blue')
+    ax.plot(xStraight2, yStraight1, '--', color = 'blue')
+    ax.plot(x1, y2, '--', color = 'blue')
+
     ax.grid(True)
     ax.axis('equal')
     ax.set_xlabel('X (m)')
     ax.set_ylabel('Y (m)')
-    ax.legend(loc = 'upper left', fontsize = '10')
+    ax.legend(loc = 'lower left', fontsize = '10')
     # plt.ylim(optim_sol1[1]-150, optim_sol2[1]+150)
     # plt.axes.set_ylim(-150, 600)
     plt.show()
-    bezXY = {
-        'Bez1X': optimal_bez1[0],
-        'Bez1Y': optimal_bez1[1],
-        'Bez2X': optimal_bez2[0],
-        'Bez2Y': optimal_bez2[1]
-    }
+    # bezXY = {
+    #     'Bez1X': optimal_bez1[0],
+    #     'Bez1Y': optimal_bez1[1],
+    #     'Bez2X': optimal_bez2[0],
+    #     'Bez2Y': optimal_bez2[1]
+    # }
 
-    bez = pd.DataFrame(bezXY)
-    bez.to_json('Bez3.json', orient = 'records', lines = 'True')
-    print('CPX1',nodes1[0])
-    print('CPY1', nodes1[1],)
-    print('OS1', optim_sol1,)
-    print('CPX2', nodes2[0],)
-    print('CPY2', nodes2[1],)
-    print('OS2', optim_sol2,)
-    print('contX', x_slope,)
-    print('contY', y_slope)
+    # bez = pd.DataFrame(bezXY)
+    # bez.to_json('Bez3.json', orient = 'records', lines = 'True')
+    # print('CPX1',nodes1[0])
+    # print('CPY1', nodes1[1],)
+    # print('OS1', optim_sol1,)
+    # print('CPX2', nodes2[0],)
+    # print('CPY2', nodes2[1],)
+    # print('OS2', optim_sol2,)
+    # print('contX', x_slope,)
+    # print('contY', y_slope)
 
-    print(f'\n\n\n TOA OF B1: {path_length(optim_sol1, [nodes1[0][0], nodes1[1][0]], [nodes1[0][2],nodes1[1][2]], 1)/velocity} TARGET TOA: {target_toa1}, RATIO: {(path_length(optim_sol1, [nodes1[0][0], nodes1[1][0]], [nodes1[0][2],nodes1[1][2]], 1)/velocity)/target_toa1}')
-    print(f'\n\n\n TOA OF B2: {path_length(optim_sol2, [nodes2[0][0], nodes2[1][0]], [nodes2[0][2],nodes2[1][2]], 1)/velocity} TARGET TOA: {target_toa2}, RATIO: {(path_length(optim_sol2, [nodes2[0][0], nodes2[1][0]], [nodes2[0][2],nodes2[1][2]], 1)/velocity/target_toa2)}')
+    # print(f'\n\n\n TOA OF B1: {path_length(optim_sol1, [nodes1[0][0], nodes1[1][0]], [nodes1[0][2],nodes1[1][2]], 1)/velocity} TARGET TOA: {target_toa1}, RATIO: {(path_length(optim_sol1, [nodes1[0][0], nodes1[1][0]], [nodes1[0][2],nodes1[1][2]], 1)/velocity)/target_toa1}')
+    # print(f'\n\n\n TOA OF B2: {path_length(optim_sol2, [nodes2[0][0], nodes2[1][0]], [nodes2[0][2],nodes2[1][2]], 1)/velocity} TARGET TOA: {target_toa2}, RATIO: {(path_length(optim_sol2, [nodes2[0][0], nodes2[1][0]], [nodes2[0][2],nodes2[1][2]], 1)/velocity/target_toa2)}')
 
 #line types for, dashed, solid, dots
 #

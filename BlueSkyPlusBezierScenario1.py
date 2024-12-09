@@ -384,8 +384,8 @@ if scenario == 'BezAM':
                         lr = -1
                         koz_x = -76
                     print(lr)
-                    target_toa1 = 4*((toi_dist+275)/bs.traf.tas[-1])
-                    target_toa2 = 4*((toi_dist+275)/bs.traf.tas[-1])
+                    target_toa1 = 1.5*((toi_dist+275)/bs.traf.tas[-1])
+                    target_toa2 = 1.5*((toi_dist+275)/bs.traf.tas[-1])
                     print(target_toa1, target_toa2)
                     print(toi_dist, bs.traf.tas[-1])
                     # target_toa1 = 2*(275/64)
@@ -434,6 +434,7 @@ if scenario == 'BezAM':
                     # print('END POINT LL:', end_ll, 'END POINT XY:', end_point)
                     EVh, EV_dist = qdrdist(bs.traf.lat[-1], bs.traf.lon[-1], end_ll[0], end_ll[1])
                     print('EV TOA TO END:', EV_dist/64, EV_dist)
+                    print(entry[-1][0])
                     if EV_dist/64 < toa:
                         print('PATH IS VALID AND SHOULD ALLOW FOR PASSAGE', 'TIME STEP:', i)
                         if lr == 1:
@@ -622,7 +623,8 @@ real_time = [0, 0, 0, 0, 0]
 delay = [0, 0, 0, 0, 0]
 
 
-
+print(times)
+print(start_end)
 if scenario == 'BezAM':
     for i in range(0, 5):
         # print(i, counter[i], start_end[i][0][0])
@@ -817,15 +819,15 @@ plt.legend()
 plt.show()
 
 
-data = {
-    'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
-    'AC1': np.array([res[::10, 1, 1], res[::10, 0, 1], res[::10, 3, 1], res[::10, 4, 1]]),
-    'AC2': np.array([res[::10, 1, 2], res[::10, 0, 2], res[::10, 3, 2], res[::10, 4, 2]]),
-    'AC3': np.array([res[::10, 1, 3], res[::10, 0, 3], res[::10, 3, 3], res[::10, 4, 3]]),
-    'AC4': np.array([res[::10, 1, 4], res[::10, 0, 4], res[::10, 3, 4], res[::10, 4, 4]]),
-    'EM0': np.array([res[::10, 1, 5], res[::10, 0, 5], res[::10, 3, 5], res[::10, 4, 5]]),
-    # 'Waypts': np.array([goalx, goaly]),
-    # 'Entry': np.array([enpx, enpy]),
-    # 'Exit': np.array([expx, expy])
-}
-scipy.io.savemat('Scen1Data2Hold.mat', data)
+# data = {
+#     'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
+#     'AC1': np.array([res[::10, 1, 1], res[::10, 0, 1], res[::10, 3, 1], res[::10, 4, 1]]),
+#     'AC2': np.array([res[::10, 1, 2], res[::10, 0, 2], res[::10, 3, 2], res[::10, 4, 2]]),
+#     'AC3': np.array([res[::10, 1, 3], res[::10, 0, 3], res[::10, 3, 3], res[::10, 4, 3]]),
+#     'AC4': np.array([res[::10, 1, 4], res[::10, 0, 4], res[::10, 3, 4], res[::10, 4, 4]]),
+#     'EM0': np.array([res[::10, 1, 5], res[::10, 0, 5], res[::10, 3, 5], res[::10, 4, 5]]),
+#     # 'Waypts': np.array([goalx, goaly]),
+#     # 'Entry': np.array([enpx, enpy]),
+#     # 'Exit': np.array([expx, expy])
+# }
+# scipy.io.savemat('Scen1Data2Hold.mat', data)

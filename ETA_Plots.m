@@ -38,7 +38,7 @@ bar2 = bar(x-0.175 + bar_width, eta_1-eta_0, bar_width, 'FaceColor', 'blue');   
 plot([0, x(1)-bar_width/2], [eta_2(1)-eta_0(1), eta_2(1)-eta_0(1)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 plot([0, x(2)-bar_width/2], [eta_2(2)-eta_0(2), eta_2(2)-eta_0(2)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 plot([0, x(1)+bar_width/2], [eta_1(1)-eta_0(1), eta_1(1)-eta_0(1)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
-% text(x(2)+bar_width/1.25, 2.5, sprintf('No\ndelay\nabosrbed'), 'FontSize', 25, FontName='Times', FontWeight= 'bold', HorizontalAlignment= 'center', VerticalAlignment = 'middle')
+% text(x(2)+bar_width/1.25, 2.5, sprintf('No\ndelay\nabsorbed'), 'FontSize', 25, FontName='Times', FontWeight= 'bold', HorizontalAlignment= 'center', VerticalAlignment = 'middle')
 plot([0, x(2)+bar_width/2], [eta_1(2)-eta_0(2), eta_1(2)-eta_0(2)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 plot([0, 0], [eta_1(2)-eta_0(2), eta_1(2)-eta_0(2)], 'linestyle', '--', 'color', 'k', 'linewidth', 2)
 
@@ -84,8 +84,8 @@ xlim([x(1)-2*bar_width, x(2)+2*bar_width])
 % Labeling
 xlabel('Aircraft', 'FontSize', 18);
 ylabel('Aircraft Delay (s)', 'FontSize', 18);
-title('Scenario 3 Aircraft Delays', 'FontSize', 18);
-legend({'Holding Pattern Alternate Maneuver Delay', 'Bezier Alternate Maneuever Delay'}, 'Location','northwest', 'FontSize', 13);%'Nominal ETA', 
+% title('Scenario 3 Aircraft Delays', 'FontSize', 18);
+legend({'Holding Pattern Delay', 'Bezier Delay'}, 'Location','northwest', 'FontSize', 13);%'Nominal ETA', 
 
 
 % Display the plot

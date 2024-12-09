@@ -151,6 +151,23 @@ def solve_optimExit(guess, max_bank, min_bank, min_t, nodes, velocity, lr):
     val =  minimize(path_cost, guess, (nodes, velocity, lr), method = 'SLSQP', tol = 1E-10, constraints=cons)
     return val.x
 
+def central_angle(center, point1, point2):
+    # Calculate vectors
+    v1 = (point1[0] - center[0], point1[1] - center[1])
+    v2 = (point2[0] - center[0], point2[1] - center[1])
+    print(v1,v2)
+    # Compute the angle using atan2
+    angle_radians = np.arctan2(v2[1]-v1[1], v2[0]-v1[0])# - math.atan2(v1[1], v1[0])
+    print(angle_radians)
+    # Normalize the angle to [0, 2*pi] if necessary
+    angle_radians = (angle_radians + 2 * math.pi) % (2 * math.pi)
+    
+    # Convert to degrees (optional)
+    angle_degrees = np.rad2deg(angle_radians)
+    print('CA:', angle_radians, angle_degrees)
+    
+    return angle_radians, angle_degrees
+
 def find_diff_entry(ba, nodes, velocity, pos, lr):
     pi = np.pi
     t_guess = 0.5
@@ -614,7 +631,7 @@ def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id):
     req_ent = np.rad2deg(np.arctan2(y_int_en2-y_int_en,x_int_en2-x_int_en))
 
     
-    x_entry, y_entry, central_angle, entryLength, entryTOA, h_c, k_c = entryPath(velocity, np.rad2deg(ba), [x_int_en, y_int_en], pos, lr)
+    x_entry, y_entry, ca, entryLength, entryTOA, h_c, k_c = entryPath(velocity, np.rad2deg(ba), [x_int_en, y_int_en], pos, lr)
     # plt.plot(x_entry, y_entry,color='cyan')
     optimal_bez1 = manual_bez([nodes1[0][0],nodes1[1][0]],
                                 [nodes1[0][1],nodes1[1][1]],
@@ -691,13 +708,12 @@ def entryPath(velocity, ba, intersect, pos, lr):
 
     y_entry = [k+np.sqrt(tr**2 - (x-h)**2) for x in x_entry]
     # y_entry[-1] = intersect[1]
-    central_angle = pi - np.arctan2(y_entry[-1]-k, x_entry[-1] - h)
-    entryLength = tr*central_angle #entryLength = 2*pi*tr * (central_angle/(2*pi))
-    
+    ar, ad = central_angle([h, k], [x_entry[0], y_entry[0]], [x_entry[-1], y_entry[-1]])
+    entryLength = tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
     entryTOA = entryLength/velocity
     print('ENTRY ToA: ', entryTOA)
 
-    return x_entry, y_entry, central_angle, entryLength, entryTOA, h, k
+    return x_entry, y_entry, ar, entryLength, entryTOA, h, k
 
 def exitPath(velocity, t_exit, ba, intersect, nodes, lr):
     pi = np.pi
@@ -711,20 +727,21 @@ def exitPath(velocity, t_exit, ba, intersect, nodes, lr):
     bezHead = np.arctan2(By(t_exit)-By(t_exit-0.01), Bx(t_exit)-Bx(t_exit-0.01))
 
     h, k = intersect[0] - tr*math.cos(bezHead), intersect[1]+tr*math.sin(bezHead)
-
+    print(h, k)
     x_exit = [i for i in np.linspace(0, intersect[0], 200)]
     y_exit = [k-np.sqrt(tr**2 - (x-h)**2) for x in x_exit]
     # y_exit[0] = 650
     # y_exit[0] = k
-    central_angle = pi + np.arctan2(y_exit[-1]-k, x_exit[-1] - h)
+    ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[1]])
 
-    exitLength = 2*pi*tr * (central_angle/(2*pi))
+    exitLength = tr*ar
 
     exitTOA = exitLength/velocity
     
     print('EXIT ToA:', exitTOA)
     y_exit[0] = k
-    return x_exit, y_exit, central_angle, exitLength, exitTOA, h, k
+    print(y_exit[0])
+    return x_exit, y_exit, ar, exitLength, exitTOA, h, k
 
 
 
@@ -914,7 +931,7 @@ if __name__ == "__main__":
     print('REQUIRED HEADING AT ENTRY:', req_ent)
     
     
-    x_entry, y_entry, central_angle, entryLength, entryTOA, h_c, k_c = entryPath(velocity, np.rad2deg(ba), [x_int_en, y_int_en])
+    x_entry, y_entry, ca, entryLength, entryTOA, h_c, k_c = entryPath(velocity, np.rad2deg(ba), [x_int_en, y_int_en])
     act_ent = np.rad2deg(np.arctan2(y_entry[-1]-y_entry[198], x_entry[-1]-x_entry[198]))
     print('ACTUAL HEADING AT INTERSECT:', act_ent)
     

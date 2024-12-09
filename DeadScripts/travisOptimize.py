@@ -90,8 +90,9 @@ def solve_optim(P0, P2, target_toa, turn_radius, guess, target_heading, velocity
 if __name__ == "__main__":
  
     velocity  = 100
-    turn_rate = 111111 # RAD/s
+    turn_rate = np.deg2rad(60) # RAD/s
     turn_radius = velocity / turn_rate
+    print(turn_radius)
    
     target_toa = 5
     uav_head = np.deg2rad(60)
