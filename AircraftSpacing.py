@@ -289,7 +289,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     # bs.stack.stack(f'DIST 39.42, -83.2, 39.415, -83.2')
     utm_zone = get_utm_zone(-82.2)
     p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
-    t_max = t
+    t_max = int(t)
     # t_max = 22500
     if subscen == 'NotSingle':
         mytraf2 = bs.traf.cre('EX0', 'M250', 39.4075, -82.2, 0, 80, 64)
@@ -312,7 +312,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
 
     ntraf = bs.traf.ntraf
 
-    n_steps = t + 1
+    n_steps = t_max + 1
     t = np.linspace(0, t_max, n_steps)
 
 
