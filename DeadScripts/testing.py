@@ -5,6 +5,7 @@ import math
 import utm
 from utm import from_latlon as llutm
 from utm import to_latlon as utmll
+import pandas as pd
 
 def Meters_To_WSG84(waypoints, home):
         # convert position back to LAT/LONg
@@ -135,15 +136,41 @@ def get_utm_zone(longitude):
 # new = __WSG84_To_Meters_Single(pos, home, p)
 # print(new)
 
-velocity  = 111.6 #m/s
-turn_rate = np.deg2rad(3.5) # RAD/s
-print(velocity/turn_rate)
-tr = velocity/turn_rate
-ba = np.arctan(111.6**2/(tr*11.6))
-print(np.rad2deg(ba))
-# turn_rate = np.deg2rad(4.50) # RAD/s
-turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(60)))
+# velocity  = 111.6 #m/s
+# turn_rate = np.deg2rad(3.5) # RAD/s
+# print(velocity/turn_rate)
+# tr = velocity/turn_rate
+# ba = np.arctan(111.6**2/(tr*11.6))
+# print(np.rad2deg(ba))
+# # turn_rate = np.deg2rad(4.50) # RAD/s
+# turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(60)))
 # turn_radius*=0.3048
 # print(np.rad2deg(velocity/turn_radius))
 # new = Meters_To_WSG84([0, 46], [39.4, -82.2])
 # print(new[0]-39.4)
+events = []
+event_l = {
+    'event': 'Simulation Start',
+    'timeStamp': 0,
+    'ACID': 'AX0, AX1, EX0',
+    'ExpNum': 0,
+    'Category': 'All Aircraft',
+    'ExpType': 'yes'
+}
+events.append(event_l)
+note_events = pd.DataFrame(events)
+print(note_events)
+note_event = {
+                            'event': 'Bezier Generation',
+                            'timeStamp': 100,
+                            'ACID': 'AX0',
+                            'ExpNum': 0,
+                            'Category': 'Fleet Aircraft',
+                            'ExpType': 'yes'
+                        }
+events.append(note_event)
+note_events = pd.DataFrame(events)
+print(note_events)
+exptype = 'SingleBez'
+path = f'{exptype}JSONsnote_events'
+print(path)

@@ -1,0 +1,11 @@
+use cas_delay_test;
+truncate aircraft;
+truncate bez;
+truncate delay;
+truncate dubins;
+truncate ev_specific;
+truncate note_events;
+truncate state;
+-- drop table dubinspath;
+-- drop table evspecific;
+-- drop table notableevents;
