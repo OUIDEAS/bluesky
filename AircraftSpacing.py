@@ -14,6 +14,7 @@ import scipy.io
 import pandas as pd
 import json
 import argparse
+import scipy
 
 
 class ScreenDummy(ScreenIO):
@@ -1150,6 +1151,23 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     
 
 if __name__ == '__main__':
+    import bluesky as bs
+    from bluesky.traffic.trafficgroups import TrafficGroups
+    from bluesky.navdatabase import loadnavdata
+    import numpy as np
+    import time
+    import math
+    from bluesky.simulation import ScreenIO
+    import matplotlib.pyplot as plt
+    from bluesky.tools import geo, aero, areafilter, plotter
+    import re, sys, io
+    from pyproj import Proj
+    import AircraftSpacingOptimize as MBO
+    import scipy.io
+    import pandas as pd
+    import json
+    import argparse
+    import scipy
     parser = argparse.ArgumentParser(description='Apply different spacing between fleet aircraft')
     parser.add_argument('-s1', '--scenario')
     parser.add_argument('-s2', '--subscenario')
