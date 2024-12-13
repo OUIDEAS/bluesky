@@ -312,7 +312,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
 
     ntraf = bs.traf.ntraf
 
-    n_steps = int(t_max + 1)
+    n_steps = t_max + 1
     t = np.linspace(0, t_max, n_steps)
 
 
