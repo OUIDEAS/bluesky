@@ -1173,7 +1173,7 @@ if __name__ == '__main__':
     parser.add_argument('-s2', '--subscenario')
     parser.add_argument('-d', '--spacing')
     parser.add_argument('-t', '--time')
-    parser.add_argument('-en', '-expnum')
+    parser.add_argument('-en', '--expnum')
     parser.add_argument('-et', '--exptype')
     args = parser.parse_args()
     run_sim(args.scenario, args.subscenario, args.spacing , args.time, args.expnum, args.exptype)
