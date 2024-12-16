@@ -269,13 +269,16 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     des_dist = [0, -spacing]
     ax1_ll = Meters_To_WSG84(des_dist, home)
     print('AX1 POSITION:', ax1_ll)
+
     mytraf = bs.traf.cre('AX0', 'M250', 39.42, -82.2, 0, 80, 57.412)
     mytraf = bs.traf.cre('AX1', 'M250', ax1_ll[0], -82.2, 0, 80, 57.412)
-    h, dist = qdrdist(39.42, -82.2, 39.4172, -82.2)
     # print(dist)
     # mytraf = bs.traf.cre('AC2', 'M250', 39.4144 , -82.2, 0, 80, 57.412)
     # mytraf = bs.traf.cre('AC3', 'M250', 39.4116, -82.2, 0, 80, 57.412)
     # mytraf = bs.traf.cre('AC4', 'M250', 39.4088 , -82.2, 0, 80, 57.412)
+
+    bez_tot = []
+    dub_tot = []
 
     for acid in bs.traf.id:
         bs.stack.stack(f'BANK {acid} 30')
@@ -298,9 +301,12 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
     t_max = int(t)
     # t_max = 22500
+
     home = [ax1_ll[0], -82.2]
     des_dist = [0, -650]
     ex0_ll = Meters_To_WSG84(des_dist, home)
+    print('EX0 START POSITION:', ex0_ll)
+
     if subscen == 'NotSingle':
         mytraf2 = bs.traf.cre('EX0', 'M250', ex0_ll[0], -82.2, 0, 80, 64)
     if subscen == 'Single':
@@ -347,9 +353,10 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     TOI = np.zeros((len(bs.traf.id)-1, n_steps))
     counter = [0, 0]#, 0, 0, 0]
 
+    fleet_dist = np.zeros(n_steps)
+
     nodes = np.zeros((len(bs.traf.id)-1, 2), dtype = object)
     waypts = [0, 0]#, 0, 0, 0]
-    print(nodes)
     if scenario == 'BezAM':
         start_end = [[0,0], [0,0]]#, [0,0], [0,0], [0,0]]
         times = [[0,0], [0,0]]#, [0,0], [0,0], [0,0]]
@@ -394,6 +401,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     lr = 0
 
     sp_diff = 64-57.412
+    fleet_rad = 8
     # print(nodes)
     # nodes = np.array([[[0], [0]], [[0],[0]]], dtype = object)
     # print(nodes[0][0])
@@ -448,13 +456,33 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
                         'ExpType': exptype
                     }
                     ev_stuff.append(ev_entry)
-                    
+                    if j==1:
+                        h, fd = qdrdist(bs.traf.lat[0], bs.traf.lon[0], bs.traf.lat[1], bs.traf.lon[1])
+                        fleet_dist[i] = fd
+                        # print(fd)
+                        #calc distance
+                        #append distance to list of dists
+                        #if dist < radius (based on wingspan)
+                        #add note event of aircraft being too close?
+                        if fd <= fleet_rad:
+                            note_event = {
+                            'event': f'Fleet Aircraft Are Too Close: {fd}',
+                            'timeStamp': i,
+                            'ACID': 'AX0, AX1',
+                            'ExpNum': expnum,
+                            'Category': 'Fleet Aircraft',
+                            'ExpType': exptype,
+                            'ax_spacing': spacing
+                            }
+                            events.append(note_event)
+                            print(f'Fleet Aircraft Are Too Close: {fd} at timestamp {i}')
+
                     if j!=0 and bs.traf.lat[j] > bs.traf.lat[j-1] and guide[j] == 0:
                         # print('here!', bs.traf.id[j])
                         toi_dist = 999999
                         counter[j] = 1
                     if TOI[j][i] <= 10 and counter[j] == 0:
-                        print(f'GENERATING BEZIER PATH AT TIME STEP {i}')
+                        print(f'{bs.traf.id} GENERATING BEZIER PATH AT TIME STEP {i}')
                         note_event = {
                             'event': 'Bezier Generation',
                             'timeStamp': i,
@@ -484,16 +512,17 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
                         # target_toa2 = 2*(275/64)
                         homexy[j] = [0, 0]
                         homell[j] = [bs.traf.lat[j], bs.traf.lon[j]] #save as lonlat for WSG84
-                        
-                        nodes1 = [np.array([homexy[j][0], lr*213+8, lr*221]).flatten(), np.array([574.12, (574.12+275)/60+574.12, 711.62])]
-                        nodes2 = [np.array([lr*221, lr*225-8,homexy[j][0]]).flatten(), np.array([711.62, 750, 849.12])]
+                        print('BEZ CURVE HOME',homell[j])
+                        nodes1 = [np.array([homexy[j][0], lr*(221), lr*221]).flatten(), np.array([574.12, (574.12+275)/60+574.12, 711.62])]
+                        nodes2 = [np.array([lr*221, lr*(225),homexy[j][0]]).flatten(), np.array([711.62, 750, 849.12])]
 
                         koz_bot = 589.12
                         koz_top = 834.12
                         corridor = lr*228
                         wpts, wpts_x, wpts_y, b1, b2, nodes1, nodes2, bezData = MBO.toCallOutside(bs.traf.tas[j], np.deg2rad(4.5), target_toa1, target_toa2,
                                                                 bs.traf.hdg[j], nodes1, nodes2, koz_x, koz_bot, koz_top, lr,
-                                                                [bs.traf.lat[j], bs.traf.lon[j]], corridor, i, bs.traf.id[j], expnum, exptype, spacing)
+                                                                [bs.traf.lat[j], bs.traf.lon[j]], corridor, i, bs.traf.id[j], expnum, exptype, spacing, homell[j])
+                        bez_tot.append(bezData)
                         nodes[j][0] = nodes1
                         nodes[j][1] = nodes2
                         waypts[j] = [wpts_x, wpts_y]
@@ -504,7 +533,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
                         # print(toi_dist)
                     
                     if toi_dist <= 45.72 and counter[j] ==1:
-                        print(f'GENERATING INTERCEPTION PATHS AT TIME STEP: {i}')
+                        print(f'{bs.traf.id} GENERATING INTERCEPTION PATHS AT TIME STEP: {i}')
                         note_event = {
                             'event': 'Dubins Generation',
                             'timeStamp': i,
@@ -527,6 +556,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
                         entry, exit, toa, wpts_x, wpts_y, dubData = MBO.EntryExitOutside(nodes1=nodes[j][0], nodes2=nodes[j][1], 
                                                                                          pos = new, velocity = bs.traf.tas[j], lr = lr, id = bs.traf.id[j],
                                                                                          timeStamp = i, expnum = expnum, exptype = exptype, spacing = spacing)
+                        dub_tot.append(dubData)
                         end_point = [exit[0][0], exit[1][0]]
                         end_ll = Meters_To_WSG84(end_point, homell[j])
                         entry_point[j] = Meters_To_WSG84([entry[0][-1], entry[1][-1]], homell[j])
@@ -607,7 +637,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
                             if np.isclose(90-req_head[j][1], bs.traf.hdg[j]-360, atol = 1):
                                 guide[j] = 2
                         else:
-                            if np.isclose(90-req_head[j][1], bs.traf.hdg[j], atol = 1):
+                            if np.isclose(90-req_head[j][1], bs.traf.hdg[j], atol = 5):
                                 guide[j] = 2
                         
                     if guide[j] == 2:
@@ -1133,29 +1163,58 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
 
     }
 
-    
     note_events = pd.DataFrame(events)
-    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json'
+    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json'
     note_events.to_json(output_file, orient='records', indent=4)
     print(f"Note Events data saved to {output_file}")
 
     ev_specific = pd.DataFrame(ev_stuff)
-    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json'
+    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json'
     ev_specific.to_json(output_file, orient='records', indent=4)
     print(f"EVSPecific data saved to {output_file}")
 
-    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json'
+    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json'
     ac_df.to_json(output_file, orient='records', indent=4)
     print(f"Aircraft data saved to {output_file}")
 
 
-    path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
+    path = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs'
     to_json(stateData, f'State_{spacing}_Apart', path)
     to_json(delayData, f'Delay_{spacing}_Apart', path)
-    print(exptype, scen)
     if 'Bez' in exptype or 'Bez' in scen:
-        to_json(bezData, f'Bez_{spacing}_Apart', path)
-        to_json(dubData, f'Dubins_{spacing}_Apart', path)
+        bez = pd.DataFrame(bez_tot)
+        output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json'
+        bez.to_json(output_file, orient='records', indent=4)
+        print(f"Bez data saved to {output_file}")
+
+        dub = pd.DataFrame(dub_tot)
+        output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json'
+        dub.to_json(output_file, orient='records', indent=4)
+        print(f"Dubins data saved to {output_file}")
+        # to_json(bezData, f'Bez_{spacing}_Apart', path)
+        # to_json(dubData, f'Dubins_{spacing}_Apart', path)
+    # note_events = pd.DataFrame(events)
+    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json'
+    # note_events.to_json(output_file, orient='records', indent=4)
+    # print(f"Note Events data saved to {output_file}")
+
+    # ev_specific = pd.DataFrame(ev_stuff)
+    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json'
+    # ev_specific.to_json(output_file, orient='records', indent=4)
+    # print(f"EVSPecific data saved to {output_file}")
+
+    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json'
+    # ac_df.to_json(output_file, orient='records', indent=4)
+    # print(f"Aircraft data saved to {output_file}")
+
+
+    # path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
+    # to_json(stateData, f'State_{spacing}_Apart', path)
+    # to_json(delayData, f'Delay_{spacing}_Apart', path)
+    # print(exptype, scen)
+    # if 'Bez' in exptype or 'Bez' in scen:
+    #     to_json(bezData, f'Bez_{spacing}_Apart', path)
+    #     to_json(dubData, f'Dubins_{spacing}_Apart', path)
 
     
     
@@ -1191,4 +1250,4 @@ if __name__ == '__main__':
         args = parser.parse_args()
         run_sim(args.scenario, args.subscenario, args.spacing , args.time, args.expnum, args.exptype)
     else:
-        run_sim('BezAM', "NotSingle", 16 , 15000, "SuperTest", 0)
+        run_sim('BezAM', "NotSingle", 311 , 17000, 0, "SuperTest")

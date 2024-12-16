@@ -65,6 +65,8 @@ home = [39.4172, -82.2]
 wp = [0, -1078.6]
 newll = Meters_To_WSG84(wp, home)
 print(newll)
+fleet_dist = np.zeros(100)
+print(fleet_dist)
 # border = [0,0]
 # border2 = Meters_To_WSG84(border, home)
 # print(border2)

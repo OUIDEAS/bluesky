@@ -1,0 +1,81 @@
+clc; clear; close all;
+load aircraft.mat;
+load bez.mat;
+load dub.mat;
+load state.mat;
+
+function [curvex,curvey] = quadBezier(P0, P1, P2, points)
+    t = linspace(0,1,points);
+    curvex = P1(1) + (P0(1)-P1(1))*(1 - t).^2 + (P2(1)-P1(1))*t.^2;
+    curvey = P1(2) + (P0(2)-P1(2))*(1 - t).^2 + (P2(2)-P1(2))*t.^2;
+end
+
+function [waypoints_LongLat, lon_points, lat_points] = Meters_To_WSG84(cx1, cy1, home, altitude)
+    % Convert position back to LAT/LON
+    % cx1, cy1: Lists of x and y points in meters
+    % home: [latitude, longitude] in WGS84
+    % altitude: Single value or list (optional, defaults to 0 if not provided)
+    % waypoints_LongLat: Nx3 array of [latitude, longitude, altitude]
+    % lon_points, lat_points: Separate lists of longitude and latitude points
+
+    % Convert home latitude/longitude to UTM coordinates
+    [homeX, homeY, zone] = ll2utm(home(1), home(2));
+
+    % Ensure cx1 and cy1 are column vectors
+    cx1 = cx1(:);
+    cy1 = cy1(:);
+
+    % Default altitude to 0 if not provided
+    if nargin < 4 || isempty(altitude)
+        altitude = 0;
+    end
+
+    % If altitude is a scalar, replicate to match cx1 and cy1 size
+    if isscalar(altitude)
+        altitude = repmat(altitude, size(cx1));
+    end
+
+    % Ensure altitude is a column vector
+    altitude = altitude(:);
+
+    % Initialize output
+    n_points = length(cx1);
+    waypoints_LongLat = zeros(n_points, 3);
+    lat_points = zeros(n_points, 1);
+    lon_points = zeros(n_points, 1);
+
+    % Loop through points and convert
+    for i = 1:n_points
+        % Add home offsets
+        x = cx1(i) + homeX;
+        y = cy1(i) + homeY;
+
+        % Convert UTM to latitude/longitude
+        [lat, lon] = utm2ll(x, y, zone);
+
+        % Store results
+        waypoints_LongLat(i, :) = [lat, lon, altitude(i)];
+        lat_points(i) = lat;
+        lon_points(i) = lon;
+    end
+end
+
+
+home = [39.42, -82.2]
+
+[cx1, cy1] = quadBezier([0, 574.12], [205.6159, 564.0093], [221, 711.62], 100);
+
+
+
+
+lon = state_dat.lon(13550:1:17001);
+lat = state_dat.lat(13550:1:17001);
+
+
+
+
+plot(lon, lat);
+xlim([-82.2-0.003, -82.2+0.003])
+axis('equal')
+
+

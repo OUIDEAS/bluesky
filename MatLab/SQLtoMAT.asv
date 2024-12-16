@@ -17,7 +17,7 @@ query = [sprintf('SELECT * FROM cas_delay_test.aircraft WHERE ax_spacing = %f',s
 
 % Execute query and fetch results
 ac_dat = fetch(conn,query);
-save(sprintf('%.0f_aircraft.mat', sp), 'ac_dat')
+save(sprintf('aircraft%f.mat', sp), 'ac_dat')
 % data = sqlread(conn,'aircraft');
 
 %Set query to execute on the database
@@ -26,7 +26,7 @@ query = [sprintf('SELECT * FROM cas_delay_test.state WHERE ax_spacing = %f',sp )
 
 % Execute query and fetch results
 state_dat = fetch(conn,query);
-save(sprintf('%.0f_state.mat', sp), 'state_dat')
+save(sprintf('state.mat%f', sp), 'state_dat')
 % data = sqlread(conn,'aircraft');
 
 %Set query to execute on the database
@@ -35,7 +35,7 @@ query = [sprintf('SELECT * FROM cas_delay_test.bez WHERE ax_spacing = %f',sp )];
 
 % Execute query and fetch results
 bez_dat = fetch(conn,query);
-save(sprintf('%.0f_bez.mat', sp), 'bez_dat')
+save(sprintf('bez.mat', sp), 'bez_dat')
 % data = sqlread(conn,'aircraft');
 
 %Set query to execute on the database
@@ -44,7 +44,7 @@ query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ax_spacing = %f',sp 
 
 % Execute query and fetch results
 dub_dat = fetch(conn,query);
-save(sprintf('%.0f_dub.mat', sp), 'dub_dat')
+save(sprintf('dub.mat', sp), 'dub_dat')
 % data = sqlread(conn,'aircraft');
 
 

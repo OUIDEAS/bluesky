@@ -216,7 +216,7 @@ Hold -> Uses a holding pattern to avoid emergency aircraft
 '''
 
 scenario = 'BezAM'
-subscen = 'Single'
+subscen = 'NotSingle'
 
 nm  = 1852.  # m       1 nautical mile\
 # tr = 111.6**2/(11.26*math.tan(np.deg2rad(25)))
@@ -269,7 +269,7 @@ bs.stack.stack(f'DT .01')
 # bs.stack.stack(f'DIST 39.42, -83.2, 39.415, -83.2')
 utm_zone = get_utm_zone(-82.2)
 p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
-t_max = 24000
+t_max = 30000
 # t_max = 22500
 if subscen == 'NotSingle':
     mytraf2 = bs.traf.cre('EM0', 'M250', 39.4075, -82.2, 0, 80, 64)
@@ -393,8 +393,8 @@ if scenario == 'BezAM':
                     homexy[j] = [0, 0]
                     homell[j] = [bs.traf.lat[j], bs.traf.lon[j]] #save as lonlat for WSG84
                     
-                    nodes1 = [np.array([homexy[j][0], lr*213+8, lr*221]).flatten(), np.array([574.12, (574.12+275)/60+574.12, 711.62])]
-                    nodes2 = [np.array([lr*221, lr*225-8,homexy[j][0]]).flatten(), np.array([711.62, 750, 849.12])]
+                    nodes1 = [np.array([homexy[j][0], lr*213, lr*221]).flatten(), np.array([574.12, (574.12+275)/60+574.12, 711.62])]
+                    nodes2 = [np.array([lr*221, lr*225,homexy[j][0]]).flatten(), np.array([711.62, 750, 849.12])]
 
                     koz_bot = 589.12
                     koz_top = 834.12

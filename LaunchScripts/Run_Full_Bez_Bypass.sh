@@ -1,9 +1,9 @@
 scenario="BezAM"
 subscenario="Single"
-t=5000
+t=17000
 exptype="SuperTest"
 expnum=0
-for spacing in {1..20..1}
+for (( spacing=311; spacing>=8; spacing-=20 ))
     do
     ((expnum++))
     python3 ../AircraftSpacing.py -s1 $scenario -s2 $subscenario -d $spacing -t $t -en $expnum -et $exptype

@@ -655,7 +655,7 @@ def exitPath(velocity, t_exit, ba, intersect, nodes):
     # central_angle = pi + np.arctan2(y_exit[-1]-k, x_exit[-1] - h)
 
     ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[0]])
-    print(ar, ad, ba)
+    # print(ar, ad, ba)
     exitLength = 2*pi*tr*ar
 
     exitTOA = exitLength/(velocity**2/(9.81*np.tan(ba)))

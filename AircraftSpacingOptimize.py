@@ -206,7 +206,7 @@ def find_diff_entry(ba, nodes, velocity, pos, lr):
 
             int_angle = np.arctan2(y[-1]-y[198], x_l[-1] - x_l[198])
             diff = np.abs(bez_angle-int_angle)
-            if diff < mindiff and np.abs(y[-1] - By(i))<=.001 and np.abs(x_l[-1]-Bx(i))<=0.001:
+            if diff < mindiff and np.abs(y[-1] - By(i))<=.025 and np.abs(x_l[-1]-Bx(i))<=0.025:
                 mindiff = diff
                 # plt.plot(path[0], path[1])
                 # plt.plot(x_l, y)
@@ -397,7 +397,7 @@ def to_LL(east, north):
     lon = ll[1]
     return [lat, lon]
     
-def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes1, nodes2, koz_x, koz_bot, koz_top, lr, latlon, corridor, timeStamp, acid, expnum, exptype, spacing):
+def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes1, nodes2, koz_x, koz_bot, koz_top, lr, latlon, corridor, timeStamp, acid, expnum, exptype, spacing, homell):
     # velocity  = 188 #ft/s
     start_time = time.time()
     # turn_rate = np.deg2rad(4.50) # RAD/s
@@ -500,14 +500,14 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
         #     valid2 = False
         # print(valid1, valid2)
         if valid1 == False:
-            target_toa1+=0.1
-            nodes1[1][1]+=-0.1
-            nodes1[0][1]+=0.1*lr
+            target_toa1+=0.01
+            nodes1[1][1]+=-0.01
+            nodes1[0][1]+=0.01*lr
             c+=1
         if valid2 == False:
-            target_toa2+=0.1
-            nodes2[0][1]+=-0.1*lr
-            nodes2[1][1]+=0.1
+            target_toa2+=0.01
+            nodes2[0][1]+=-0.01*lr
+            nodes2[1][1]+=0.01
             c+=1
         if c>1000:
             print('BEZ TOOK TOO LONG AND FAILED')
@@ -630,6 +630,7 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
             'travel_time': optim1_length/velocity,
             'timeStamp': timeStamp,
             'velocity': velocity,
+            
             'ACID': acid,
             'ExpNum': expnum,
             'Category': 'Fleet Aircraft',
@@ -650,6 +651,8 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
             'travel_time': optim2_length/velocity,
             'timeStamp': timeStamp,
             'velocity': velocity,
+            'home_lat': homell[0],
+            'home_lon': homell[1],
             'ACID': acid,
             'ExpNum': expnum,
             'Category': 'Fleet Aircraft',
@@ -667,10 +670,10 @@ def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id, timeStamp, expnum, e
     optim1_length = path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[nodes1[0][1],nodes1[1][1]],P2=[nodes1[0][2], nodes1[1][2]], t=1)
     optim2_length = path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[nodes2[0][1],nodes2[1][1]],P2=[nodes2[0][2], nodes2[1][2]], t=1)
     
-    if id!= 0:
-        ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
-    else:
-        ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
+    # if id!= 0:
+    ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(25), nodes1, vel_knots, pos, lr)
+    # else:
+    #     ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
 
     x_int_en, y_int_en = find_bez_xy([nodes1[0][0],nodes1[1][0]],
                                 [nodes1[0][1],nodes1[1][1]],
@@ -802,8 +805,10 @@ def entryPath(velocity, ba, intersect, pos, lr):
     y_entry = [k+np.sqrt(tr**2 - (x-h)**2) for x in x_entry]
     # y_entry[-1] = intersect[1]
     ar, ad = central_angle([h, k], [x_entry[0], y_entry[0]], [x_entry[-1], y_entry[-1]])
-    entryLength = tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
-    entryTOA = entryLength/velocity
+    # entryLength = tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
+    # entryTOA = entryLength/velocity
+    entryLength = 2*pi*tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
+    entryTOA = entryLength/(velocity**2/(9.81*np.tan(np.deg2rad(ba))))
     print('ENTRY ToA: ', entryTOA)
 
     return x_entry, y_entry, ar, entryLength, entryTOA, h, k
@@ -820,20 +825,33 @@ def exitPath(velocity, t_exit, ba, intersect, nodes, lr):
     bezHead = np.arctan2(By(t_exit)-By(t_exit-0.01), Bx(t_exit)-Bx(t_exit-0.01))
 
     h, k = intersect[0] - tr*math.cos(bezHead), intersect[1]+tr*math.sin(bezHead)
-    print(h, k)
+    
+    print('H AND K', h, k)
+    # print(h)
+    # print(k)
     x_exit = [i for i in np.linspace(0, intersect[0], 200)]
     y_exit = [k-np.sqrt(tr**2 - (x-h)**2) for x in x_exit]
     # y_exit[0] = 650
     # y_exit[0] = k
+    # print(y_exit)
+    c = 0
+    for i in range(0, len(y_exit)):
+        if math.isnan(y_exit[i]):
+            y_exit[i] = k-(i*2.5)
+    # print(y_exit)
     ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[1]])
 
-    exitLength = tr*ar
+    # exitLength = tr*ar
 
-    exitTOA = exitLength/velocity
+    # exitTOA = exitLength/velocity
+    ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[0]])
+    # print(ar, ad, ba)
+    exitLength = 2*pi*tr*ar
+
+    exitTOA = exitLength/(velocity**2/(9.81*np.tan(ba)))
     
     print('EXIT ToA:', exitTOA)
-    y_exit[0] = k
-    print(y_exit[0])
+    
     return x_exit, y_exit, ar, exitLength, exitTOA, h, k
 
 
