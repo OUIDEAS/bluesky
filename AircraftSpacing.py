@@ -100,7 +100,6 @@ def qdrdist(latd1, lond1, latd2, lond2):
     qdr = np.degrees(np.arctan2(np.sin(lon2 - lon1) * coslat2,
                                 coslat1 * np.sin(lat2) -
                                 np.sin(lat1) * coslat2 * np.cos(lon2 - lon1)))
-    d
     return qdr, d #m    
 
 def Meters_To_WSG84(waypoints, home):
@@ -230,6 +229,7 @@ def to_json(obj, name, path):
         json.dump(data_serializable, f, indent=4)
 
     print(f"{name} data saved to {output_file}")
+
 def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     '''
     Scenario 1 Options:
@@ -265,9 +265,14 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     datasets = [wptdata, aptdata]
 
     #Make Aircraft
-
+    home = [39.42, -82.2]
+    des_dist = [0, -spacing]
+    ax1_ll = Meters_To_WSG84(des_dist, home)
+    print('AX1 POSITION:', ax1_ll)
     mytraf = bs.traf.cre('AX0', 'M250', 39.42, -82.2, 0, 80, 57.412)
-    mytraf = bs.traf.cre('AX1', 'M250', 39.4172, -82.2, 0, 80, 57.412)
+    mytraf = bs.traf.cre('AX1', 'M250', ax1_ll[0], -82.2, 0, 80, 57.412)
+    h, dist = qdrdist(39.42, -82.2, 39.4172, -82.2)
+    # print(dist)
     # mytraf = bs.traf.cre('AC2', 'M250', 39.4144 , -82.2, 0, 80, 57.412)
     # mytraf = bs.traf.cre('AC3', 'M250', 39.4116, -82.2, 0, 80, 57.412)
     # mytraf = bs.traf.cre('AC4', 'M250', 39.4088 , -82.2, 0, 80, 57.412)
@@ -293,8 +298,11 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     p = Proj(proj='utm',zone=utm_zone,ellps='WGS84')
     t_max = int(t)
     # t_max = 22500
+    home = [ax1_ll[0], -82.2]
+    des_dist = [0, -650]
+    ex0_ll = Meters_To_WSG84(des_dist, home)
     if subscen == 'NotSingle':
-        mytraf2 = bs.traf.cre('EX0', 'M250', 39.4075, -82.2, 0, 80, 64)
+        mytraf2 = bs.traf.cre('EX0', 'M250', ex0_ll[0], -82.2, 0, 80, 64)
     if subscen == 'Single':
         mytraf2 = bs.traf.cre('EX0', 'M250', 39.4186, -82.2, 0, 80, 64)
     cat = ['Fleet Aircraft', 'Fleet Aircraft', 'Emergency Vehicle']
@@ -402,7 +410,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     '''
     for i in range(len(bs.traf.id)-1):
         goalHead, goalDist = qdrdist(bs.traf.lat[i], bs.traf.lon[i], home_end[0], home_end[1])
-        print(goalDist)
+        print('Goal Distance:',goalDist)
         print('ID',bs.traf.id[i])
         ETA[i][0] = goalDist/57.412
         print('INITIAL ETA:', ETA[i][0], bs.traf.id[i])
@@ -905,168 +913,168 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     # print('TOTAL TIME EACH AIRCRAFT VIOLATED THE RADIUS:', violation_count)
     # print('MINIMUM DISTANCE EACH AIRCRAFT GOT TO THE EV:', mins )
     '''Plotting'''
-    # fig = plt.figure(1)
-    # ax = fig.add_subplot(111)
-    # # gpts = []
-    # # for i in range(0, len(waypts[4][0])-1):
-    # #     gpts.append([waypts[4][0][i], waypts[4][1][i]])
-    # # # print(gpts)
-    # # goal = Meters_To_WSG84(gpts, homell[4])
-    # # goalx = []
-    # # goaly = []
-    # # for i in range(0, len(goal)-1):
-    # #     goalx.append(goal[i][1])
-    # #     goaly.append(goal[i][0])
-    # # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
+    fig = plt.figure(1)
+    ax = fig.add_subplot(111)
+    # gpts = []
+    # for i in range(0, len(waypts[4][0])-1):
+    #     gpts.append([waypts[4][0][i], waypts[4][1][i]])
+    # # print(gpts)
+    # goal = Meters_To_WSG84(gpts, homell[4])
+    # goalx = []
+    # goaly = []
+    # for i in range(0, len(goal)-1):
+    #     goalx.append(goal[i][1])
+    #     goaly.append(goal[i][0])
+    # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
 
-    # # gpts = []
-    # # for i in range(0, len(waypts[3][0])-1):
-    # #     gpts.append([waypts[3][0][i], waypts[3][1][i]])
-    # # # print(gpts)
-    # # goal = Meters_To_WSG84(gpts, homell[3])
-    # # goalx = []
-    # # goaly = []
-    # # for i in range(0, len(goal)-1):
-    # #     goalx.append(goal[i][1])
-    # #     goaly.append(goal[i][0])
-    # # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
+    # gpts = []
+    # for i in range(0, len(waypts[3][0])-1):
+    #     gpts.append([waypts[3][0][i], waypts[3][1][i]])
+    # # print(gpts)
+    # goal = Meters_To_WSG84(gpts, homell[3])
+    # goalx = []
+    # goaly = []
+    # for i in range(0, len(goal)-1):
+    #     goalx.append(goal[i][1])
+    #     goaly.append(goal[i][0])
+    # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
 
-    # # gpts = []
-    # # for i in range(0, len(waypts[2][0])-1):
-    # #     gpts.append([waypts[2][0][i], waypts[2][1][i]])
-    # # # print(gpts)
-    # # goal = Meters_To_WSG84(gpts, homell[2])
-    # # goalx = []
-    # # goaly = []
-    # # for i in range(0, len(goal)-1):
-    # #     goalx.append(goal[i][1])
-    # #     goaly.append(goal[i][0])
-    # # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
+    # gpts = []
+    # for i in range(0, len(waypts[2][0])-1):
+    #     gpts.append([waypts[2][0][i], waypts[2][1][i]])
+    # # print(gpts)
+    # goal = Meters_To_WSG84(gpts, homell[2])
+    # goalx = []
+    # goaly = []
+    # for i in range(0, len(goal)-1):
+    #     goalx.append(goal[i][1])
+    #     goaly.append(goal[i][0])
+    # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
 
-    # # gpts = []
-    # # for i in range(0, len(waypts[1][0])-1):
-    # #     gpts.append([waypts[1][0][i], waypts[1][1][i]])
-    # # # print(gpts)
-    # # goal = Meters_To_WSG84(gpts, homell[1])
-    # # goalx = []
-    # # goaly = []
-    # # for i in range(0, len(goal)-1):
-    # #     goalx.append(goal[i][1])
-    # #     goaly.append(goal[i][0])
-    # # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
+    # gpts = []
+    # for i in range(0, len(waypts[1][0])-1):
+    #     gpts.append([waypts[1][0][i], waypts[1][1][i]])
+    # # print(gpts)
+    # goal = Meters_To_WSG84(gpts, homell[1])
+    # goalx = []
+    # goaly = []
+    # for i in range(0, len(goal)-1):
+    #     goalx.append(goal[i][1])
+    #     goaly.append(goal[i][0])
+    # plt.scatter(goalx, goaly, color = 'green', marker = '*', s = 30, zorder = 50)
 
-    # # gpts = []
-    # # j = 4
-    # # for i in range(0, len(waypts[j][0])):
-    # #     gpts.append([waypts[j][0][i], waypts[j][1][i]])
-    # # # print(gpts)
-    # # goal = Meters_To_WSG84(gpts, homell[j])
-    # # goalx = []
-    # # goaly = []
-    # # for i in range(0, len(goal)):
-    # #     goalx.append(goal[i][1])
-    # #     goaly.append(goal[i][0])
+    # gpts = []
+    # j = 4
+    # for i in range(0, len(waypts[j][0])):
+    #     gpts.append([waypts[j][0][i], waypts[j][1][i]])
+    # # print(gpts)
+    # goal = Meters_To_WSG84(gpts, homell[j])
+    # goalx = []
+    # goaly = []
+    # for i in range(0, len(goal)):
+    #     goalx.append(goal[i][1])
+    #     goaly.append(goal[i][0])
 
-    # # enpts = []
-    # # for i in range(0, len(entry[0])):
-    # #     enpts.append([entry[0][i], entry[1][i]])
-    # # enp = Meters_To_WSG84(enpts, homell[j])
-    # # enpx = []
-    # # enpy = []
-    # # for i in range(0, len(enp)):
-    # #     enpx.append(enp[i][1])
-    # #     enpy.append(enp[i][0])
+    # enpts = []
+    # for i in range(0, len(entry[0])):
+    #     enpts.append([entry[0][i], entry[1][i]])
+    # enp = Meters_To_WSG84(enpts, homell[j])
+    # enpx = []
+    # enpy = []
+    # for i in range(0, len(enp)):
+    #     enpx.append(enp[i][1])
+    #     enpy.append(enp[i][0])
 
-    # # expts = []
-    # # for i in range(0, len(exit[0])):
-    # #     expts.append([exit[0][i], exit[1][i]])
-    # # exp = Meters_To_WSG84(expts, homell[j])
-    # # expx = []
-    # # expy = []
-    # # for i in range(0, len(exp)):
-    # #     expx.append(exp[i][1])
-    # #     expy.append(exp[i][0])    
-    # # expx.append(goalx[-1])
-    # # expy.append(goaly[-1])
-    # # ax.plot(goalx, goaly, color = 'magenta', label = 'Partial Bezier Path')
-    # # ax.plot(enpx, enpy,  color = 'cyan', label = 'Interception Path')
-    # # ax.plot(expx, expy,  color = 'cyan')
+    # expts = []
+    # for i in range(0, len(exit[0])):
+    #     expts.append([exit[0][i], exit[1][i]])
+    # exp = Meters_To_WSG84(expts, homell[j])
+    # expx = []
+    # expy = []
+    # for i in range(0, len(exp)):
+    #     expx.append(exp[i][1])
+    #     expy.append(exp[i][0])    
+    # expx.append(goalx[-1])
+    # expy.append(goaly[-1])
+    # ax.plot(goalx, goaly, color = 'magenta', label = 'Partial Bezier Path')
+    # ax.plot(enpx, enpy,  color = 'cyan', label = 'Interception Path')
+    # ax.plot(expx, expy,  color = 'cyan')
 
-    # # print(goal[0])
-    # # print(ETA)
-    # # print(res[4])
-    # # print(res[5])
-    # # markers = ['o', 's', '^', 'v', '>', '<', 'P', 'X', 'D', '*', '+', 'x', '|', '_', '1', '2', '3', '4', 'h', 'H']
-    # used_colors = []
-    # # for idx, acid in enumerate(bs.traf.id):
-    # #     available_colors = [color for color in range(1, 101) if color not in used_colors]
-    # #     color_idx = np.random.choice(available_colors)
-    # #     color = plt.cm.tab20(color_idx)  # Use a colormap to generate a color
-    # #     used_colors.append(color_idx)  # Add the used color index to the list
-    # #     if idx%2 == 0:
-    # #         marker = 'o'
-    # #     elif idx%3 == 0:
-    # #         marker = '^'
-    # #     else:
-    # #         marker = 'x'
-    # #     # marker = np.random.choice()  # Randomly select a marker style
-    # #     color = np.random.rand(3,)  # Randomly select a color
-    # #     if acid == 'AC4' or acid == 'EM0':
-    # #         print(idx)
-    # #         plt.plot(res[::25, 1, idx], res[::25, 0, idx], marker = marker, label=f'{acid}', color=color
-    # # bez1_ll = Meters_To_WSG84(waypts[4], homell[4])
+    # print(goal[0])
+    # print(ETA)
+    # print(res[4])
+    # print(res[5])
+    # markers = ['o', 's', '^', 'v', '>', '<', 'P', 'X', 'D', '*', '+', 'x', '|', '_', '1', '2', '3', '4', 'h', 'H']
+    used_colors = []
+    # for idx, acid in enumerate(bs.traf.id):
+    #     available_colors = [color for color in range(1, 101) if color not in used_colors]
+    #     color_idx = np.random.choice(available_colors)
+    #     color = plt.cm.tab20(color_idx)  # Use a colormap to generate a color
+    #     used_colors.append(color_idx)  # Add the used color index to the list
+    #     if idx%2 == 0:
+    #         marker = 'o'
+    #     elif idx%3 == 0:
+    #         marker = '^'
+    #     else:
+    #         marker = 'x'
+    #     # marker = np.random.choice()  # Randomly select a marker style
+    #     color = np.random.rand(3,)  # Randomly select a color
+    #     if acid == 'AC4' or acid == 'EM0':
+    #         print(idx)
+    #         plt.plot(res[::25, 1, idx], res[::25, 0, idx], marker = marker, label=f'{acid}', color=color
+    # bez1_ll = Meters_To_WSG84(waypts[4], homell[4])
 
-    # # for idx, acid in enumerate(bs.traf.id):
-    # #     available_colors = [color for color in range(1, 101) if color not in used_colors]
-    # #     color_idx = np.random.choice(available_colors)
-    # #     color = plt.cm.tab20(color_idx)
-    # #     used_colors.append(color_idx)
-    # #     # plt.scatter(bez1_ll[1], bez1_ll[0])
-    # #     marker = 'o' if idx % 2 == 0 else '^' if idx % 3 == 0 else 'x' if idx == 1 else '*'
-    # #     color = np.random.rand(3,)
-
-
-    # # if acid == 'AC4' or acid == 'EM0':
-
-    # plt.plot(res[::10, 1, -1], res[::10, 0, -1], marker='x', label='Emergency Vehicle', color='red', zorder = 10)
-    # plt.plot(res[::10, 1, 0], res[::10, 0, 0], marker='o', label='Aircraft 0', color='blue', zorder = 10)
-    # plt.plot(res[::10, 1, 1], res[::10, 0, 1], marker='o', label='Aircraft 1', color='green', zorder = 10)
-    # # plt.plot(res[::10, 1, 2], res[::10, 0, 2], marker='o', label='Aircraft 2', color='orange', zorder = 10)
-    # # plt.plot(res[::10, 1, 3], res[::10, 0, 3], marker='o', label='Aircraft 3', color='purple', zorder = 10)
-    # # plt.plot(res[::10, 1, 4], res[::10, 0, 4], marker='o', label='Aircraft 4', color='brown', zorder = 10)
+    # for idx, acid in enumerate(bs.traf.id):
+    #     available_colors = [color for color in range(1, 101) if color not in used_colors]
+    #     color_idx = np.random.choice(available_colors)
+    #     color = plt.cm.tab20(color_idx)
+    #     used_colors.append(color_idx)
+    #     # plt.scatter(bez1_ll[1], bez1_ll[0])
+    #     marker = 'o' if idx % 2 == 0 else '^' if idx % 3 == 0 else 'x' if idx == 1 else '*'
+    #     color = np.random.rand(3,)
 
 
-    # h, toi_dist = qdrdist(bs.traf.lat[0], bs.traf.lon[0], bs.traf.lat[-1], bs.traf.lon[-1])
+    # if acid == 'AC4' or acid == 'EM0':
 
-    # # ax.text(bs.traf.lon[-1]-0.005, bs.traf.lat[-1]+0.001, f'Emergency Vehicle TOA To Goal {ev_TOA:.3g}', fontsize = 7)
-    # # ax.text(bs.traf.lon[0]+0.0005, bs.traf.lat[0]+0.0005, f'AC0 Resumes Flight On The Nominal Path At t = {k/100}', fontsize = 10)
-    # # ax.plot([bs.traf.lon[0]+0.001, bs.traf.lon[0]], [bs.traf.lat[0], bs.traf.lat[0]], linestyle = 'dashed', color = 'black', linewidth = 2)
-    # # ax.plot([bs.traf.lon[0]+0.001, bs.traf.lon[0]], [bs.traf.lat[-1], bs.traf.lat[-1]], linestyle = 'dashed', color = 'black', linewidth = 2)
-    # # ax.text(bs.traf.lon[0]+0.0001, (bs.traf.lat[0]+bs.traf.lat[-1])/2, f'Time Separation: {TOI[0][-1]:.3g}s, Distance: {toi_dist:.3g}m', fontsize = 11)
-    # # ax.text(bs.traf.lon[2]-0.0025, bs.traf.lat[2]-0.001, f'AC2 Begins Return To Nominal Path At t = {k/100}, After AC1 Has Passed It', fontsize = 10)
-    # # ax.text(bs.traf.lon[3]-0.0025, bs.traf.lat[3]+0.001, f'AC3 Begins Holding Pattern At t = 33.81, After It Has Passed AC2', fontsize = 10)
+    plt.plot(res[::10, 1, -1], res[::10, 0, -1], marker='x', label='Emergency Vehicle', color='red', zorder = 1000)
+    plt.plot(res[::10, 1, 0], res[::10, 0, 0], marker='o', label='Aircraft 0', color='blue', zorder = 10)
+    plt.plot(res[::10, 1, 1], res[::10, 0, 1], marker='o', label='Aircraft 1', color='green', zorder = 10)
+    # plt.plot(res[::10, 1, 2], res[::10, 0, 2], marker='o', label='Aircraft 2', color='orange', zorder = 10)
+    # plt.plot(res[::10, 1, 3], res[::10, 0, 3], marker='o', label='Aircraft 3', color='purple', zorder = 10)
+    # plt.plot(res[::10, 1, 4], res[::10, 0, 4], marker='o', label='Aircraft 4', color='brown', zorder = 10)
 
-    # # # ax.scatter()\size = 7)
-    # # # ax.scatter()\
-    # # # ax.plot([bs.traf.lon[0]-0.001, bs.traf.lon[1]+0.001], [bs.traf.lat[0], bs.traf.lat[1]], color = 'blue', linestyle = 'dashed', linewidth = 2)
-    # # ax.plot([bs.traf.lon[0]-0.005, bs.traf.lon[0]], [39.4287, 39.4287], color = 'black', linestyle = 'dashed', linewidth = 2)
-    # # ax.plot([bs.traf.lon[0]-0.005, bs.traf.lon[0]], [bs.traf.lat[1], bs.traf.lat[1]], color = 'black', linestyle = 'dashed', linewidth = 2)
-    # # ax.text(bs.traf.lon[0]-0.005, (bs.traf.lat[2]+39.4287)/2, f'{k2[2]:.3g} Second Travel Time', fontsize = 10)
-    # # ax.text(bs.traf.lon[1]+0.0005, bs.traf.lat[1], f'AC1 Is Passing AC0', fontsize = 10)
-    # # ax.text(bs.traf.lon[1]+0.0005, bs.traf.lat[1]-0.0005, f'AC1 Initiates Holding Pattern At t = {k/100}', fontsize = 10)
-    # plt.axis('equal')
-    # # shape4PlotAirport('COJEZ', 'NIKOE')
-    # # plotWPTCoords(wpts)
-    # plt.title(f'Flight Snapshot At t = {t_max/100}')
-    # # shape4PlotAirport('COJEZ', 'NIKOE')
-    # # plotWPTCoords(wpts)
-    # plt.xlabel('Longitude')
-    # plt.ylabel('Latitude')
-    # plt.grid()
-    # plt.legend()
 
-    # plt.show()
+    h, toi_dist = qdrdist(bs.traf.lat[0], bs.traf.lon[0], bs.traf.lat[-1], bs.traf.lon[-1])
 
+    # ax.text(bs.traf.lon[-1]-0.005, bs.traf.lat[-1]+0.001, f'Emergency Vehicle TOA To Goal {ev_TOA:.3g}', fontsize = 7)
+    # ax.text(bs.traf.lon[0]+0.0005, bs.traf.lat[0]+0.0005, f'AC0 Resumes Flight On The Nominal Path At t = {k/100}', fontsize = 10)
+    # ax.plot([bs.traf.lon[0]+0.001, bs.traf.lon[0]], [bs.traf.lat[0], bs.traf.lat[0]], linestyle = 'dashed', color = 'black', linewidth = 2)
+    # ax.plot([bs.traf.lon[0]+0.001, bs.traf.lon[0]], [bs.traf.lat[-1], bs.traf.lat[-1]], linestyle = 'dashed', color = 'black', linewidth = 2)
+    # ax.text(bs.traf.lon[0]+0.0001, (bs.traf.lat[0]+bs.traf.lat[-1])/2, f'Time Separation: {TOI[0][-1]:.3g}s, Distance: {toi_dist:.3g}m', fontsize = 11)
+    # ax.text(bs.traf.lon[2]-0.0025, bs.traf.lat[2]-0.001, f'AC2 Begins Return To Nominal Path At t = {k/100}, After AC1 Has Passed It', fontsize = 10)
+    # ax.text(bs.traf.lon[3]-0.0025, bs.traf.lat[3]+0.001, f'AC3 Begins Holding Pattern At t = 33.81, After It Has Passed AC2', fontsize = 10)
+
+    # # ax.scatter()\size = 7)
+    # # ax.scatter()\
+    # # ax.plot([bs.traf.lon[0]-0.001, bs.traf.lon[1]+0.001], [bs.traf.lat[0], bs.traf.lat[1]], color = 'blue', linestyle = 'dashed', linewidth = 2)
+    # ax.plot([bs.traf.lon[0]-0.005, bs.traf.lon[0]], [39.4287, 39.4287], color = 'black', linestyle = 'dashed', linewidth = 2)
+    # ax.plot([bs.traf.lon[0]-0.005, bs.traf.lon[0]], [bs.traf.lat[1], bs.traf.lat[1]], color = 'black', linestyle = 'dashed', linewidth = 2)
+    # ax.text(bs.traf.lon[0]-0.005, (bs.traf.lat[2]+39.4287)/2, f'{k2[2]:.3g} Second Travel Time', fontsize = 10)
+    # ax.text(bs.traf.lon[1]+0.0005, bs.traf.lat[1], f'AC1 Is Passing AC0', fontsize = 10)
+    # ax.text(bs.traf.lon[1]+0.0005, bs.traf.lat[1]-0.0005, f'AC1 Initiates Holding Pattern At t = {k/100}', fontsize = 10)
+    plt.axis('equal')
+    # shape4PlotAirport('COJEZ', 'NIKOE')
+    # plotWPTCoords(wpts)
+    plt.title(f'Flight Snapshot At t = {t_max/100}')
+    # shape4PlotAirport('COJEZ', 'NIKOE')
+    # plotWPTCoords(wpts)
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.grid()
+    plt.legend()
+
+    plt.show()
+    print('FINAL TOI:', TOI[1][-1])
 
     # data = {
     #     'AC0': np.array([res[::10, 1, 0], res[::10, 0, 0], res[::10, 3, 0], res[::10, 4, 0]]),
@@ -1171,12 +1179,16 @@ if __name__ == '__main__':
     import json
     import argparse
     import scipy
-    parser = argparse.ArgumentParser(description='Apply different spacing between fleet aircraft')
-    parser.add_argument('-s1', '--scenario')
-    parser.add_argument('-s2', '--subscenario')
-    parser.add_argument('-d', '--spacing')
-    parser.add_argument('-t', '--time')
-    parser.add_argument('-en', '--expnum')
-    parser.add_argument('-et', '--exptype')
-    args = parser.parse_args()
-    run_sim(args.scenario, args.subscenario, args.spacing , args.time, args.expnum, args.exptype)
+    windows = False
+    if not windows:
+        parser = argparse.ArgumentParser(description='Apply different spacing between fleet aircraft')
+        parser.add_argument('-s1', '--scenario')
+        parser.add_argument('-s2', '--subscenario')
+        parser.add_argument('-d', '--spacing')
+        parser.add_argument('-t', '--time')
+        parser.add_argument('-en', '--expnum')
+        parser.add_argument('-et', '--exptype')
+        args = parser.parse_args()
+        run_sim(args.scenario, args.subscenario, args.spacing , args.time, args.expnum, args.exptype)
+    else:
+        run_sim('BezAM', "NotSingle", 16 , 15000, "SuperTest", 0)

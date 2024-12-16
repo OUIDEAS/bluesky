@@ -509,6 +509,9 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
             nodes2[0][1]+=-0.1*lr
             nodes2[1][1]+=0.1
             c+=1
+        if c>1000:
+            print('BEZ TOOK TOO LONG AND FAILED')
+            break
         # if c>30:
        
         # fig = plt.figure(1)

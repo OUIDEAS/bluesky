@@ -26,6 +26,7 @@ def Meters_To_WSG84(waypoints, home):
             return waypoints_LongLat
 
         else:
+            # x = (waypoints[0] + homeX)
             x = (waypoints[0] + homeX)
             y = (waypoints[1] + homeY)
             lon, lat = p(x,y,inverse=True)
@@ -60,7 +61,10 @@ def get_utm_zone(longitude):
     return int((longitude + 180) / 6) + 1
 # lat-lon 39.42, -83.2 lon = x
 
-# home = [39.42, -83.2]
+home = [39.4172, -82.2]
+wp = [0, -1078.6]
+newll = Meters_To_WSG84(wp, home)
+print(newll)
 # border = [0,0]
 # border2 = Meters_To_WSG84(border, home)
 # print(border2)
@@ -148,29 +152,29 @@ def get_utm_zone(longitude):
 # print(np.rad2deg(velocity/turn_radius))
 # new = Meters_To_WSG84([0, 46], [39.4, -82.2])
 # print(new[0]-39.4)
-events = []
-event_l = {
-    'event': 'Simulation Start',
-    'timeStamp': 0,
-    'ACID': 'AX0, AX1, EX0',
-    'ExpNum': 0,
-    'Category': 'All Aircraft',
-    'ExpType': 'yes'
-}
-events.append(event_l)
-note_events = pd.DataFrame(events)
-print(note_events)
-note_event = {
-                            'event': 'Bezier Generation',
-                            'timeStamp': 100,
-                            'ACID': 'AX0',
-                            'ExpNum': 0,
-                            'Category': 'Fleet Aircraft',
-                            'ExpType': 'yes'
-                        }
-events.append(note_event)
-note_events = pd.DataFrame(events)
-print(note_events)
-exptype = 'SingleBez'
-path = f'{exptype}JSONsnote_events'
-print(path)
+# events = []
+# event_l = {
+#     'event': 'Simulation Start',
+#     'timeStamp': 0,
+#     'ACID': 'AX0, AX1, EX0',
+#     'ExpNum': 0,
+#     'Category': 'All Aircraft',
+#     'ExpType': 'yes'
+# }
+# events.append(event_l)
+# note_events = pd.DataFrame(events)
+# print(note_events)
+# note_event = {
+#                             'event': 'Bezier Generation',
+#                             'timeStamp': 100,
+#                             'ACID': 'AX0',
+#                             'ExpNum': 0,
+#                             'Category': 'Fleet Aircraft',
+#                             'ExpType': 'yes'
+#                         }
+# events.append(note_event)
+# note_events = pd.DataFrame(events)
+# print(note_events)
+# exptype = 'SingleBez'
+# path = f'{exptype}JSONsnote_events'
+# print(path)
