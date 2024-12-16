@@ -266,7 +266,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
 
     #Make Aircraft
     home = [39.42, -82.2]
-    des_dist = [0, -spacing]
+    des_dist = [0, -int(spacing)]
     ax1_ll = Meters_To_WSG84(des_dist, home)
     print('AX1 POSITION:', ax1_ll)
 
