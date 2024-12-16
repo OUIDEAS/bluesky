@@ -222,7 +222,7 @@ def to_json(obj, name, path):
     data_serializable = convert_numpy(obj)
 
     # Dump to a .json file
-    output_file = f"{path}\\{name}.json"
+    output_file = f"{path}/{name}.json"
     with open(output_file, "w") as f:
         json.dump(data_serializable, f, indent=4)
 
@@ -1139,7 +1139,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     print(f"Aircraft data saved to {output_file}")
 
 
-    path = f'~/bluesky/BlueSkyData/{exptype}JSONs/'
+    path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
     to_json(stateData, f'State_{spacing}_Apart', path)
     to_json(delayData, f'Delay_{spacing}_Apart', path)
     if 'Bez' in (exptype or scen):
