@@ -218,21 +218,18 @@ def convert_numpy(obj):
     return obj
 
 def to_json(obj, name, path):
-    # Expand '~' to the full home directory path
     expanded_path = os.path.expanduser(path)
-    print(expanded_path)
-    # Ensure the directory exists
+
     os.makedirs(expanded_path, exist_ok=True)
 
     data_serializable = convert_numpy(obj)
 
-    # Dump to a .json file
-    output_file = f"{path}/{name}.json"
+    output_file = os.path.join(expanded_path, f"{name}.json")
+
     with open(output_file, "w") as f:
         json.dump(data_serializable, f, indent=4)
 
     print(f"{name} data saved to {output_file}")
-
 def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     '''
     Scenario 1 Options:
