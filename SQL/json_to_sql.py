@@ -230,7 +230,7 @@ def to_sql(spacing, exptype, scen):
     print('Delay Data Uploaded to SQL!')
 
 if __name__ == '__main__':
-    windows = False
+    windows = True
     if not windows:
         parser = argparse.ArgumentParser(description='Apply different spacing between fleet aircraft')
         parser.add_argument('-s1', '--scenario')
