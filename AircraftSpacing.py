@@ -1163,56 +1163,65 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
 
     }
 
-    note_events = pd.DataFrame(events)
-    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json'
-    note_events.to_json(output_file, orient='records', indent=4)
-    print(f"Note Events data saved to {output_file}")
-
-    ev_specific = pd.DataFrame(ev_stuff)
-    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json'
-    ev_specific.to_json(output_file, orient='records', indent=4)
-    print(f"EVSPecific data saved to {output_file}")
-
-    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json'
-    ac_df.to_json(output_file, orient='records', indent=4)
-    print(f"Aircraft data saved to {output_file}")
-
-
-    path = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs'
-    to_json(stateData, f'State_{spacing}_Apart', path)
-    to_json(delayData, f'Delay_{spacing}_Apart', path)
-    if 'Bez' in exptype or 'Bez' in scen:
-        bez = pd.DataFrame(bez_tot)
-        output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json'
-        bez.to_json(output_file, orient='records', indent=4)
-        print(f"Bez data saved to {output_file}")
-
-        dub = pd.DataFrame(dub_tot)
-        output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json'
-        dub.to_json(output_file, orient='records', indent=4)
-        print(f"Dubins data saved to {output_file}")
-        # to_json(bezData, f'Bez_{spacing}_Apart', path)
-        # to_json(dubData, f'Dubins_{spacing}_Apart', path)
     # note_events = pd.DataFrame(events)
-    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json'
+    # output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json'
     # note_events.to_json(output_file, orient='records', indent=4)
     # print(f"Note Events data saved to {output_file}")
 
     # ev_specific = pd.DataFrame(ev_stuff)
-    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json'
+    # output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json'
     # ev_specific.to_json(output_file, orient='records', indent=4)
     # print(f"EVSPecific data saved to {output_file}")
 
-    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json'
+    # output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json'
     # ac_df.to_json(output_file, orient='records', indent=4)
     # print(f"Aircraft data saved to {output_file}")
 
 
-    # path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
+    # path = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs'
     # to_json(stateData, f'State_{spacing}_Apart', path)
     # to_json(delayData, f'Delay_{spacing}_Apart', path)
-    # print(exptype, scen)
     # if 'Bez' in exptype or 'Bez' in scen:
+    #     bez = pd.DataFrame(bez_tot)
+    #     output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json'
+    #     bez.to_json(output_file, orient='records', indent=4)
+    #     print(f"Bez data saved to {output_file}")
+
+    #     dub = pd.DataFrame(dub_tot)
+    #     output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json'
+    #     dub.to_json(output_file, orient='records', indent=4)
+    #     print(f"Dubins data saved to {output_file}")
+        # to_json(bezData, f'Bez_{spacing}_Apart', path)
+        # to_json(dubData, f'Dubins_{spacing}_Apart', path)
+    note_events = pd.DataFrame(events)
+    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json'
+    note_events.to_json(output_file, orient='records', indent=4)
+    print(f"Note Events data saved to {output_file}")
+
+    ev_specific = pd.DataFrame(ev_stuff)
+    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json'
+    ev_specific.to_json(output_file, orient='records', indent=4)
+    print(f"EVSPecific data saved to {output_file}")
+
+    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json'
+    ac_df.to_json(output_file, orient='records', indent=4)
+    print(f"Aircraft data saved to {output_file}")
+
+
+    path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
+    to_json(stateData, f'State_{spacing}_Apart', path)
+    to_json(delayData, f'Delay_{spacing}_Apart', path)
+    # print(exptype, scen)
+    if 'Bez' in exptype or 'Bez' in scen:
+        bez = pd.DataFrame(bez_tot)
+        output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json'
+        bez.to_json(output_file, orient='records', indent=4)
+        print(f"Bez data saved to {output_file}")
+
+        dub = pd.DataFrame(dub_tot)
+        output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Dubins_{spacing}_Apart.json'
+        dub.to_json(output_file, orient='records', indent=4)
+        print(f"Dubins data saved to {output_file}")
     #     to_json(bezData, f'Bez_{spacing}_Apart', path)
     #     to_json(dubData, f'Dubins_{spacing}_Apart', path)
 
