@@ -1145,7 +1145,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     to_json(stateData, f'State_{spacing}_Apart', path)
     to_json(delayData, f'Delay_{spacing}_Apart', path)
     print(exptype, scen)
-    if 'Bez' in (exptype or scen):
+    if 'Bez' in exptype or 'Bez' in scen:
         to_json(bezData, f'Bez_{spacing}_Apart', path)
         to_json(dubData, f'Dubins_{spacing}_Apart', path)
 
