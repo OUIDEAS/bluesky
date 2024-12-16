@@ -220,7 +220,7 @@ def convert_numpy(obj):
 def to_json(obj, name, path):
     # Expand '~' to the full home directory path
     expanded_path = os.path.expanduser(path)
-
+    print(expanded_path)
     # Ensure the directory exists
     os.makedirs(expanded_path, exist_ok=True)
 
