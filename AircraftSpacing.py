@@ -1139,7 +1139,7 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     print(f"Aircraft data saved to {output_file}")
 
 
-    path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
+    path = f'~/bluesky/BlueSkyData/{exptype}JSONs/'
     to_json(stateData, f'State_{spacing}_Apart', path)
     to_json(delayData, f'Delay_{spacing}_Apart', path)
     if 'Bez' in (exptype or scen):
