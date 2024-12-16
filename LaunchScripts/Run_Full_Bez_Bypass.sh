@@ -1,5 +1,5 @@
 scenario="BezAM"
-subscenario="Single"
+subscenario="NotSingle"
 t=17000
 exptype="SuperTest"
 expnum=0
