@@ -15,7 +15,7 @@ import pandas as pd
 import json
 import argparse
 import scipy
-
+import os
 
 class ScreenDummy(ScreenIO):
     """
@@ -218,6 +218,11 @@ def convert_numpy(obj):
     return obj
 
 def to_json(obj, name, path):
+    # Expand '~' to the full home directory path
+    expanded_path = os.path.expanduser(path)
+
+    # Ensure the directory exists
+    os.makedirs(expanded_path, exist_ok=True)
 
     data_serializable = convert_numpy(obj)
 
