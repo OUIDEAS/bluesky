@@ -14,7 +14,7 @@ import os
 #     database="cas_delay_test"
 #     )
 
-engine = create_engine("mysql+mysqlconnector://root:pixhawk2@localhost:3307/cas_delay_test")
+engine = create_engine("mysql+mysqlconnector://root:pixhawk2@100.100.100.100:3307/cas_delay_test")
 
 
 def to_sql(spacing, exptype, scen):
