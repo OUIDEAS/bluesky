@@ -23,7 +23,7 @@ def to_sql(spacing, exptype, scen):
         Bez Data
         '''
         # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json"
-        file_path = f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json'
+        file_path = f'~/bluesky/BlueSkyData/SuperTestJSONs/Bez_{spacing}_Apart.json'
         with open(file_path, 'r') as file:
             BezierData = json.load(file)
         records = []
