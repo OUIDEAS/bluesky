@@ -1,6 +1,6 @@
 scenario="BezAM"
 exptype="SuperTest"
-for (( spacing=311; spacing>=8; spacing-=20 ))
+for (( spacing=104; spacing>=8; spacing-=8 ))
     do
     python3 ../SQL/json_to_sql.py -s1 $scenario -d $spacing -et $exptype
 done
