@@ -234,13 +234,16 @@ def find_diff_exit(guess, nodes, velocity, lr):
     By = lambda t: nodes[1][1] + (nodes[1][0] - nodes[1][1]) * (1 - t)**2 + (nodes[1][2] - nodes[1][1]) * t**2
     bezHead = np.arctan2(By(t_guess)-By(t_guess-0.01), Bx(t_guess)-Bx(t_guess-0.01))
 
-    tr = 111.6**2 / (11.26*math.tan(ba))
+    tr = (velocity*1.94384)**2 / (11.26*math.tan(ba))
     tr*=0.3048
-    h = lambda t: Bx(t) - lr*tr*math.cos(bezHead)
+    h = lambda t: Bx(t) - tr*math.cos(bezHead)
     k = lambda t: By(t) + tr*math.sin(bezHead)
 
     circle_eq = lambda y: (0-h(t_guess))**2+(y-k(t_guess))**2 - tr**2
-    y_guess = 610
+    if lr == -1:
+        y_guess = 1200
+    else:
+        y_guess = 1400
     S = fsolve(circle_eq, y_guess) #gives y intersection
     t_final = .5
 
@@ -250,24 +253,26 @@ def find_diff_exit(guess, nodes, velocity, lr):
     # print(S)
     for i in S:
         if i > 0: 
-            y = [i for i in np.linspace(S, By(t_guess))]
+            y = [k for k in np.linspace(S, By(t_guess))]
             if lr == 1:
                 x_l = [h(t_guess) - np.sqrt(tr**2 - (y_y - k(t_guess))**2) for y_y in y]
+                # print(x_l)
             else:
                 x_l = [h(t_guess) + np.sqrt(tr**2 - (y_y - k(t_guess))**2) for y_y in y]
-            if x_l[0]<=0.01: #==0:# <= 0.01:
+            int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
+            if x_l[0] == 0 and y[0] > By(t_guess):# and np.isclose(int_angle, math.pi/2, atol = 2.5):# <= 0.01:
                 # x_l = [i for i in np.linspace(750, Bx(t_guess))]
                 # y = [k(t_guess)-np.sqrt(tr**2 - (x-h(t_guess))**2) for x in x_l]
                 int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
                 diff = np.abs((np.pi/2) - int_angle)
                 guess_deg = np.rad2deg(ba)
-                # plt.title(f'{guess_deg} {t_guess}')
-                # plt.plot(x, y_l, linestyle = 'dashed')
-                # plt.plot(path[0], path[1])
-                # plt.plot(x_l, y)
-                # plt.scatter(h(t_guess), k(t_guess))
-                # plt.axis('equal')
-                # plt.show()
+                # if lr == 1:
+                    # plt.title(f'{guess_deg} {t_guess}')
+                    # plt.plot(x, y_l, linestyle = 'dashed')
+                    # plt.plot(path[0], path[1])
+                    # plt.plot(x_l, y)
+                    # plt.axis('equal')
+                    # plt.show()
                 if diff < mindiff:
                     mindiff = diff
                     # print('BLARGY', diff)
@@ -402,7 +407,7 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
     start_time = time.time()
     # turn_rate = np.deg2rad(4.50) # RAD/s
     # turn_radius = velocity / turn_rate
-    turn_radius = (velocity*1.94384)**2/(11.26*math.tan(np.deg2rad(70)))
+    turn_radius = (velocity*1.94384)**2/(11.26*math.tan(np.deg2rad(73)))
     turn_radius*=0.3048
     valid1 = False
     valid2 = False
@@ -612,9 +617,9 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
     #     'corridor': corridor,
     #     'op_corridor': corridor-228,
     # }
-    scipy.io.savemat('4XBez.mat', bez_data)
+    # scipy.io.savemat('4XBez.mat', bez_data)
 
-    print('SAVED')
+    # print('SAVED')
     BezierData = {
         'B1':{
             'p0x': nodes1[0][0],
@@ -665,13 +670,13 @@ def toCallOutside(velocity, turn_rate, target_toa1, target_toa2, uav_head, nodes
 
 def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id, timeStamp, expnum, exptype, spacing):
     start = time.time()
-    vel_knots = 111.6
+    vel_knots = velocity*1.94384
 
     optim1_length = path_length(P0=[nodes1[0][0],nodes1[1][0]], P1=[nodes1[0][1],nodes1[1][1]],P2=[nodes1[0][2], nodes1[1][2]], t=1)
     optim2_length = path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[nodes2[0][1],nodes2[1][1]],P2=[nodes2[0][2], nodes2[1][2]], t=1)
     
     # if id!= 0:
-    ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(25), nodes1, vel_knots, pos, lr)
+    ba, t_entry = solve_optimEntry(np.deg2rad(25), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
     # else:
     #     ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
 
@@ -701,8 +706,11 @@ def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id, timeStamp, expnum, e
 
     t_start2 = 0.35678391959798994
 
-    # if lr == 1:
-    baEx, exit_t = solve_optimExit([np.deg2rad(30), 0.45], np.deg2rad(60), np.deg2rad(20), t_start2, nodes2, velocity, lr)
+    if lr == -1:
+        baEx, exit_t = solve_optimExit([np.deg2rad(25), 0.45], np.deg2rad(73), np.deg2rad(15), t_start2, nodes2, velocity, lr)
+    else:
+        baEx, exit_t = solve_optimExit([np.deg2rad(28), 0.45], np.deg2rad(73), np.deg2rad(15), t_start2, nodes2, velocity, lr)
+
     # else:
     #     baEx, exit_t = solve_optimExit([np.deg2rad(60), 0.55], np.deg2rad(60), np.deg2rad(20), t_start2, nodes2, velocity, lr)
     print('EXIT BANK', np.rad2deg(baEx), 'EXIT T:', exit_t)
@@ -835,9 +843,9 @@ def exitPath(velocity, t_exit, ba, intersect, nodes, lr):
     # y_exit[0] = k
     # print(y_exit)
     c = 0
-    for i in range(0, len(y_exit)):
-        if math.isnan(y_exit[i]):
-            y_exit[i] = k-(i*2.5)
+    # for i in range(0, len(y_exit)):
+    #     if math.isnan(y_exit[i]):
+    #         y_exit[i] = k-(i*2.5)
     # print(y_exit)
     ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[1]])
 

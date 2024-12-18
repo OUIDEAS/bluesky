@@ -11,40 +11,87 @@ id = 'AX0';
 % Make connection to database
 conn = mysql('Cascading Delay','root','pixhawk2');
 
-%Set query to execute on the database
+for sp = 
+
+%%%%%%%%%%
+%Aircraft%
+%%%%%%%%%%
+
 query = [sprintf('SELECT * FROM cas_delay_test.aircraft WHERE ax_spacing = %f',sp )];
 % query = [sprintf('SELECT * FROM cas_delay_test.aircraft WHERE ACID = ''%s''',id )];
 
-% Execute query and fetch results
 ac_dat = fetch(conn,query);
-save(sprintf('aircraft%f.mat', sp), 'ac_dat')
+save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_aircraft.mat', sp), 'ac_dat')
 % data = sqlread(conn,'aircraft');
 
-%Set query to execute on the database
+
+%%%%%%%
+%State%
+%%%%%%%
+
 query = [sprintf('SELECT * FROM cas_delay_test.state WHERE ax_spacing = %f',sp )];
 % query = [sprintf('SELECT * FROM cas_delay_test.state WHERE ACID = ''%s''',id )];
 
-% Execute query and fetch results
 state_dat = fetch(conn,query);
-save(sprintf('state.mat%f', sp), 'state_dat')
+save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_state.mat', sp), 'state_dat')
 % data = sqlread(conn,'aircraft');
 
-%Set query to execute on the database
+%%%%%
+%Bez%
+%%%%%
+
 query = [sprintf('SELECT * FROM cas_delay_test.bez WHERE ax_spacing = %f',sp )];
 % query = [sprintf('SELECT * FROM cas_delay_test.bez WHERE ACID = ''%s''',id )];
 
-% Execute query and fetch results
 bez_dat = fetch(conn,query);
-save(sprintf('bez.mat', sp), 'bez_dat')
+save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_bez.mat', sp), 'bez_dat')
 % data = sqlread(conn,'aircraft');
 
-%Set query to execute on the database
+%%%%%%%%
+%Dubins%
+%%%%%%%%
+
 query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ax_spacing = %f',sp )];
 % query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ACID = ''%s''',id )];
 
-% Execute query and fetch results
 dub_dat = fetch(conn,query);
-save(sprintf('dub.mat', sp), 'dub_dat')
+save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_dub.mat', sp), 'dub_dat')
+% data = sqlread(conn,'aircraft');
+
+
+%%%%%%%%%%%%%
+%Note Events%
+%%%%%%%%%%%%%
+
+query = [sprintf('SELECT * FROM cas_delay_test.note_events WHERE ax_spacing = %f',sp )];
+% query = [sprintf('SELECT * FROM cas_delay_test.note_events WHERE ACID = ''%s''',id )];
+
+event_dat = fetch(conn,query);
+save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_note_events.mat', sp), 'event_dat')
+% data = sqlread(conn,'aircraft');
+
+
+%%%%%%%%%%%%%
+%EV Specific%
+%%%%%%%%%%%%%
+
+query = [sprintf('SELECT * FROM cas_delay_test.ev_specific WHERE ax_spacing = %f',sp )];
+% query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ACID = ''%s''',id )];
+
+ev_specific_dat = fetch(conn,query);
+save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_ev_specific.mat', sp), 'ev_specific_dat')
+% data = sqlread(conn,'aircraft');
+
+
+%%%%%%%
+%Delay%
+%%%%%%%
+
+query = [sprintf('SELECT * FROM cas_delay_test.delay WHERE ax_spacing = %f',sp )];
+% query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ACID = ''%s''',id )];
+
+delay_dat = fetch(conn,query);
+save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_delay.mat', sp), 'delay_dat')
 % data = sqlread(conn,'aircraft');
 
 

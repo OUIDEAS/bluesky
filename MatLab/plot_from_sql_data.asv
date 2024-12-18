@@ -1,8 +1,4 @@
 clc; clear; close all;
-load aircraft.mat;
-load bez.mat;
-load dub.mat;
-load state.mat;
 
 function [curvex,curvey] = quadBezier(P0, P1, P2, points)
     t = linspace(0,1,points);
@@ -10,72 +6,123 @@ function [curvex,curvey] = quadBezier(P0, P1, P2, points)
     curvey = P1(2) + (P0(2)-P1(2))*(1 - t).^2 + (P2(2)-P1(2))*t.^2;
 end
 
-function [waypoints_LongLat, lon_points, lat_points] = Meters_To_WSG84(cx1, cy1, home, altitude)
-    % Convert position back to LAT/LON
+function [lon_points, lat_points] = Meters_To_WSG84(cx1, cy1, home)
+    % Convert position from UTM back to latitude/longitude
     % cx1, cy1: Lists of x and y points in meters
     % home: [latitude, longitude] in WGS84
-    % altitude: Single value or list (optional, defaults to 0 if not provided)
-    % waypoints_LongLat: Nx3 array of [latitude, longitude, altitude]
     % lon_points, lat_points: Separate lists of longitude and latitude points
 
-    % Convert home latitude/longitude to UTM coordinates
-    [homeX, homeY, zone] = ll2utm(home(1), home(2));
+    % Define the UTM zone 17 projection (WGS84)
+    utmproj = projcrs(32617, 'Authority', 'EPSG'); % EPSG 32617: UTM zone 17N
+
+    % Convert home latitude and longitude to UTM
+    [homeX, homeY] = projfwd(utmproj, home(1), home(2));
 
     % Ensure cx1 and cy1 are column vectors
     cx1 = cx1(:);
     cy1 = cy1(:);
 
-    % Default altitude to 0 if not provided
-    if nargin < 4 || isempty(altitude)
-        altitude = 0;
-    end
-
-    % If altitude is a scalar, replicate to match cx1 and cy1 size
-    if isscalar(altitude)
-        altitude = repmat(altitude, size(cx1));
-    end
-
-    % Ensure altitude is a column vector
-    altitude = altitude(:);
-
-    % Initialize output
+    % Initialize output arrays
     n_points = length(cx1);
-    waypoints_LongLat = zeros(n_points, 3);
     lat_points = zeros(n_points, 1);
     lon_points = zeros(n_points, 1);
 
-    % Loop through points and convert
+    % Convert each point back to latitude/longitude
     for i = 1:n_points
-        % Add home offsets
-        x = cx1(i) + homeX;
-        y = cy1(i) + homeY;
+        % Add offsets to the home coordinates
+        x = homeX + cx1(i);
+        y = homeY + cy1(i);
 
-        % Convert UTM to latitude/longitude
-        [lat, lon] = utm2ll(x, y, zone);
+        % Convert from UTM back to lat/lon
+        [lat, lon] = projinv(utmproj, x, y);
 
         % Store results
-        waypoints_LongLat(i, :) = [lat, lon, altitude(i)];
         lat_points(i) = lat;
         lon_points(i) = lon;
     end
 end
 
 
-home = [39.42, -82.2]
+path = 'C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/';
 
-[cx1, cy1] = quadBezier([0, 574.12], [205.6159, 564.0093], [221, 711.62], 100);
+data = struct();
+x = zeros([1, 10])
 
-
-
-
-lon = state_dat.lon(13550:1:17001);
-lat = state_dat.lat(13550:1:17001);
+c = 1;
 
 
+for sp = 131:20:311
+    sp_str = sprintf('sp%.0f', sp); % Create a unique field name for each sp
+
+    % ac = sprintf('%s%.0f_aircraft.mat', path, sp);
+    % load(ac);
+    % 
+    % bez = sprintf('%s%.0f_bez.mat', path, sp);
+    % load(bez);
+    % 
+    % delay = sprintf('%s%.0f_delay.mat', path, sp);
+    % load(delay);
+    % 
+    % dub = sprintf('%s%.0f_dub.mat', path, sp);
+    % load(dub);
+    % 
+    % ev = sprintf('%s%.0f_ev_specific.mat', path, sp);
+    % load(ev);
+    % 
+    % note = sprintf('%s%.0f_note_events.mat', path, sp);
+    % load(note);
+    % 
+    % state = sprintf('%s%.0f_state.mat', path, sp);
+    % load(state);
+    ac_data = load(sprintf('%s%.0f_aircraft.mat', path, sp));
+    bez_data = load(sprintf('%s%.0f_bez.mat', path, sp));
+    delay_data = load(sprintf('%s%.0f_delay.mat', path, sp));
+    dub_data = load(sprintf('%s%.0f_dub.mat', path, sp));
+    ev_data = load(sprintf('%s%.0f_ev_specific.mat', path, sp));
+    note_data = load(sprintf('%s%.0f_note_events.mat', path, sp));
+    state_data = load(sprintf('%s%.0f_state.mat', path, sp));
+
+    data.(sp_str).aircraft = ac_data;
+    data.(sp_str).bez = bez_data;
+    data.(sp_str).delay = delay_data;
+    data.(sp_str).dub = dub_data;
+    data.(sp_str).ev_specific = ev_data;
+    data.(sp_str).note_events = note_data;
+    data.(sp_str).state = state_data;
+
+    x(c) = sp;
+    c = c+1;
+end
+
+bar_width = 0.35;
+hold on;
 
 
-plot(lon, lat);
-xlim([-82.2-0.003, -82.2+0.003])
-axis('equal')
+for i = 1:1:length(x)
+
+
+end
+
+
+
+
+
+% home = [39.49029047106718, -82.2];
+% 
+% [cx1, cy1] = quadBezier([0, 574.12], [205.6159, 564.0093], [221, 711.62], 100);
+% 
+% [bezlon1, bezlat1] = Meters_To_WSG84(cx1, cy1, home)
+% 
+% 
+% lon = state_dat.lon(13550:1:17001);
+% lat = state_dat.lat(13550:1:17001);
+% 
+% 
+% 
+% hold on;
+% plot(lon, lat, LineWidth=2);
+% plot(bezlon1, bezlat1, LineWidth=2)
+% xlim([-82.2-0.003, -82.2+0.003])
+% axis('equal')
 
 

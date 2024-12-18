@@ -240,12 +240,12 @@ def find_diff_exit(guess, nodes, velocity):
                 int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
                 diff = np.abs((np.pi/2) - int_angle)
                 guess_deg = np.rad2deg(ba)
-                # plt.title(f'{guess_deg} {t_guess}')
-                # plt.plot(x, y_l, linestyle = 'dashed')
-                # plt.plot(path[0], path[1])
-                # plt.plot(x_l, y)
-                # plt.axis('equal')
-                # plt.show()
+                plt.title(f'{guess_deg} {t_guess}')
+                plt.plot(x, y_l, linestyle = 'dashed')
+                plt.plot(path[0], path[1])
+                plt.plot(x_l, y)
+                plt.axis('equal')
+                plt.show()
                 if diff < mindiff:
                     mindiff = diff
                     # print('BLARGY', diff)
