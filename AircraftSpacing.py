@@ -1270,7 +1270,7 @@ if __name__ == '__main__':
     import json
     import argparse
     import scipy
-    windows = True
+    windows = False
     if not windows:
         parser = argparse.ArgumentParser(description='Apply different spacing between fleet aircraft')
         parser.add_argument('-s1', '--scenario')
