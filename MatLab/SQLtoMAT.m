@@ -11,7 +11,7 @@ id = 'AX0';
 % Make connection to database
 conn = mysql('Cascading Delay','root','pixhawk2');
 
-for sp = 131:20:311
+for sp = 8:8:104
 
     %%%%%%%%%%
     %Aircraft%

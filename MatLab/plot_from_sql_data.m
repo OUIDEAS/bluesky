@@ -50,7 +50,7 @@ xl = zeros([1, 10]);
 c = 1;
 
 
-for sp = 131:20:311
+for sp = 8:8:104
     sp_str = sprintf('sp%.0f', sp); 
     ac_data = load(sprintf('%s%.0f_aircraft.mat', path, sp));
     bez_data = load(sprintf('%s%.0f_bez.mat', path, sp));
@@ -90,13 +90,17 @@ delay_matrix = zeros(length(xl), num_aircraft);
 % Loop through each sp to populate the delay matrix
 for i = 1:length(xl)
     sp_str = sprintf('sp%.0f', xl(i)); % Create the dynamic field name
+
+    if data.(sp_str).delay.delay_dat.delay > 0
     delay_values = data.(sp_str).delay.delay_dat.delay; % Extract delay values for this sp
-    
     if xl(i) == 311
         delay_values = delay_values(1:2);
     end
     
-    delay_matrix(i, :) = delay_values; % Store the delay values in the matrix
+    delay_matrix(i, :) = delay_values; 
+    end
+
+   % Store the delay values in the matrix
 end
 
 % Create bar plot with grouped bars
