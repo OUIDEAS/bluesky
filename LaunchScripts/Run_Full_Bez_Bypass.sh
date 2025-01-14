@@ -1,6 +1,6 @@
 scenario="Hold"
 subscenario="Single"
-t=17000
+t=5000
 exptype="SingleHold"
 expnum=1
 for (( spacing=160; spacing>=8; spacing-=8 ))
