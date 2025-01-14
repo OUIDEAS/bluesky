@@ -271,14 +271,25 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     datasets = [wptdata, aptdata]
 
     #Make Aircraft
-    home = [39.42, -82.2]
-    des_dist = [0, -int(spacing)]
-    ax1_ll = Meters_To_WSG84(des_dist, home)
-    print(f'BEGINNING SIMULAION FOR AIRCRAFT SPACING OF {spacing}')
-    print('AX1 POSITION:', ax1_ll)
+    
 
-    mytraf = bs.traf.cre('AX0', 'M250', 39.42, -82.2, 0, 80, 57.412)
-    mytraf = bs.traf.cre('AX1', 'M250', ax1_ll[0], -82.2, 0, 80, 57.412)
+    
+    if subscenario == 'NotSingle':
+        home = [39.42, -82.2]
+        des_dist = [0, -int(spacing)]
+        ax1_ll = Meters_To_WSG84(des_dist, home)
+        print(f'BEGINNING SIMULAION FOR AIRCRAFT SPACING OF {spacing}')
+        print('AX1 POSITION:', ax1_ll)
+        mytraf = bs.traf.cre('AX0', 'M250', 39.42, -82.2, 0, 80, 57.412)
+        mytraf = bs.traf.cre('AX1', 'M250', ax1_ll[0], -82.2, 0, 80, 57.412)
+    else:
+        home = [39.4186, -82.2]
+        des_dist = [0, int(spacing)]
+        ax0_ll = Meters_To_WSG84(des_dist, home)
+        print(f'BEGINNING SIMULAION FOR AIRCRAFT SPACING OF {spacing}')
+        print('AX0 POSITION:', ax0_ll)
+        mytraf = bs.traf.cre('AX0', 'M250', ax0_ll[0], -82.2, 0, 80, 57.412)
+        mytraf = bs.traf.cre('AX1', 'M250', 39.4172, -82.2, 0, 80, 57.412)
     # print(dist)
     # mytraf = bs.traf.cre('AC2', 'M250', 39.4144 , -82.2, 0, 80, 57.412)
     # mytraf = bs.traf.cre('AC3', 'M250', 39.4116, -82.2, 0, 80, 57.412)
@@ -309,12 +320,13 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     t_max = int(t)
     # t_max = 22500
 
-    home = [ax1_ll[0], -82.2]
-    des_dist = [0, -650]
-    ex0_ll = Meters_To_WSG84(des_dist, home)
-    print('EX0 START POSITION:', ex0_ll)
+    
 
     if subscen == 'NotSingle':
+        home = [ax1_ll[0], -82.2]
+        des_dist = [0, -650]
+        ex0_ll = Meters_To_WSG84(des_dist, home)
+        print('EX0 START POSITION:', ex0_ll)
         mytraf2 = bs.traf.cre('EX0', 'M250', ex0_ll[0], -82.2, 0, 80, 64)
     if subscen == 'Single':
         mytraf2 = bs.traf.cre('EX0', 'M250', 39.4186, -82.2, 0, 80, 64)
@@ -903,10 +915,12 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     if scenario == 'BezAM':
         for i in range(0, 2):
             # print(i, counter[i], start_end[i][0][0])
-            if counter[i] == 0:
-                start_end[i][0] = [0, 0]
-                start_end[i][1] = [0, 0]
+            # print(counter[i])
+            if subscenario == 'Single':
+                start_end[1][0] = [0, 0]
+                start_end[1][1] = [0, 0]
             # print(i, counter[i])
+            # print(i)
             heh, point_dist[i] = qdrdist(start_end[i][0][0], start_end[i][0][1], start_end[i][1][0], start_end[i][1][1])
             nominal_time[i] = point_dist[i]/57.412
             real_time[i] = times[i][1]-times[i][0]
@@ -915,16 +929,17 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
             print(f'DATA FOR {bs.traf.id[i]}')
             print(f'ALTERNATE MANEUVER START/END LATLON{start_end[i]}, DISTANCE BETWEEN POINTS {point_dist[i]}, STRAIGHT LINE TRAVEL TIME {nominal_time[i]}, ALTERNATE MANEUVER TRAVEL TIME {real_time[i]}, ABSORBED DELAY {delay[i]}')
     else:
+        # print(times)
         for i in range(0,2):
             delay[i] = times[i][2] - times[i][0] 
             real_time[i] = delay[i]
             nominal_time[i] = 0
-            print(f'DATA FOR {bs.traf.id[i]}, {delay[i]}')
+            print(f'DATA FOR {bs.traf.id[i]}, {delay[i]} SECOND DELAY')
             ETA[i][1] = ETA[i][0]+delay[i]
-            print(start_end[i])
-            print(times[i])
+            print(start_end[i], 'START END')
+            print(times[i], 'TIMES')
     print('ETA FOR EACH AIRCRAFT:', ETA)
-    print(start_end,times)
+    # print(start_end,times)
 
     delayData = {
         'AX0':{
@@ -959,16 +974,19 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
         }
     }
 
+    # print(dist_to_EV[0], violation_count)
 
+    # try:
+    #     for i in range(len(violation_count[0])):
+    #         violation_count[i]/=100
+    #     mins = []
+    #     for i in dist_to_EV:
+    #         mins.append(np.argmin(i))
+    #     print('TOTAL TIME EACH AIRCRAFT VIOLATED THE RADIUS:', violation_count)
+    #     print('MINIMUM DISTANCE EACH AIRCRAFT GOT TO THE EV:', mins )
+    # except:
+    #     print('no dist to ev taken')
 
-    for i in range(len(violation_count)):
-        violation_count[i]/=100
-    mins = []
-    for i in dist_to_EV:
-        mins.append(np.argmin(i))
-
-    print('TOTAL TIME EACH AIRCRAFT VIOLATED THE RADIUS:', violation_count)
-    print('MINIMUM DISTANCE EACH AIRCRAFT GOT TO THE EV:', mins )
     '''Plotting'''
     # fig = plt.figure(1)
     # ax = fig.add_subplot(111)
@@ -1129,8 +1147,8 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
     # plt.ylabel('Latitude')
     # plt.grid()
     # plt.legend()
-
     # plt.show()
+
     print('FINAL TOI:', TOI[1][-1])
 
     # data = {
@@ -1190,67 +1208,67 @@ def run_sim(scen, subscenario, spacing, t, expnum, exptype):
 
     }
     #WINDOWS FILE SAVING
-    # note_events = pd.DataFrame(events)
-    # output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json'
-    # note_events.to_json(output_file, orient='records', indent=4)
-    # print(f"Note Events data saved to {output_file}")
-
-    # ev_specific = pd.DataFrame(ev_stuff)
-    # output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json'
-    # ev_specific.to_json(output_file, orient='records', indent=4)
-    # print(f"EVSPecific data saved to {output_file}")
-
-    # output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json'
-    # ac_df.to_json(output_file, orient='records', indent=4)
-    # print(f"Aircraft data saved to {output_file}")
-
-
-    # path = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs'
-    # to_json(stateData, f'State_{spacing}_Apart', path)
-    # to_json(delayData, f'Delay_{spacing}_Apart', path)
-    # if 'Bez' in exptype or 'Bez' in scen:
-    #     bez = pd.DataFrame(bez_tot)
-    #     output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json'
-    #     bez.to_json(output_file, orient='records', indent=4)
-    #     print(f"Bez data saved to {output_file}")
-
-    #     dub = pd.DataFrame(dub_tot)
-    #     output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json'
-    #     dub.to_json(output_file, orient='records', indent=4)
-    #     print(f"Dubins data saved to {output_file}")
-    #     to_json(bezData, f'Bez_{spacing}_Apart', path)
-    #     to_json(dubData, f'Dubins_{spacing}_Apart', path)
-
-
     note_events = pd.DataFrame(events)
-    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json'
+    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json'
     note_events.to_json(output_file, orient='records', indent=4)
     print(f"Note Events data saved to {output_file}")
 
     ev_specific = pd.DataFrame(ev_stuff)
-    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json'
+    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json'
     ev_specific.to_json(output_file, orient='records', indent=4)
     print(f"EVSPecific data saved to {output_file}")
 
-    output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json'
+    output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json'
     ac_df.to_json(output_file, orient='records', indent=4)
     print(f"Aircraft data saved to {output_file}")
 
 
-    path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
+    path = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs'
     to_json(stateData, f'State_{spacing}_Apart', path)
     to_json(delayData, f'Delay_{spacing}_Apart', path)
-    # print(exptype, scen)
     if 'Bez' in exptype or 'Bez' in scen:
         bez = pd.DataFrame(bez_tot)
-        output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json'
+        output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json'
         bez.to_json(output_file, orient='records', indent=4)
         print(f"Bez data saved to {output_file}")
 
         dub = pd.DataFrame(dub_tot)
-        output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Dubins_{spacing}_Apart.json'
+        output_file = f'C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json'
         dub.to_json(output_file, orient='records', indent=4)
         print(f"Dubins data saved to {output_file}")
+        to_json(bezData, f'Bez_{spacing}_Apart', path)
+        to_json(dubData, f'Dubins_{spacing}_Apart', path)
+
+
+    # note_events = pd.DataFrame(events)
+    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json'
+    # note_events.to_json(output_file, orient='records', indent=4)
+    # print(f"Note Events data saved to {output_file}")
+
+    # ev_specific = pd.DataFrame(ev_stuff)
+    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json'
+    # ev_specific.to_json(output_file, orient='records', indent=4)
+    # print(f"EVSPecific data saved to {output_file}")
+
+    # output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json'
+    # ac_df.to_json(output_file, orient='records', indent=4)
+    # print(f"Aircraft data saved to {output_file}")
+
+
+    # path = f'~/bluesky/BlueSkyData/{exptype}JSONs'
+    # to_json(stateData, f'State_{spacing}_Apart', path)
+    # to_json(delayData, f'Delay_{spacing}_Apart', path)
+    # # print(exptype, scen)
+    # if 'Bez' in exptype or 'Bez' in scen:
+    #     bez = pd.DataFrame(bez_tot)
+    #     output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json'
+    #     bez.to_json(output_file, orient='records', indent=4)
+    #     print(f"Bez data saved to {output_file}")
+
+    #     dub = pd.DataFrame(dub_tot)
+    #     output_file = f'~/bluesky/BlueSkyData/{exptype}JSONs/Dubins_{spacing}_Apart.json'
+    #     dub.to_json(output_file, orient='records', indent=4)
+    #     print(f"Dubins data saved to {output_file}")
 
 
     
@@ -1287,12 +1305,15 @@ if __name__ == '__main__':
         args = parser.parse_args()
         run_sim(args.scenario, args.subscenario, args.spacing , args.time, args.expnum, args.exptype)
     else:
-        scenario="BezAM"
-        subscenario="NotSingle"
-        t=17000
-        exptype="WindowsTests"
-        expnum=0
-        # spacing = np.arange(104, 0, -8)
+        # scenario="BezAM"
+        scenario = "BezAM"
+        subscenario="Single"
+        t=5000
+        exptype="SingleBez"
+        expnum= 3
+        spacing = 160
         # print(spacing)
+        # c=1
         # for i in spacing:
-        run_sim(scenario, subscenario, 104 , t, expnum, exptype)
+        run_sim(scenario, subscenario, spacing , t, expnum, exptype)
+            # c+=1

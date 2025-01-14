@@ -43,37 +43,16 @@ function [lon_points, lat_points] = Meters_To_WSG84(cx1, cy1, home)
 end
 
 
-path = 'C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/';
+path = 'C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/';
 
 data = struct();
-x = zeros([1, 10])
-
+xl = zeros([1, 20]);
+mins = zeros([0, 20]);
 c = 1;
 
 
-for sp = 131:20:311
-    sp_str = sprintf('sp%.0f', sp); % Create a unique field name for each sp
-
-    % ac = sprintf('%s%.0f_aircraft.mat', path, sp);
-    % load(ac);
-    % 
-    % bez = sprintf('%s%.0f_bez.mat', path, sp);
-    % load(bez);
-    % 
-    % delay = sprintf('%s%.0f_delay.mat', path, sp);
-    % load(delay);
-    % 
-    % dub = sprintf('%s%.0f_dub.mat', path, sp);
-    % load(dub);
-    % 
-    % ev = sprintf('%s%.0f_ev_specific.mat', path, sp);
-    % load(ev);
-    % 
-    % note = sprintf('%s%.0f_note_events.mat', path, sp);
-    % load(note);
-    % 
-    % state = sprintf('%s%.0f_state.mat', path, sp);
-    % load(state);
+for sp = 8:8:160
+    sp_str = sprintf('sp%.0f', sp); 
     ac_data = load(sprintf('%s%.0f_aircraft.mat', path, sp));
     bez_data = load(sprintf('%s%.0f_bez.mat', path, sp));
     delay_data = load(sprintf('%s%.0f_delay.mat', path, sp));
@@ -90,20 +69,60 @@ for sp = 131:20:311
     data.(sp_str).note_events = note_data;
     data.(sp_str).state = state_data;
 
-    x(c) = sp;
+    xl(c) = sp;
     c = c+1;
 end
 
-bar_width = 0.35;
+bar_width = 1;
 hold on;
 
+% x = 1:length(xl)
+% for i = 1:length(x)
+% sp_str = sprintf('sp%.0f', xl(i))
+%  delay_value = data.(sp_str).delay.delay_dat.delay;
+% 
+%     % Plot using x(i) and delay_value
+%     plot([0, x(i) + bar_width * i], [delay_value(1), delay_value(1)], 'LineWidth', 2);
+% end
 
-for i = 1:1:length(x)
+num_aircraft = 2; % Assuming 2 aircraft per sp
+delay_matrix = zeros(length(xl), num_aircraft);
 
+% Loop through each sp to populate the delay matrix
+for i = 1:length(xl)
+    
+    sp_str = sprintf('sp%.0f', xl(i)); % Create the dynamic field name
+    disp(sp_str);
+    disp(min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist))
+    min_dist = min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist);
+    if data.(sp_str).delay.delay_dat.delay >= 0
+    delay_values = data.(sp_str).delay.delay_dat.delay; % Extract delay values for this sp
+    % if xl(i) == 311
+    %     delay_values = delay_values(1:2);
+        % disp(delay_values)
+    % end
+    
+    delay_matrix(i, :) = delay_values; 
+    mins(i, :) = min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist);
+    end
 
+   % Store the delay values in the matrix
 end
+mins
+% Create bar plot with grouped bars
+x = 1:length(xl); % X values corresponding to sp indices
+bar(x, delay_matrix, bar_width); % Plot grouped bars
 
-
+% Customize the plot
+xticks(x);
+% grid();
+xticklabels(arrayfun(@num2str, xl, 'UniformOutput', false)); % Set x-axis labels to sp numbers
+xlabel('Spacing Between Fleet Aircraft (m)');
+ylabel('Delay (s)');
+legend({'AX0', 'AX1'}, 'Location', 'best');
+title('Delay for Each Aircraft Across SP Values');
+ylim([0, 2.5]);
+hold off;
 
 
 

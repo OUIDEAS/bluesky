@@ -43,10 +43,11 @@ function [lon_points, lat_points] = Meters_To_WSG84(cx1, cy1, home)
 end
 
 
-path = 'C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/';
+path = 'C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/';
 
 data = struct();
 xl = zeros([1, 10]);
+mins = zeros([0, 10]);
 c = 1;
 
 
@@ -89,20 +90,25 @@ delay_matrix = zeros(length(xl), num_aircraft);
 
 % Loop through each sp to populate the delay matrix
 for i = 1:length(xl)
+    
     sp_str = sprintf('sp%.0f', xl(i)); % Create the dynamic field name
-
-    if data.(sp_str).delay.delay_dat.delay > 0
+    disp(sp_str);
+    disp(min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist))
+    min_dist = min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist);
+    if data.(sp_str).delay.delay_dat.delay >= 0
     delay_values = data.(sp_str).delay.delay_dat.delay; % Extract delay values for this sp
-    if xl(i) == 311
-        delay_values = delay_values(1:2);
-    end
+    % if xl(i) == 311
+    %     delay_values = delay_values(1:2);
+        % disp(delay_values)
+    % end
     
     delay_matrix(i, :) = delay_values; 
+    mins(i) = min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist);
     end
 
    % Store the delay values in the matrix
 end
-
+figure(1);
 % Create bar plot with grouped bars
 x = 1:length(xl); % X values corresponding to sp indices
 bar(x, delay_matrix, bar_width); % Plot grouped bars
@@ -113,13 +119,21 @@ xticks(x);
 xticklabels(arrayfun(@num2str, xl, 'UniformOutput', false)); % Set x-axis labels to sp numbers
 xlabel('Spacing Between Fleet Aircraft (m)');
 ylabel('Delay (s)');
-legend({'AX0', 'AX1'}, 'Location', 'best');
+legend({'AX0'}, 'Location', 'best');
 title('Delay for Each Aircraft Across SP Values');
+ylim([0, 2.5]);
 hold off;
 
 
-
-% home = [39.49029047106718, -82.2];
+figure(2);
+% bar(x, mins, bar_width); % Plot grouped bars% home = [39.49029047106718, -82.2];
+plot(x, mins, LineWidth=5)
+xticks(x);
+xticklabels(arrayfun(@num2str, xl, 'UniformOutput', false)); % Set x-axis labels to sp numbers
+xlabel('Spacing Between Fleet Aircraft (m)');
+ylabel('Minimum Distance Between Aircraft (m)');
+% legend({'AX0', 'AX1'}, 'Location', 'best');
+title('Delay for Each Aircraft Across SP Values');
 % 
 % [cx1, cy1] = quadBezier([0, 574.12], [205.6159, 564.0093], [221, 711.62], 100);
 % 

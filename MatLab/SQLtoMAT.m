@@ -10,18 +10,18 @@ clc;clear;close all;
 id = 'AX0';
 % Make connection to database
 conn = mysql('Cascading Delay','root','pixhawk2');
-
-for sp = 8:8:104
+scenario = 'SingleBez';
+for sp = 8:8:160
 
     %%%%%%%%%%
     %Aircraft%
     %%%%%%%%%%
     
-    query = [sprintf('SELECT * FROM cas_delay_test.aircraft WHERE ax_spacing = %f',sp )];
-    % query = [sprintf('SELECT * FROM cas_delay_test.aircraft WHERE ACID = ''%s''',id )];
+    query = [sprintf('SELECT * FROM cas_delay_1.aircraft WHERE ax_spacing = %f and ExpType = ''%s''', sp, scenario)];
+    % query = [sprintf('SELECT * FROM cas_delay_1.aircraft WHERE ACID = ''%s''',id )];
     
     ac_dat = fetch(conn,query);
-    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_aircraft.mat', sp), 'ac_dat')
+    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/%.0f_aircraft.mat', sp), 'ac_dat')
     % data = sqlread(conn,'aircraft');
     
     
@@ -29,33 +29,33 @@ for sp = 8:8:104
     %State%
     %%%%%%%
     
-    query = [sprintf('SELECT * FROM cas_delay_test.state WHERE ax_spacing = %f',sp )];
-    % query = [sprintf('SELECT * FROM cas_delay_test.state WHERE ACID = ''%s''',id )];
+    query = [sprintf('SELECT * FROM cas_delay_1.state WHERE ax_spacing = %f and ExpType = ''%s''', sp, scenario)];
+    % query = [sprintf('SELECT * FROM cas_delay_1.state WHERE ACID = ''%s''',id )];
     
     state_dat = fetch(conn,query);
-    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_state.mat', sp), 'state_dat')
+    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/%.0f_state.mat', sp), 'state_dat')
     % data = sqlread(conn,'aircraft');
     
     %%%%%
     %Bez%
     %%%%%
     
-    query = [sprintf('SELECT * FROM cas_delay_test.bez WHERE ax_spacing = %f',sp )];
-    % query = [sprintf('SELECT * FROM cas_delay_test.bez WHERE ACID = ''%s''',id )];
-    
+    query = [sprintf('SELECT * FROM cas_delay_1.bez WHERE ax_spacing = %f and ExpType = ''%s''', sp, scenario)];
+    % query = [sprintf('SELECT * FROM cas_delay_1.bez WHERE ACID = ''%s''',id )];
+
     bez_dat = fetch(conn,query);
-    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_bez.mat', sp), 'bez_dat')
+    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/%.0f_bez.mat', sp), 'bez_dat')
     % data = sqlread(conn,'aircraft');
-    
+
     %%%%%%%%
     %Dubins%
     %%%%%%%%
-    
-    query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ax_spacing = %f',sp )];
-    % query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ACID = ''%s''',id )];
-    
+
+    query = [sprintf('SELECT * FROM cas_delay_1.dubins WHERE ax_spacing = %f and ExpType = ''%s''', sp, scenario)];
+    % query = [sprintf('SELECT * FROM cas_delay_1.dubins WHERE ACID = ''%s''',id )];
+
     dub_dat = fetch(conn,query);
-    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_dub.mat', sp), 'dub_dat')
+    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/%.0f_dub.mat', sp), 'dub_dat')
     % data = sqlread(conn,'aircraft');
     
     
@@ -63,11 +63,11 @@ for sp = 8:8:104
     %Note Events%
     %%%%%%%%%%%%%
     
-    query = [sprintf('SELECT * FROM cas_delay_test.note_events WHERE ax_spacing = %f',sp )];
-    % query = [sprintf('SELECT * FROM cas_delay_test.note_events WHERE ACID = ''%s''',id )];
+    query = [sprintf('SELECT * FROM cas_delay_1.note_events WHERE ax_spacing = %f and ExpType = ''%s''', sp, scenario)];
+    % query = [sprintf('SELECT * FROM cas_delay_1.note_events WHERE ACID = ''%s''',id )];
     
     event_dat = fetch(conn,query);
-    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_note_events.mat', sp), 'event_dat')
+    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/%.0f_note_events.mat', sp), 'event_dat')
     % data = sqlread(conn,'aircraft');
     
     
@@ -75,11 +75,11 @@ for sp = 8:8:104
     %EV Specific%
     %%%%%%%%%%%%%
     
-    query = [sprintf('SELECT * FROM cas_delay_test.ev_specific WHERE ax_spacing = %f',sp )];
-    % query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ACID = ''%s''',id )];
+    query = [sprintf('SELECT * FROM cas_delay_1.ev_specific WHERE ax_spacing = %f and ExpType = ''%s''', sp, scenario)];
+    % query = [sprintf('SELECT * FROM cas_delay_1.dubins WHERE ACID = ''%s''',id )];
     
     ev_specific_dat = fetch(conn,query);
-    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_ev_specific.mat', sp), 'ev_specific_dat')
+    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/%.0f_ev_specific.mat', sp), 'ev_specific_dat')
     % data = sqlread(conn,'aircraft');
     
     
@@ -87,12 +87,14 @@ for sp = 8:8:104
     %Delay%
     %%%%%%%
     
-    query = [sprintf('SELECT * FROM cas_delay_test.delay WHERE ax_spacing = %f',sp )];
-    % query = [sprintf('SELECT * FROM cas_delay_test.dubins WHERE ACID = ''%s''',id )];
+    query = [sprintf('SELECT * FROM cas_delay_1.delay WHERE ax_spacing = %f and ExpType = ''%s''', sp, scenario)];
+    % query = [sprintf('SELECT * FROM cas_delay_1.dubins WHERE ACID = ''%s''',id )];
     
     delay_dat = fetch(conn,query);
-    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SQLData/%.0f_delay.mat', sp), 'delay_dat')
+    save(sprintf('C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/%.0f_delay.mat', sp), 'delay_dat')
     % data = sqlread(conn,'aircraft');
+
+    fprintf('Spacing %.0f conversion complete!', sp);
 
 end
 

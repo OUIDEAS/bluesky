@@ -260,7 +260,7 @@ def find_diff_exit(guess, nodes, velocity, lr):
             else:
                 x_l = [h(t_guess) + np.sqrt(tr**2 - (y_y - k(t_guess))**2) for y_y in y]
             int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
-            if x_l[0] == 0 and y[0] > By(t_guess):# and np.isclose(int_angle, math.pi/2, atol = 2.5):# <= 0.01:
+            if x_l[0] <=0.01 and y[0] > By(t_guess):# and np.isclose(int_angle, math.pi/2, atol = 2.5):# <= 0.01:
                 # x_l = [i for i in np.linspace(750, Bx(t_guess))]
                 # y = [k(t_guess)-np.sqrt(tr**2 - (x-h(t_guess))**2) for x in x_l]
                 int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
@@ -676,7 +676,7 @@ def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id, timeStamp, expnum, e
     optim2_length = path_length(P0=[nodes2[0][0],nodes2[1][0]], P1=[nodes2[0][1],nodes2[1][1]],P2=[nodes2[0][2], nodes2[1][2]], t=1)
     
     # if id!= 0:
-    ba, t_entry = solve_optimEntry(np.deg2rad(25), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
+    ba, t_entry = solve_optimEntry(np.deg2rad(10), np.deg2rad(73), np.deg2rad(5), nodes1, vel_knots, pos, lr)
     # else:
     #     ba, t_entry = solve_optimEntry(np.deg2rad(15), np.deg2rad(73), np.deg2rad(15), nodes1, vel_knots, pos, lr)
 
@@ -706,10 +706,10 @@ def EntryExitOutside(nodes1, nodes2, pos, velocity, lr, id, timeStamp, expnum, e
 
     t_start2 = 0.35678391959798994
 
-    if lr == -1:
-        baEx, exit_t = solve_optimExit([np.deg2rad(25), 0.45], np.deg2rad(73), np.deg2rad(15), t_start2, nodes2, velocity, lr)
-    else:
-        baEx, exit_t = solve_optimExit([np.deg2rad(28), 0.45], np.deg2rad(73), np.deg2rad(15), t_start2, nodes2, velocity, lr)
+    # if lr == -1:
+    #     baEx, exit_t = solve_optimExit([np.deg2rad(10), 0.45], np.deg2rad(73), np.deg2rad(5), t_start2, nodes2, velocity, lr)
+    # else:
+    baEx, exit_t = solve_optimExit([np.deg2rad(30), 0.45], np.deg2rad(60), np.deg2rad(20), t_start2, nodes2, velocity, lr)
 
     # else:
     #     baEx, exit_t = solve_optimExit([np.deg2rad(60), 0.55], np.deg2rad(60), np.deg2rad(20), t_start2, nodes2, velocity, lr)
@@ -839,6 +839,9 @@ def exitPath(velocity, t_exit, ba, intersect, nodes, lr):
     # print(k)
     x_exit = [i for i in np.linspace(0, intersect[0], 200)]
     y_exit = [k-np.sqrt(tr**2 - (x-h)**2) for x in x_exit]
+    if math.isnan(y_exit[0]):
+        x_exit = [i for i in np.linspace(h-tr, intersect[0], 200)]
+        y_exit = [k-np.sqrt(tr**2 - (x-h)**2) for x in x_exit]
     # y_exit[0] = 650
     # y_exit[0] = k
     # print(y_exit)
@@ -852,7 +855,7 @@ def exitPath(velocity, t_exit, ba, intersect, nodes, lr):
     # exitLength = tr*ar
 
     # exitTOA = exitLength/velocity
-    ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[0]])
+    # ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[0]])
     # print(ar, ad, ba)
     exitLength = 2*pi*tr*ar
 

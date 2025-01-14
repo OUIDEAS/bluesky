@@ -5,6 +5,7 @@ from sqlalchemy import text
 import json
 import argparse
 import os
+import numpy as np
 
 # mydb = mysql.connector.connect(
 #     host="localhost",
@@ -23,34 +24,56 @@ def to_sql(spacing, exptype, scen):
         '''
         Bez Data
         '''
-        # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json"
-        file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json')
+        file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json"
+        # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json')
         with open(file_path, 'r') as file:
             BezierData = json.load(file)
         records = []
-        for item in BezierData:
-            for key, value in item.items():
-                records.append({
-                    # 'ID': key,
-                    'p0x': value['p0x'],
-                    'p0y': value['p0y'],
-                    'p1x': value['p1x'],
-                    'p1y': value['p1y'],
-                    'p2x': value['p2x'],
-                    'p2y': value['p2y'],
-                    'length': value['length'],
-                    'Bez_ID': value['Bez_ID'],
-                    'TOA': value['TOA'],
-                    'orig_TOA': value['orig_TOA'],
-                    'travel_time': value['travel_time'],
-                    'timeStamp': value['timeStamp'],
-                    'velocity': value['velocity'],
-                    'ACID': value['ACID'],
-                    'ExpNum': value['ExpNum'],
-                    'Category': value['Category'],
-                    'ExpType': value['ExpType'],
-                    'ax_spacing': value['ax_spacing']
-                })
+        # for item in BezierData:
+        #     for key, value in item.items():
+        #         records.append({
+        #             # 'ID': key,
+        #             'p0x': value['p0x'],
+        #             'p0y': value['p0y'],
+        #             'p1x': value['p1x'],
+        #             'p1y': value['p1y'],
+        #             'p2x': value['p2x'],
+        #             'p2y': value['p2y'],
+        #             'length': value['length'],
+        #             'Bez_ID': value['Bez_ID'],
+        #             'TOA': value['TOA'],
+        #             'orig_TOA': value['orig_TOA'],
+        #             'travel_time': value['travel_time'],
+        #             'timeStamp': value['timeStamp'],
+        #             'velocity': value['velocity'],
+        #             'ACID': value['ACID'],
+        #             'ExpNum': value['ExpNum'],
+        #             'Category': value['Category'],
+        #             'ExpType': value['ExpType'],
+        #             'ax_spacing': value['ax_spacing']
+        #         })
+        for key, value in BezierData.items():  # Iterate over the top-level dictionary
+            records.append({
+                # 'ID': key,  # If you want to include the key (e.g., "B1") as an ID
+                'p0x': value['p0x'],
+                'p0y': value['p0y'],
+                'p1x': value['p1x'],
+                'p1y': value['p1y'],
+                'p2x': value['p2x'],
+                'p2y': value['p2y'],
+                'length': value['length'],
+                'Bez_ID': value['Bez_ID'],
+                'TOA': value['TOA'],
+                'orig_TOA': value['orig_TOA'],
+                'travel_time': value['travel_time'],
+                'timeStamp': value['timeStamp'],
+                'velocity': value['velocity'],
+                'ACID': value['ACID'],
+                'ExpNum': value['ExpNum'],
+                'Category': value['Category'],
+                'ExpType': value['ExpType'],
+                'ax_spacing': value['ax_spacing']
+            })
 
         bez = pd.DataFrame(records)
         bez.to_sql(name = 'bez', con=engine, if_exists='append', index = False)
@@ -61,35 +84,37 @@ def to_sql(spacing, exptype, scen):
         Dubins Data
 
         '''
-        # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json"
-        file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Dubins_{spacing}_Apart.json')
+        file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json"
+        # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Dubins_{spacing}_Apart.json')
 
         with open(file_path, 'r') as file:
             DubinsData = json.load(file)
 
         # Process JSON into records
         records = []
-        for item in DubinsData:
-            for path_type, value in item.items():
-                records.append({
-                    'path_type': value.get('path_type'),
-                    'bez_intx': value.get('bez_intx'),
-                    'bez_inty': value.get('bez_inty'),
-                    'nom_intx': value.get('nom_intx'),
-                    'nom_inty': value.get('nom_inty'),
-                    'bez_t': value.get('bez_t'),
-                    'intersect_heading': value.get('intersect_heading'),
-                    'h': value.get('h'),
-                    'k': value.get('k'),
-                    'bank_angle': value.get('bank_angle'),
-                    'tr': value.get('tr'),
-                    'timeStamp': value.get('timeStamp'),
-                    'ACID': value.get('ACID'),
-                    'ExpNum': value.get('ExpNum'),
-                    'Category': value.get('Category'),
-                    'ExpType': value.get('ExpType'),
-                    'ax_spacing': value.get('ax_spacing'),
-                })
+        # for item in DubinsData:
+            # for path_type, value in item.items():
+        for path_type, value in DubinsData.items():
+
+            records.append({
+                'path_type': value.get('path_type'),
+                'bez_intx': value.get('bez_intx'),
+                'bez_inty': value.get('bez_inty'),
+                'nom_intx': value.get('nom_intx'),
+                'nom_inty': value.get('nom_inty'),
+                'bez_t': value.get('bez_t'),
+                'intersect_heading': value.get('intersect_heading'),
+                'h': value.get('h'),
+                'k': value.get('k'),
+                'bank_angle': value.get('bank_angle'),
+                'tr': value.get('tr'),
+                'timeStamp': value.get('timeStamp'),
+                'ACID': value.get('ACID'),
+                'ExpNum': value.get('ExpNum'),
+                'Category': value.get('Category'),
+                'ExpType': value.get('ExpType'),
+                'ax_spacing': value.get('ax_spacing'),
+            })
 
 
         dubinsPath = pd.DataFrame(records)
@@ -99,8 +124,8 @@ def to_sql(spacing, exptype, scen):
     '''
     State Data
     '''  
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\State_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/State_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\State_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/State_{spacing}_Apart.json')
 
     with open(file_path) as file:
         state_data = json.load(file)
@@ -130,8 +155,8 @@ def to_sql(spacing, exptype, scen):
     '''
     EV Specific
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         ev_data = json.load(file)
@@ -158,8 +183,8 @@ def to_sql(spacing, exptype, scen):
     '''
     Notable Events
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         note_events = json.load(file)
@@ -186,8 +211,8 @@ def to_sql(spacing, exptype, scen):
     '''
     Aircraft Data
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         ac_dat = json.load(file)
@@ -212,8 +237,8 @@ def to_sql(spacing, exptype, scen):
     '''
     Delay Data
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Delay_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Delay_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Delay_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Delay_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         DelayData = json.load(file)
@@ -242,7 +267,7 @@ def to_sql(spacing, exptype, scen):
     print('Delay Data Uploaded to SQL!')
 
 if __name__ == '__main__':
-    windows = False
+    windows = True
     if not windows:
         parser = argparse.ArgumentParser(description='Apply different spacing between fleet aircraft')
         parser.add_argument('-s1', '--scenario')
@@ -254,4 +279,6 @@ if __name__ == '__main__':
         args = parser.parse_args()
         to_sql(args.spacing, args.exptype, args.scenario)
     else:
-        to_sql( 311, "SuperTest", 'BezAM')
+        spacing = np.arange(160, 0, -8)
+        for i in spacing:
+            to_sql(i, "SingleBez", 'BezAM')
