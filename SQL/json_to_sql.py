@@ -24,8 +24,8 @@ def to_sql(spacing, exptype, scen):
         '''
         Bez Data
         '''
-        # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json"
-        file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json')
+        file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Bez_{spacing}_Apart.json"
+        # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Bez_{spacing}_Apart.json')
         with open(file_path, 'r') as file:
             BezierData = json.load(file)
         records = []
@@ -84,8 +84,8 @@ def to_sql(spacing, exptype, scen):
         Dubins Data
 
         '''
-        # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json"
-        file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Dubins_{spacing}_Apart.json')
+        file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Dubins_{spacing}_Apart.json"
+        # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Dubins_{spacing}_Apart.json')
 
         with open(file_path, 'r') as file:
             DubinsData = json.load(file)
@@ -124,8 +124,8 @@ def to_sql(spacing, exptype, scen):
     '''
     State Data
     '''  
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\State_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/State_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\State_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/State_{spacing}_Apart.json')
 
     with open(file_path) as file:
         state_data = json.load(file)
@@ -155,8 +155,8 @@ def to_sql(spacing, exptype, scen):
     '''
     EV Specific
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\EVSpecific_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/EVSpecific_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         ev_data = json.load(file)
@@ -183,8 +183,8 @@ def to_sql(spacing, exptype, scen):
     '''
     Notable Events
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\NotableEvents_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/NotableEvents_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         note_events = json.load(file)
@@ -211,8 +211,8 @@ def to_sql(spacing, exptype, scen):
     '''
     Aircraft Data
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Aircraft_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Aircraft_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         ac_dat = json.load(file)
@@ -237,8 +237,8 @@ def to_sql(spacing, exptype, scen):
     '''
     Delay Data
     '''
-    # file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Delay_{spacing}_Apart.json"
-    file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Delay_{spacing}_Apart.json')
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\Delay_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Delay_{spacing}_Apart.json')
 
     with open(file_path, 'r') as file:
         DelayData = json.load(file)
@@ -266,8 +266,36 @@ def to_sql(spacing, exptype, scen):
     delay.to_sql(name = 'delay', con=engine, if_exists='append', index = False)
     print('Delay Data Uploaded to SQL!')
 
+
+    '''
+    Distance Data
+    '''
+    file_path = f"C:\\Users\\Michael\\Desktop\\BlueSkyData\\{exptype}JSONs\\ACDistances_{spacing}_Apart.json"
+    # file_path = os.path.expanduser(f'~/bluesky/BlueSkyData/{exptype}JSONs/Delay_{spacing}_Apart.json')
+
+    with open(file_path, 'r') as file:
+        DistData = json.load(file)
+    records = []
+    for item in DistData:
+        for key, value in item.items():
+
+            records.append({
+                # 'ID': key,
+                'ExpNum': value['ExpNum'],
+                'ExpType': value['ExpType'],
+                'ax_spacing': value['ax_spacing'],
+                'ac_dist':value['ac_dist']
+            })
+
+    dist = pd.DataFrame(records)
+    dist.to_sql(name = 'distances', con=engine, if_exists='append', index = False)
+    print('Distance Data Uploaded to SQL!')
+
+
+    print(f'Data for a spacing of {spacing} finished uploading to SQL!')
+
 if __name__ == '__main__':
-    windows = False
+    windows = True
     if not windows:
         parser = argparse.ArgumentParser(description='Apply different spacing between fleet aircraft')
         parser.add_argument('-s1', '--scenario')
@@ -279,6 +307,6 @@ if __name__ == '__main__':
         args = parser.parse_args()
         to_sql(args.spacing, args.exptype, args.scenario)
     else:
-        spacing = np.arange(160, 0, -8)
+        spacing = np.arange(104, 0, -8)
         for i in spacing:
-            to_sql(i, "SingleBez", 'BezAM')
+            to_sql(i, "FullHold", 'Hold')

@@ -98,3 +98,17 @@ ssd.obj
 #Other File Types
 *.json
 *.mat
+*.ipynb
+*.sql
+SQL_DB_Creations.sql
+.gitignore
+MatLab/SQLtoMAT.m
+MatLab/SQLtoMAT.asv
+MatLab/ScenarioPlotsBez.m
+MatLab/ScenarioPlots.m
+MatLab/plot_from_sql_data.m
+MatLab/plot_from_sql_data.asv
+MatLab/FullBezRPlot.m
+MatLab/FullBezRPlot.asv
+MatLab/ETA_Plots2.m
+MatLab/BezTesting.mlx
