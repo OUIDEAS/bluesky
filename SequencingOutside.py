@@ -296,9 +296,9 @@ def sort(etas, t_it, t_tran, dtmax):
         for key, vals in fcfs_sorted.items():
             for i in range(1, len(vals)):
                 if staff_it[key][i-1] and vals[i][0]>= staff_it[key][i-1][0]+t_it:
-                    staff_it[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0]])
+                    staff_it[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0], vals[i][-1]])
                 else:
-                    staff_it[key].append([staff_it[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0]])
+                    staff_it[key].append([staff_it[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0], vals[i][-1]])
     
     else:
         print('ETA SORTED:', etas_sorted,'\n\n')
@@ -307,9 +307,9 @@ def sort(etas, t_it, t_tran, dtmax):
         for key, vals in etas_sorted.items():
             for i in range(1, len(vals)):
                 if staff_it[key][i-1] and vals[i][0]>= staff_it[key][i-1][0]+t_it:
-                    staff_it[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0]])
+                    staff_it[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0], vals[i][-1]])
                 else:
-                    staff_it[key].append([staff_it[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0]])
+                    staff_it[key].append([staff_it[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][0], vals[i][-1]])
 
     '''
     Step 2: Applying transition constraints
@@ -319,15 +319,20 @@ def sort(etas, t_it, t_tran, dtmax):
     rta2 = []
     for key, vals in staff_it.items():
         for i in vals:
-            rs = [i[0]+i[4][0], i[0]+i[4][1]]
-            rta.append([np.min(rs), i[1],i[2], i[3], f'R{np.argmin(rs)+1}', i[5], i[4], i[0]])
-            rta2.append([np.max(rs), i[1],i[2], i[3], f'R{np.argmax(rs)+1}', i[5], i[4], i[0]])
+            rs = [i[-1][0]+i[4][0], i[-1][1]+i[4][1]]
+            # retas = [i[-1][0], i[-1][1]]
+            # print(retas)
+            # print(rs)
+            # print(retas[np.argmin(rs)], retas[rs.index(np.min(rs))])
+            # print(retas[rs.index(np.min(rs))]+np.min(rs), f'R{np.argmin(rs)+1}')
+            rta.append([np.min(rs), i[1],i[2], i[3], f'R{np.argmin(rs)+1}', i[5], i[4], i[0], i[6]])
+            rta2.append([np.max(rs), i[1],i[2], i[3], f'R{np.argmax(rs)+1}', i[5], i[4], i[0], i[6]])
 
     cp = []
     for i in rta:
         cp.append(i)
     cp2 = sorted(cp, key = lambda x: x[0])
-    cp3 = [[v[0], v[1], i, v[3], v[4], v[5], v[6], v[7]] for i, v in enumerate(cp2)]
+    cp3 = [[v[0], v[1], i, v[3], v[4], v[5], v[6], v[7], v[8]] for i, v in enumerate(cp2)]
     print('CP:',cp3, '\n\n')
     print('RTA:', rta, '\n\n')
 
@@ -403,17 +408,17 @@ def sort(etas, t_it, t_tran, dtmax):
     for key, vals in rta_p.items():
         for i in range(1, len(vals)):
             if sta_p[key][i-1] and vals[i][0] > sta_p[key][i-1][0]+t_it:
-                sta_p[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7]])
+                sta_p[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], vals[i][8]])
             else:
-                sta_p[key].append([sta_p[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7]])
+                sta_p[key].append([sta_p[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], vals[i][8]])
     print('STA_P', sta_p, '\n\n')
 
     for key, vals in non_rta.items():
         for i in range(1, len(vals)):
             if non_sta[key][i-1] and vals[i][0] > non_sta[key][i-1][0]+t_it:
-                non_sta[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7]])
+                non_sta[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], vals[i][8]])
             else:
-                non_sta[key].append([non_sta[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7]])
+                non_sta[key].append([non_sta[key][i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], vals[i][8]])
 
     c=0
     for key, vals in rta_p.items():
@@ -434,16 +439,16 @@ def sort(etas, t_it, t_tran, dtmax):
 
     for key, vals in sta_p.items():
         for i in vals:
-            delay[key].append([i[0]-i[5], i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7]])
+            delay[key].append([i[0]-i[5], i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8]])
 
     for key, vals in delay.items():
         for i in vals:
             if i[0] <= dtmax:
-                ddfC[key].append([0, i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8]])
+                ddfC[key].append([0, i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8], i[9]])
                 ddfT[key].append(i)
             else:
-                ddfC[key].append([i[0]-dtmax, i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8]])
-                ddfT[key].append([dtmax, i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8]])
+                ddfC[key].append([i[0]-dtmax, i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8], i[9]])
+                ddfT[key].append([dtmax, i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8], i[9]])
 
     '''
     CTAS Step 5 Scheduled Time of Arrival at Meter Gates
@@ -459,14 +464,14 @@ def sort(etas, t_it, t_tran, dtmax):
             rs_p = np.min(rs)
             # print(rs_p, rs)
             if i == 0:
-                staff[key].append([vals[i][0]-rs_p, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0]])
+                staff[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
             elif i == 1:
-                staff[key].append([vals[i][7]+ddfC[key][i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0]])
+                staff[key].append([vals[i][7]+ddfC[key][i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
             else:
                 if vals[i-1][0]+t_it > vals[i][7]+ddfC[key][i][0]:
-                    staff[key].append([vals[i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0]])
+                    staff[key].append([vals[i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
                 else:
-                    staff[key].append([vals[i][7]+ddfC[key][i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0]])
+                    staff[key].append([vals[i][7]+ddfC[key][i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
 
 
     print('STAFF_IT:', staff_it, '\n\n')

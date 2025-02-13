@@ -8,7 +8,7 @@ import time
 import scipy
 import sympy as sp
 from scipy.optimize import brentq
-import Scenario1Optimize as MBO
+# import Scenario1Optimize as MBO
 from algebra_with_sympy import *
 
 '''

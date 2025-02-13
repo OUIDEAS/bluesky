@@ -18,6 +18,8 @@ import argparse
 import scipy
 import os
 import SequencingOutside as SQO
+import BezIntersectOptimization as BIO
+
 
 class ScreenDummy(ScreenIO):
     """
@@ -280,13 +282,13 @@ def tracon_points(r, n):
     return x, y
 
 def get_ll(x, y, home_ll, picked):
-    i = np.random.randint(0, 200)
+    i = np.random.randint(0, 360)
     j = np.random.randint(500, 3000)
     c = 0  
     
     while c == 0:
         if i in picked:
-            i = np.random.randint(0, 200)
+            i = np.random.randint(0, 360)
         else:
             picked.append(i)
             c=1
@@ -322,30 +324,57 @@ def get_ll(x, y, home_ll, picked):
     return lat, lon, alt, hdg, picked
 
 def find_quadrant(picked):
-    if picked<=50:
+    if picked<=90:
         quad = 'I'
-    elif 50<picked<=100:
+    elif 90<picked<=180:
         quad = 'II'
-    elif 100<picked<=151:
+    elif 180<picked<=270:
         quad = 'III'
     else:
         quad = 'IV'
+    # print('in GATE FUNCTION')
     return quad, quad
 
-def get_tran(gate, lat, lon, t_tran, fixes, v):
+def get_eta(gate, lat, lon, eta, fixes, v):
     # fixes -> R, 1,2,2,1
      # fixes_l = [favus_path, teeze_path, elupy_path, xavyr_path]
+    # print(len(lat))
+    for i in range(len(lat)):
+        # print(gate[i][0], i)
+        if gate[i][0] == 'I' or gate[i][0] == 'II':
+            h, d_r1 = qdrdist(lat[i], lon[i], fixes[0][0], fixes[0][1])
+            h2, d_r2 = qdrdist(lat[i], lon[i], fixes[1][0], fixes[1][1])
+            t_r1 = d_r1/v[i]
+            t_r2 = d_r2/v[i]
+            # print(t_r1, t_r2)
+            eta[i] = [t_r1, t_r2]
+
+        elif gate[i][0] == 'IV' or gate[i][0] == 'III':
+            h2, d_r1 = qdrdist(lat[i], lon[i], fixes[3][0], fixes[3][1])
+            h, d_r2 = qdrdist(lat[i], lon[i], fixes[2][0], fixes[2][1])
+            t_r1 = d_r1/v[i]
+            t_r2 = d_r2/v[i]
+            eta[i] = [t_r1, t_r2]
+
+    # print(t_tran)
+    # print(eta)
+    return eta
+
+def get_tran(gate, lat, lon, t_tran, fixes, v, star_routes):
+    # fixes -> R, 1,2,2,1
+    # fixes_l = [favus_path, teeze_path, elupy_path, xavyr_path]
     for i in range(len(lat)):
         if gate[i] == 'I' or gate[i] == 'II':
-            h, d_r1 = qdrdist(lat[i], lon[i], fixes[0][0][0], fixes[0][0][1])
-            h2, d_r2 = qdrdist(lat[i], lon[i], fixes[1][0][0], fixes[1][0][1])
+            # print(gate, gate[i], star_routes)
+            d_r1 = star_routes[0][2]+star_routes[2][3]
+            d_r2 = star_routes[1][1]+star_routes[1][2]+star_routes[1][3]+star_routes[1][4]
             t_r1 = d_r1/v[i]
             t_r2 = d_r2/v[i]
             t_tran[i] = [t_r1, t_r2]
 
-        elif gate[i][0] == 'IV' or gate[i] == 'III':
-            h2, d_r1 = qdrdist(lat[i], lon[i], fixes[3][0][0], fixes[3][0][1])
-            h, d_r2 = qdrdist(lat[i], lon[i], fixes[2][0][0], fixes[2][0][1])
+        elif gate[i] == 'III' or gate[i] == 'IV':
+            d_r2 = star_routes[2][2]+star_routes[2][3]+star_routes[2][4]
+            d_r1 = star_routes[3][1]+star_routes[3][2]
             t_r1 = d_r1/v[i]
             t_r2 = d_r2/v[i]
             t_tran[i] = [t_r1, t_r2]
@@ -368,32 +397,40 @@ def findWPs(acid, run, fixes_l):
         if seq_dat[4] == 'R2':
             print('TEEZE')
             wp_list = makeWPTS(fixes_l[1])
+            wps = fixes_l[1]
         else:
             print('FAVUS')
             wp_list = makeWPTS(fixes_l[0])
+            wps = fixes_l[0]
     if seq_dat[3] == 'I':
         if seq_dat[4] == 'R1':
             print('FAVUS')
             wp_list = makeWPTS(fixes_l[0])
+            wps = fixes_l[0]
         else:
             print('TEEZE')
             wp_list = makeWPTS(fixes_l[1])
+            wps = fixes_l[1]
     if seq_dat[3] == 'III':
         if seq_dat[4] == 'R2':
             print('ELUPY')
             wp_list = makeWPTS(fixes_l[2])
+            wps = fixes_l[2]
         else:
             print('XAVYR')
             wp_list = makeWPTS(fixes_l[3])
+            wps = fixes_l[3]
     if seq_dat[3] == 'IV':
         if seq_dat[4] == 'R1':
             print('XAVYR')
             wp_list = makeWPTS(fixes_l[3])
+            wps = fixes_l[3]
         else:
             print('ELUPY')
             wp_list = makeWPTS(fixes_l[2])
+            wps = fixes_l[2]
     # print(wp_list)
-    return index, wp_list
+    return index, wp_list, wps
 
 def WPGuidance(wp_list, idx, pos, d, gate, i, id):
     # print(wp_list[idx])
@@ -420,7 +457,33 @@ def WPGuidance(wp_list, idx, pos, d, gate, i, id):
             return head, dn, idx-1, 'done'
     return head, dn, idx, 'not_done'
     
-    
+def interp_wps(waypts, n, v):
+    interps = np.zeros((len(waypts)-1, 2, n))
+    dists = []
+    travel = []
+    # interps[0][0] = (8, 10)
+    # print(interps[0][0])
+    # interps[0][0][0] = 9
+    # interps[0][1][0] = 10
+    # print(interps[0])
+    # print(interps)
+    total = 0
+    for i in range(0, len(waypts)-1):
+        dx = waypts[i+1][0] - waypts[i][0]
+        dy = waypts[i+1][1] - waypts[i][1]
+        m = (waypts[i+1][1] - waypts[i][1])/(waypts[i+1][0] - waypts[i][0])
+        d = np.hypot(dx, dy)
+        dists.append(d)
+        travel.append(d/v)
+        total+= d/v
+        x = np.linspace(waypts[i][0], waypts[i+1][0], n, endpoint=False)
+        interps[i][0][0], interps[i][1][0] = x[0], waypts[i][1]
+        for j in range(1, len(x)):
+            y = waypts[i][1] + m * (x[j]-waypts[i][0])
+            interps[i][0][j] = x[j]
+            interps[i][1][j] = y
+    print(f'Total STAR Route Travel Time: {total}')
+    return interps, dists, travel, total
 
 
 
@@ -445,11 +508,13 @@ datasets = [wptdata, aptdata]
 # bs.traf.mcre(10, 'M250')
 #R2 is 28 L
 nm = 1852
-points = 200
+points = 360
 tracon = 10*nm
 center = 30*nm # OPTIMIZATION HORIZON
 freeze = 20.7*nm
 other = 36*nm
+
+scen = 'Bez'
 
 '''
 KCMH Airport and Meter Fixes for different STAR Routes
@@ -471,13 +536,20 @@ polrs = [40.111194, -82.953444]
 taces = [40.090111, -82.916333]
 
 teeze_path = [melzz, dubln, trlgy, polrs, taces, teeze]
+teeze_wps = LongLat_To_WSG84_Meters(teeze_path, kcmh)
+teeze_pts, teeze_dists, teeze_toa, teeze_total_t = interp_wps(teeze_wps, 100, 57.412)
+
 
 # FAVUS WAYPOINTS
 bugzz = [40.565, -82.454056]
 cbuss = [40.325306, -82.5405]
 molls = [40.132139, -82.609194]
+ordiw = [39.989306, -82.666056]
+bazel = [39.981917, -82.704556]
 
-favus_path =[cbuss, molls, favus]
+favus_path =[cbuss, molls, favus, ordiw, bazel]
+favus_wps = LongLat_To_WSG84_Meters(favus_path, kcmh)
+favus_pts, favus_dists, favus_toa, favus_total_t = interp_wps(favus_wps, 100, 57.412)
 
 # ELUPY WAYPOINTS
 jaktz = [39.591028, -83.419583]
@@ -488,14 +560,21 @@ gagbe = [39.907167, -82.927278]
 jesce = [39.903556, -82.858889]
 
 elupy_path = [rscot, obetz, elupy, edwib, gagbe, jesce]
+elupy_wps = LongLat_To_WSG84_Meters(elupy_path, kcmh)
+elupy_pts, elupy_dists, elupy_toa, elupy_total_t = interp_wps(elupy_wps, 100, 57.412)
 
 # XAVYR WAYPOINTS
 scrlt = [39.502917, -82.350833]
 brtus = [39.730944, -82.473083]
+guber = [39.963222, -82.670889]
+bkeye = [39.982056, -82.706694]
 
-xavyr_path = [brtus, xavyr]
+xavyr_path = [brtus, xavyr, guber, bkeye]
+xavyr_wps = LongLat_To_WSG84_Meters(xavyr_path, kcmh)
+xavyr_pts, xavyr_dists, xavyr_toa, xavyr_total_t = interp_wps(xavyr_wps, 100, 57.412)
 
 fixes = [favus, dubln, elupy, xavyr]
+star_routes = [favus_dists, teeze_dists, elupy_dists, xavyr_dists] 
 
 fixes_l = [favus_path, teeze_path, elupy_path, xavyr_path]
 
@@ -543,8 +622,8 @@ p = Proj(proj='utm',zone=17,ellps='WGS84', preserve_units=False)
 
 
 
-t_max = 30001
-t_max = 6010
+t_max = 3001
+# t_max = 6010
 # t_max = 2
 dt = 0.1
 bs.stack.stack(f'DT {dt}')
@@ -552,11 +631,12 @@ bs.stack.stack(f'DT {dt}')
 # t_max = 1
 # ntraf = bs.traf.ntraf
 # print(ntraf)
+eta = np.zeros((ntraf, 2)) # AC -> Each Meter Gate
 t_tran = np.zeros((ntraf, 2))
 # print(t_tran)
 # t_tran[0] = [5, 10]
 # print(t_tran, t_tran[0])
-gate = np.zeros((ntraf, 1), dtype = str)
+gate = np.zeros((ntraf, 1), dtype = '<U3')
 
 n_steps = int(t_max + 1)
 # print(n_steps)
@@ -574,114 +654,218 @@ step = [0, 0]
 closed = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 guide = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 waypts = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+waypt_set = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+bez = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+entry = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+interps = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+nodes = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+
 d = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 d2 = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 idx = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+run_id = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 etas = []
 fcfs = []
 
 start_time = time.time()
-for i in range(n_steps):
-    # Perform one step of the simulation
-    bs.sim.step()
-    
-    # save the results from the simulator in the results array,
-    # here we keep the latitude, longitude, altitude and TAS
-    res[i] = [bs.traf.lat,
-                bs.traf.lon,
-                bs.traf.alt,
-                bs.traf.tas,
-                bs.traf.hdg]
-    if i == 3000:
-        print(f'Optimization Interval Closed! Number Of Aircraft In Interval Is {len(locals()[f'sort_group{c}'])}')
-        step[c] = 1
-        c+=1
+if scen == 'WP':
+    for i in range(n_steps):
+        # Perform one step of the simulation
+        bs.sim.step()
         
-
-    for j in range(len(bs.traf.id)):
-        pos = __WSG84_To_Meters_Single([bs.traf.lat[j], bs.traf.lon[j]], kcmh, p)
-        current_xy[j][i] = pos
-        # if i %100 == 0:
-        #     print(f'min_centx: {min_centx}, p[0]: {pos[0]}, max_centx: {max_centx}, min_freezey: {min_freezey}, p[1]: {pos[1]}, max_freezey: {max_freezey}')
-        # if min_centlon < bs.traf.lon[j] < max_centlon and min_freezelat < bs.traf.lat[j] < max_freezelat and sorter[j] ==  0:
-        h, dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
-        # print(dist, center)
-        # if min_centx <= pos[0] <= max_centx and min_freezey <= pos[1] <= max_freezey and sorter[j] ==  0:
-        if dist <= center and sorter[j] == 0:
-            # print(f'{bs.traf.id[j]} crossed Optimization Horizon at timestep {i}!')
-            # print(f'Postion is {bs.traf.lat[j], bs.traf.lon[j]}, horizon bounds are\nLON: {min_centlon},{max_centlon} LAT: {min_freezelat},{max_freezelat}')
-            print(f'{bs.traf.id[j]} crossed Optimization Horizon at timestep {i}!')
-            print(f'Postion is {pos[0], pos[1]}, horizon bounds are\nX: {min_centx, max_centx} Y: {min_freezey, max_freezey}')
-            print(f'Postion is {bs.traf.lat[j], bs.traf.lon[j]}, horizon bounds are\nLON: {min_centlon,max_centlon} LAT: {min_freezelat,max_freezelat}\n')
-            sorter[j] = 1
-            h, eta_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
-            eta = eta_dist/bs.traf.tas[j]
-            locals()[f'sort_group{c}'].append([bs.traf.id[j], bs.traf.lat[j], bs.traf.lon[j], bs.traf.hdg[j], eta_dist, eta, i])
-            fcfs.append(bs.traf.id[j])
-            closed[j] = c
-        if closed[j] == c-1:
-            gate[j], g = find_quadrant(picked[j])
-            h, eta_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
-            eta = eta_dist/bs.traf.tas[j]
-            t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas)
-            etas.append([eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], eta])
-            closed[j]+=1
-        if step[c-1] == 2 and guide[j] == -1:
-            index, waypts[j] = findWPs(bs.traf.id[j], run, fixes_l)
-            h, d[j] = qdrdist(waypts[j][0][0], waypts[j][1][0], bs.traf.lat[j], bs.traf.lon[j])
-            idx[j] = 0
-            guide[j] = 1
-        if guide[j] == 1:
-            pos = [bs.traf.lat[j], bs.traf.lon[j]]
-            # print(bs.traf.id[j], d[j])
-            # m_pos = __WSG84_To_Meters_Single(waypoint =pos, home = homell[j], projobject=p)
-            # print(waypts[j][1])
-            # print(m_pos[1])
-            # print(waypts[j])
-            head, d[j], idx[j], stat = WPGuidance(waypts[j], idx[j], [bs.traf.lat[j], bs.traf.lon[j]], d[j], gate[j], i, bs.traf.id[j])
-            # print(d[j])
-            # head = np.arctan2(waypts[j][1][index[j]] - pos[1], waypts[j][0][index[j]]-pos[0])
-            h, dtw = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
-            d2[j] = [bs.traf.id[j], dtw]
-            bs.stack.stack(f'HDG {bs.traf.id[j]} {90-head}')
-        # if  step[c-1] ==2 and i%1000 == 0:
-        #     gate[j], g = find_quadrant(picked[j])
-        #     t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas)
-        #     etas.append([eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], eta])
-    if step[c-1] == 1:
-        t_it = 5
-        dtmax = 8
-        sta_p, run, cp3, staff = SQO.sort(etas, t_it, t_tran, dtmax)
-        step[c-1] = 2
-        etas = []
-    # if step [c-1] == 2 and i%1000 == 0 and etas:
-    #     sta_p, run, cp3, staff = SQO.sort(etas, t_it, t_tran, dtmax)
-    #     etas = []
-    #     step[c-1]=2
-    #     fcfs, order = SQO.step0(etas)
-    # if step[c-1] == 2:
-    #     # t_tran = [[15, 30], [30, 15], [15, 30], [30, 15]]
-        
-    #     print(f'AIRCRAFT TRANSITION TIMES: {t_tran}')
-    #     t_it = 5
-    #     cp, rta_p, non_rta = SQO.step12(fcfs, t_it, t_tran)
-    #     step[c-1]=3
-    # if step[c-1] == 3:
-    #     sta_p, non_sta = SQO.step3(cp, rta_p, non_rta, order, t_it)
-    #     step[c-1]=4
-    # if step[c-1] == 4:
-    #     dtmax = 8
-    #     dels, ddfC, ddfT = SQO.step4(sta_p, dtmax)
-    #     step[c-1] = 5
-    # if step[c-1] == 5:
-    #     SQO.step5()
+        # save the results from the simulator in the results array,
+        # here we keep the latitude, longitude, altitude and TAS
+        res[i] = [bs.traf.lat,
+                    bs.traf.lon,
+                    bs.traf.alt,
+                    bs.traf.tas,
+                    bs.traf.hdg]
+        if i == 3000:
+            print(f'Optimization Interval Closed! Number Of Aircraft In Interval Is {len(locals()[f'sort_group{c}'])}')
+            step[c] = 1
+            c+=1
             
-print(run)
+
+        for j in range(len(bs.traf.id)):
+            pos = __WSG84_To_Meters_Single([bs.traf.lat[j], bs.traf.lon[j]], kcmh, p)
+            current_xy[j][i] = pos
+            # if i %100 == 0:
+            #     print(f'min_centx: {min_centx}, p[0]: {pos[0]}, max_centx: {max_centx}, min_freezey: {min_freezey}, p[1]: {pos[1]}, max_freezey: {max_freezey}')
+            # if min_centlon < bs.traf.lon[j] < max_centlon and min_freezelat < bs.traf.lat[j] < max_freezelat and sorter[j] ==  0:
+            h, dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+            # print(dist, center)
+            # if min_centx <= pos[0] <= max_centx and min_freezey <= pos[1] <= max_freezey and sorter[j] ==  0:
+            if dist <= center and sorter[j] == 0:
+                # print(f'{bs.traf.id[j]} crossed Optimization Horizon at timestep {i}!')
+                # print(f'Postion is {bs.traf.lat[j], bs.traf.lon[j]}, horizon bounds are\nLON: {min_centlon},{max_centlon} LAT: {min_freezelat},{max_freezelat}')
+                print(f'{bs.traf.id[j]} crossed Optimization Horizon at timestep {i}!')
+                print(f'Postion is {pos[0], pos[1]}, horizon bounds are\nX: {min_centx, max_centx} Y: {min_freezey, max_freezey}')
+                print(f'Postion is {bs.traf.lat[j], bs.traf.lon[j]}, horizon bounds are\nLON: {min_centlon,max_centlon} LAT: {min_freezelat,max_freezelat}\n')
+                sorter[j] = 1
+                gate[j], g = find_quadrant(picked[j])
+                # print(gate[j], g, bs.traf.id[j])
+                eta = get_eta(gate, bs.traf.lat, bs.traf.lon, eta, fixes, bs.traf.tas) #ETA now has the shape [[1,2], []...]
+                # h, eta_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+                # eta = eta_dist/bs.traf.tas[j]
+                locals()[f'sort_group{c}'].append([bs.traf.id[j], bs.traf.lat[j], bs.traf.lon[j], bs.traf.hdg[j], eta[j], i])
+                fcfs.append(bs.traf.id[j])
+                closed[j] = c
+            if closed[j] == c-1:
+                # gate[j], g = find_quadrant(picked[j])
+                # h, eta_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+                # eta = eta_dist/bs.traf.tas[j]
+                # t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas)
+                # etas.append([eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], eta])
+                # closed[j]+=1
+                gate[j], g = find_quadrant(picked[j])
+                # print(gate[j][0], g, bs.traf.id[j])
+                # print('GATE GATE GATE', gate)
+                # h, eta_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+                # eta = eta_dist/bs.traf.tas[j]
+                eta = get_eta(gate, bs.traf.lat, bs.traf.lon, eta, fixes, bs.traf.tas) #ETA now has the shape [[1,2], []...]
+                p_eta = np.min(eta[j])
+                t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas, star_routes)
+                # print(eta[j])
+                # print(t_tran[j])
+                etas.append([p_eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], p_eta, eta[j]])
+                closed[j]+=1
+            if step[c-1] == 2 and guide[j] == -1:
+                index, waypts[j] = findWPs(bs.traf.id[j], run, fixes_l)
+                h, d[j] = qdrdist(waypts[j][0][0], waypts[j][1][0], bs.traf.lat[j], bs.traf.lon[j])
+                idx[j] = 0
+                guide[j] = 1
+            if guide[j] == 1:
+                pos = [bs.traf.lat[j], bs.traf.lon[j]]
+                # print(bs.traf.id[j], d[j])
+                # m_pos = __WSG84_To_Meters_Single(waypoint =pos, home = homell[j], projobject=p)
+                # print(waypts[j][1])
+                # print(m_pos[1])
+                # print(waypts[j])
+                head, d[j], idx[j], stat = WPGuidance(waypts[j], idx[j], [bs.traf.lat[j], bs.traf.lon[j]], d[j], gate[j], i, bs.traf.id[j])
+                # print(d[j])
+                # head = np.arctan2(waypts[j][1][index[j]] - pos[1], waypts[j][0][index[j]]-pos[0])
+                h, dtw = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+                d2[j] = [bs.traf.id[j], dtw]
+                bs.stack.stack(f'HDG {bs.traf.id[j]} {90-head}')
+            # if  step[c-1] ==2 and i%1000 == 0:
+            #     gate[j], g = find_quadrant(picked[j])
+            #     t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas)
+            #     etas.append([eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], eta])
+        if step[c-1] == 1:
+            t_it = 5
+            dtmax = 8
+            sta_p, run, cp3, staff = SQO.sort(etas, t_it, t_tran, dtmax)
+            step[c-1] = 2
+            etas = []
+        # if step [c-1] == 2 and i%1000 == 0 and etas:
+        #     sta_p, run, cp3, staff = SQO.sort(etas, t_it, t_tran, dtmax)
+        #     etas = []
+        #     step[c-1]=2
+        #     fcfs, order = SQO.step0(etas)
+        # if step[c-1] == 2:
+        #     # t_tran = [[15, 30], [30, 15], [15, 30], [30, 15]]
+            
+        #     print(f'AIRCRAFT TRANSITION TIMES: {t_tran}')
+        #     t_it = 5
+        #     cp, rta_p, non_rta = SQO.step12(fcfs, t_it, t_tran)
+        #     step[c-1]=3
+        # if step[c-1] == 3:
+        #     sta_p, non_sta = SQO.step3(cp, rta_p, non_rta, order, t_it)
+        #     step[c-1]=4
+        # if step[c-1] == 4:
+        #     dtmax = 8
+        #     dels, ddfC, ddfT = SQO.step4(sta_p, dtmax)
+        #     step[c-1] = 5
+        # if step[c-1] == 5:
+        #     SQO.step5()
+if scen == 'Bez':
+    for i in range(n_steps):
+        # Perform one step of the simulation
+        bs.sim.step()
+        
+        # save the results from the simulator in the results array,
+        # here we keep the latitude, longitude, altitude and TAS
+        res[i] = [bs.traf.lat,
+                    bs.traf.lon,
+                    bs.traf.alt,
+                    bs.traf.tas,
+                    bs.traf.hdg]
+        if i == 3000:
+            print(f'Optimization Interval Closed! Number Of Aircraft In Interval Is {len(locals()[f'sort_group{c}'])}')
+            step[c] = 1
+            c+=1
+            
+
+        for j in range(len(bs.traf.id)):
+            pos = __WSG84_To_Meters_Single([bs.traf.lat[j], bs.traf.lon[j]], kcmh, p)
+            current_xy[j][i] = pos
+            # if i %100 == 0:
+            #     print(f'min_centx: {min_centx}, p[0]: {pos[0]}, max_centx: {max_centx}, min_freezey: {min_freezey}, p[1]: {pos[1]}, max_freezey: {max_freezey}')
+            # if min_centlon < bs.traf.lon[j] < max_centlon and min_freezelat < bs.traf.lat[j] < max_freezelat and sorter[j] ==  0:
+            h, dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+            # print(dist, center)
+            # if min_centx <= pos[0] <= max_centx and min_freezey <= pos[1] <= max_freezey and sorter[j] ==  0:
+            if dist <= center and sorter[j] == 0:
+                # print(f'{bs.traf.id[j]} crossed Optimization Horizon at timestep {i}!')
+                # print(f'Postion is {bs.traf.lat[j], bs.traf.lon[j]}, horizon bounds are\nLON: {min_centlon},{max_centlon} LAT: {min_freezelat},{max_freezelat}')
+                print(f'{bs.traf.id[j]} crossed Optimization Horizon at timestep {i}!')
+                print(f'Postion is {pos[0], pos[1]}, horizon bounds are\nX: {min_centx, max_centx} Y: {min_freezey, max_freezey}')
+                print(f'Postion is {bs.traf.lat[j], bs.traf.lon[j]}, horizon bounds are\nLON: {min_centlon,max_centlon} LAT: {min_freezelat,max_freezelat}\n')
+                sorter[j] = 1
+                gate[j], g = find_quadrant(picked[j])
+                # print(gate[j], g, bs.traf.id[j])
+                eta = get_eta(gate, bs.traf.lat, bs.traf.lon, eta, fixes, bs.traf.tas) #ETA now has the shape [[1,2], []...]
+                # h, eta_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+                # eta = eta_dist/bs.traf.tas[j]
+                locals()[f'sort_group{c}'].append([bs.traf.id[j], bs.traf.lat[j], bs.traf.lon[j], bs.traf.hdg[j], eta[j], i])
+                fcfs.append(bs.traf.id[j])
+                closed[j] = c
+            if closed[j] == c-1:
+                # gate[j], g = find_quadrant(picked[j])
+                # h, eta_dist = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+                # eta = eta_dist/bs.traf.tas[j]
+                # t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas)
+                # etas.append([eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], eta])
+                # closed[j]+=1
+                gate[j], g = find_quadrant(picked[j])
+
+                eta = get_eta(gate, bs.traf.lat, bs.traf.lon, eta, fixes, bs.traf.tas) #ETA now has the shape [[1,2], []...]
+                p_eta = np.min(eta[j])
+                t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas, star_routes)
+                # print(eta[j])
+                # print(t_tran[j])
+                etas.append([p_eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], p_eta, eta[j]])
+                closed[j]+=1
+            if step[c-1] == 2 and guide[j] == -1:
+                index, waypts[j], waypt_set[j] = findWPs(bs.traf.id[j], run, fixes_l)
+                h, d[j] = qdrdist(waypts[j][0][0], waypts[j][1][0], bs.traf.lat[j], bs.traf.lon[j])
+                idx[j] = 0
+                guide[j] = 1
+            if guide[j] == 1:
+                pos = [bs.traf.lat[j], bs.traf.lon[j]]
+                interps[j], nodes[j], bez[j], entry[j] = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]], run_id[j][0], waypt_set[j], bs.traf.hdg[j], bs.traf.tas[j], kcmh, gate[j])
+                # head, d[j], idx[j], stat = WPGuidance(waypts[j], idx[j], [bs.traf.lat[j], bs.traf.lon[j]], d[j], gate[j], i, bs.traf.id[j])
+
+                # h, dtw = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
+                # d2[j] = [bs.traf.id[j], dtw]
+                # bs.stack.stack(f'HDG {bs.traf.id[j]} {90-head}')
+
+        if step[c-1] == 1:
+            t_it = 5
+            dtmax = 8
+            sta_p, run, cp3, staff = SQO.sort(etas, t_it, t_tran, dtmax)
+            step[c-1] = 2
+            run_id = sorted(run, key = lambda x: int(x[1][2:]))
+            # etas = []
+        
+            
+print(run[0])
 run_id = [i[1] for i in run]
 print(run_id)
 # print(sorted(d2, key=lambda x: x[1]))
             
-
+for i in range(len(bs.traf.id)):
+    print(bs.traf.id[i], bs.traf.lat[i],',', bs.traf.lon[i], bs.traf.hdg[i])
 
 end_time = time.time()
 print("SIM TIME", end_time-start_time)
@@ -714,8 +898,10 @@ plt.scatter(xavyr[1], xavyr[0], color = 'cyan', s = 100, marker = 'o', label = '
 plt.scatter(elupy[1], elupy[0], color = 'magenta', s = 100, marker = 'o', label = 'ELUPY')
 plt.scatter(favus[1], favus[0], color = 'brown', s = 100, marker = 'o', label = 'FAVUS')
 plt.scatter(dubln[1], dubln[0], color = 'orange', s = 100, marker = 'o', label = 'DUBLN')
-plt.scatter([favus_path[0][1], favus_path[1][1]], [favus_path[0][0], favus_path[1][0]], marker = 's', s = 100, color = 'brown')
-plt.scatter(xavyr_path[0][1], xavyr_path[0][0], marker = 's', s = 100, color = 'cyan')
+plt.scatter([favus_path[0][1], favus_path[1][1], favus_path[3][1], favus_path[4][1]],
+            [favus_path[0][0], favus_path[1][0], favus_path[3][0], favus_path[4][0]], marker = 's', s = 100, color = 'brown')
+plt.scatter([xavyr_path[0][1], xavyr_path[2][1], xavyr_path[3][1]],
+            [xavyr_path[0][0], xavyr_path[2][0], xavyr_path[3][0]], marker = 's', s = 100, color = 'cyan')
 plt.scatter([teeze_path[0][1], teeze_path[2][1], teeze_path[3][1], teeze_path[4][1], teeze_path[5][1]], 
             [teeze_path[0][0], teeze_path[2][0], teeze_path[3][0], teeze_path[4][0], teeze_path[5][0]], marker = 's', s = 100, color = 'orange')
 plt.scatter([elupy_path[0][1], elupy_path[1][1], elupy_path[3][1], elupy_path[4][1], elupy_path[5][1]],
