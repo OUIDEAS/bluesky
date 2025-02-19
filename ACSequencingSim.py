@@ -18,7 +18,7 @@ import argparse
 import scipy
 import os
 import SequencingOutside as SQO
-import BezIntersectOptimization as BIO
+import BezIntersectOptimizeP1P2 as BIO
 
 
 class ScreenDummy(ScreenIO):
@@ -658,7 +658,10 @@ waypt_set = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 bez = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 entry = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 interps = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+end_point = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 nodes = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+times = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+diffs = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 
 d = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 d2 = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
@@ -752,8 +755,8 @@ if scen == 'WP':
             #     t_tran = get_tran(gate, bs.traf.lat, bs.traf.lon, t_tran, fixes_l, bs.traf.tas)
             #     etas.append([eta, bs.traf.id[j], fcfs.index(bs.traf.id[j]), g, t_tran[j], eta])
         if step[c-1] == 1:
-            t_it = 5
-            dtmax = 8
+            t_it = 10
+            dtmax = 13
             sta_p, run, cp3, staff = SQO.sort(etas, t_it, t_tran, dtmax)
             step[c-1] = 2
             etas = []
@@ -843,7 +846,8 @@ if scen == 'Bez':
                 guide[j] = 1
             if guide[j] == 1:
                 pos = [bs.traf.lat[j], bs.traf.lon[j]]
-                interps[j], nodes[j], bez[j], entry[j] = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]], run_id[j][0], waypt_set[j], bs.traf.hdg[j], bs.traf.tas[j], kcmh, gate[j])
+                print(bs.traf.id[j], pos, bs.traf.hdg[j])
+                interps[j], end_point[j], nodes[j], bez[j], entry[j], times[j], diffs[j] = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]], run_id[j][0], waypt_set[j], bs.traf.hdg[j], bs.traf.tas[j], kcmh, gate[j])
                 # head, d[j], idx[j], stat = WPGuidance(waypts[j], idx[j], [bs.traf.lat[j], bs.traf.lon[j]], d[j], gate[j], i, bs.traf.id[j])
 
                 # h, dtw = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
@@ -862,6 +866,8 @@ if scen == 'Bez':
 print(run[0])
 run_id = [i[1] for i in run]
 print(run_id)
+print(f'AVERAGE COMPUTE TIME: {np.average(times)}, MAX COMPUTE TIME: {np.max(times)}')
+print(f'AVERAGE ETA/TRAJECTORY TOA DIFFERENCE: {np.average(diffs)}, MAX DIFFERENCE: {np.max(diffs)}')
 # print(sorted(d2, key=lambda x: x[1]))
             
 for i in range(len(bs.traf.id)):

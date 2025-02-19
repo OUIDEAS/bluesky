@@ -465,8 +465,8 @@ def sort(etas, t_it, t_tran, dtmax):
             # print(rs_p, rs)
             if i == 0:
                 staff[key].append([vals[i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
-            elif i == 1:
-                staff[key].append([vals[i][7]+ddfC[key][i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
+            # elif i == 1:
+            #     staff[key].append([vals[i][7]+ddfC[key][i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
             else:
                 if vals[i-1][0]+t_it > vals[i][7]+ddfC[key][i][0]:
                     staff[key].append([vals[i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
