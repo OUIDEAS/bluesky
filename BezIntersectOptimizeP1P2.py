@@ -899,53 +899,31 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
         angle_to_rotate = (90-heading+180)
         g_index = 1
     rotated_heading = np.deg2rad(heading+angle_to_rotate)
-    # plt.scatter(ac_pos[1], ac_pos[0])
-    # print(transform_angle)
+
     
     wps = LongLat_To_WSG84_Meters(wp_list, kcmh) #Gives waypoints in global frame
-    # print(wps)
     ac_met = __WSG84_To_Meters_Single(ac_pos, kcmh) #Global aircraft position
     wps_local = LongLat_To_WSG84_Meters(wp_list, ac_pos)
 
 
-    # start_time = time.time()
-
     x = [i[0] for i in wps]
     y = [i[1] for i in wps]
 
-    # x_local = [i[0] for i in wps_local]
-    # y_local = [i[1] for i in wps_local]
-
+    
 
     origin = np.array([ac_met])
-    # interp_pts = 100
-    # interps, dists, toa, total = interp_wps(wps, interp_pts, velocity) #Interpolate points between waypoints
-    # for i in range(len(wps)-1):
-    #     plt.scatter(interps[i][0], interps[i][1], color = 'orange', marker = 's')
-    # plt.show()
-    # origin = np.array([ac_met])
-    # print(origin)
+    
 
     rotated_wps = rotate_points(wps, angle_to_rotate, origin)
     
-    # interps_local, dists_local, toa_local, total_local = interp_wps(rotated_wps,  interp_pts, velocity)
 
     x_rot = [i[0] for i in rotated_wps]
     y_rot = [i[1] for i in rotated_wps]
     
-    d_reg = np.hypot(x[0]-ac_met[0], y[0]-ac_met[1])
-    # d_loc = np.hypot(x_local[0]-ac_local[0], y_local[0]-ac_local[1])
-    d_rot = np.hypot(x_rot[0]-ac_met[0], y_rot[0]-ac_met[1])
+    
     dists_local, toa_local, total_local = total_travel(wps_local, v)
     # print(f'REGULAR DISTANCE TO FIRST WP: {d_reg}, ROTATED: {d_rot}')
 
-    # if interps_local[1][0][0] < ac_met[0]:
-    #     lr = -1
-    #     # g = 5
-    #     # min = 2
-    #     # plan_ahead = 60
-    # else:
-    #     lr = 1
     if rotated_wps[1][0] < ac_met[0]:
         lr = -1
     else:
@@ -967,34 +945,15 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
     # plt.plot([origin[0][0], path_startX_local], [origin[0][1], path_startY_local], color = 'black')
     # plt.show()
 
-    # nodes = [np.array([path_startX, (path_startX + interps[0][0][25])/2, interps[0][0][25]]).flatten(),
-    #          np.array([path_startY, (path_startY + interps[0][1][25])/1.5, interps[0][1][25]]).flatten()]
-    
-    # nodes_local = [np.array([path_startX_local, (path_startX_local + interps_local[0][0][25])/2, interps_local[0][0][25]]).flatten(),
-    #          np.array([path_startY, (path_startY + interps_local[0][1][25])/1.5, interps_local[0][1][25]]).flatten()]
-    # # print(nodes[0], nodes[0][1])
-    # # print(interps[0][1][25])
+
     turn_radius = v*1.94384**2/(11.26*math.tan(np.deg2rad(73)))
     turn_radius*=0.3048
     
-    # # print(interps_local)
-    # bez = manual_bez([nodes[0][0],nodes[1][0]], [nodes[0][1], nodes[1][1]], [nodes[0][2], nodes[1][2]], 200)
 
-    # bez_local = manual_bez([nodes_local[0][0],nodes_local[1][0]], [nodes_local[0][1], nodes_local[1][1]], [nodes_local[0][2], nodes_local[1][2]], 200)
     valid = False
     gi = [0,0]
     t_t = target-total_local-plan_ahead
 
-
-    # new_travel, new_total = getTravelTime(interps, gi, toa, v)
-
-    # new_travel, new_total = getTravelTime(interps_local, gi, toa, v)
-    # t_h = np.arctan2(interps_local[gi[0]][1][gi[1]]- interps_local[gi[0]][1][gi[1]-2],interps_local[gi[0]][0][gi[0]]- interps_local[gi[0]][0][gi[1]-2] )
-    # # print(new_total)
-    # t_t = target-new_total-plan_ahead
-    
-    # entry = False
-    # entryTOA = plan_ahead
     end_point = get_line(rotated_wps[1], rotated_wps[2], 0)
     end_point_ref = get_line(rotated_wps[1], rotated_wps[2], 0.1)
     new_travel, new_total = getTravelXY(wps, end_point, gi[0], toa_local, v)
@@ -1010,19 +969,7 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
     show = False
 
     start_time = time.time()
-    # m = (rotated_wps[g_index][1]-rotated_wps[g_index-1][1])/(rotated_wps[g_index][0]-rotated_wps[g_index-1][0])
-    # b = rotated_wps[g_index-1][1] - m*rotated_wps[g_index-1][0]
-    # coeffs = [m, b]
-    # nom_opt, curv = solve_optim1([path_startX_local, path_startY_local], [rotated_wps[g_index][0], rotated_wps[g_index][1]], t_t, 
-    #                        [rotated_wps[g_index][0]-5000, rotated_wps[g_index][1]-5000], t_h2, v, turn_radius, lr, coeffs)
-    # nom_nodes = [np.array([path_startX_local, nom_opt[0], rotated_wps[g_index][0]]).flatten(), np.array([path_startY_local, nom_opt[1], rotated_wps[g_index][1]]).flatten()]
-    # nom_b = manual_bez([nom_nodes[0][0], nom_nodes[1][0]], [nom_nodes[0][1], nom_nodes[1][1]], [nom_nodes[0][2], nom_nodes[1][2]], 50)
-    # nom_l = path_length([nom_nodes[0][1], nom_nodes[1][1]], [nom_nodes[0][0], nom_nodes[1][0]],[nom_nodes[0][2], nom_nodes[1][2]],1 )
-    # path_toa = nom_l/v
-    # entry = False
-    # end = 1
-    # all_bez.append([path_toa+new_total, nom_b[0], nom_b[1], new_total,  path_toa, nom_l, g_index, end, entry])
-    # all_nodes.append(nom_nodes)
+
     
     for i in range(len(wps)-1):
 
@@ -1038,30 +985,16 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
         t_h = np.arctan2(w2[1]- w1[1],w2[1]- w1[0])
         for j in range(0,5):
             
-            # show = False
-            # new_travel, new_total = getTravelTime(interps_local, gi, toa, v)
+  
             end_point = get_line(w1, w2, gi[1])
             p1_point = get_line(w1, end_point, p1g)
             new_travel, new_total = getTravelXY(rotated_wps, end_point, gi[0], toa_local, v)
             t_t = target-new_total-entryTOA
             
-            # nodes = [np.array([path_startX_local, interps_local[gi[0]][0][gi[1]]+lr*2500*np.abs(np.cos(t_h)), interps_local[gi[0]][0][gi[1]]]).flatten(),
-            #     np.array([path_startY_local, interps_local[gi[0]][1][gi[1]]+lr*2500*np.abs(np.sin(t_h)), interps_local[gi[0]][1][gi[1]]]).flatten()]
-            # nodes = [np.array([path_startX_local, end_point[0]+lr*g*np.abs(np.cos(t_h)), end_point[0]]).flatten(),
-            #     np.array([path_startY_local, end_point[1]+lr*g*np.abs(np.sin(t_h)), end_point[1]]).flatten()]
+       
             nodes = [np.array([path_startX_local, p1_point[0], end_point[0]]).flatten(),
                 np.array([path_startY_local, p1_point[1], end_point[1]]).flatten()]
-            # m = (interps_local[gi[0]][1][0] - interps_local[gi[0]][1][gi[1]])/(interps_local[gi[0]][0][0] - interps_local[gi[0]][0][gi[1]])
-            # b = interps_local[gi[0]][1][0] - m*interps_local[gi[0]][0][0]
-            # coeffs = [m, b]
-            
-            # t_h = np.arctan2(interps_local[gi[0]][1][gi[1]]- interps_local[gi[0]][1][gi[1]-2],interps_local[gi[0]][0][gi[0]]- interps_local[gi[0]][0][gi[1]-2] )
-            # t_h = np.arctan2(w2[1]- w1[1],w2[1]- w1[0])
-            
-            # optim1, curv1 = solve_optim1(P0 = [nodes[0][0],nodes[1][0]], P2 = [nodes[0][2], nodes[1][2]],
-            #                             target_toa=t_t,
-            #                             guess = [nodes[0][1], nodes[1][1]],
-            #                             target_heading=t_h, velocity=velocity, turn_radius=turn_radius, lr = lr, line = coeffs)
+         
             p1, end, curv1 = solve_optim12(P0 = [nodes[0][0],nodes[1][0]],
                                         target_toa=t_t,
                                         guess = [p1g, gi[1]],
@@ -1184,51 +1117,20 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
                 if entry:
                     x_close = np.isclose(x_entry[-1],partial_bez1[0][0], atol = 5)
                     y_close = np.isclose(y_entry[-1],partial_bez1[1][0], atol = 5)
-                # print(f'X ENTRY, PB1 Start: {x_entry[-1]}, {partial_bez1[0][0]}, {x_close}')
-                # print(f'Y ENTRY, PB1 Start: {y_entry[-1]}, {partial_bez1[1][0]}, {y_close}')
-                    # if (not x_close or not y_close):
-                    #     valid = False
-                        # if act_ent > req_ent:
-                        #     bank-=2.5
-                        # else:
-                        #     bank+=10
+             
                     if x_close and y_close:
                         valid = True
-                        # print(path_toa+new_total, pb_toa, new_total)
-                        # all_bez.append([path_toa+new_total, partial_bez1[0], partial_bez1[1], new_total, x_entry, y_entry, pb_toa, pb_length, entryLength, ba, entryTOA, act_ent, gi[0], end, entry])
-                        # all_nodes.append(nodes1)
-                        # valid = True
                         break
                 
                 else:
                     valid = True
                     break
-                    # valid = True
-                    # all_bez.append([path_toa+new_total, optim_b[0], optim_b[1], new_total,  path_toa, optim_b_length, gi[0], end, entry])
-                    # all_nodes.append(nodes1)
+                    
             
             r_star_time = target-path_toa
-            # print(f'STAR REQUIRED TIME: {r_star_time}')
             r_star_len = r_star_time*v
             gi[1] = get_guess_point(travel_times=toa_local, dists = dists_local, required_toa=r_star_time, required_len=r_star_len, index = gi[0])
-            # else:
-            #     r_star_time = target-
-            # if gi[1] > 1:
-            #     gi[1] = 1
-            # if valid == False:
-            #     gi[1]+=0.25
-            #     # if path_toa+new_total > target: 
-            #     #     g-=500
-            #     # else:
-            #     #     g+=500
-            #     if gi[1] > 1:
-            #         # print(f'PATH WAS INVALID, APPENDING, {path_toa+new_total}, {path_toa}, {new_total}')
-            #         valid = True
-                    # if entry:
-                    #     all_bez.append([path_toa+new_total, partial_bez1[0], partial_bez1[1], new_total, x_entry, y_entry, pb_toa, pb_length, entryLength, ba, entryTOA, act_ent, gi[0], end, entry])
-                    # else:
-                    #     all_bez.append([path_toa+new_total, optim_b[0], optim_b[1], new_total,  path_toa, optim_b_length, gi[0], end, entry])
-                    # all_nodes.append(nodes1)
+            
 
         gi[0]+=1
 
@@ -1238,11 +1140,10 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
     # print(all_nodes)
     for i in all_bez:
         diffs.append(np.abs(target-i[0]))
-        print(np.abs(target-i[0]), i[len(i)-2])
+        # print(np.abs(target-i[0]), i[len(i)-2])
     
     mindex = diffs.index(np.min(diffs))
-    # print(mindex)
-    # print(all_bez[mindex])
+
     optim_b = [all_bez[mindex][1], all_bez[mindex][2]]
     nodes1 = all_nodes[mindex]
     print(f'TOTAL OPTIMIZATION TIME: {stop_time-start_time}')
@@ -1255,8 +1156,7 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
 
     
     gi[0] = all_bez[mindex][len(all_bez[mindex])-3]
-    # print(all_bez[mindex][0])
-    # print(all_bez[0][0], all_bez[1][0], all_bez[2][0])
+
     end_point = get_line(wps[gi[0]], wps[gi[0]+1], all_bez[mindex][len(all_bez[mindex])-1])
     new_travel, new_total = getTravelXY(wps, end_point, gi[0], toa_local, v)
     # print(new_total)
@@ -1267,8 +1167,7 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
     ep = get_line(wps[gi[0]], wps[gi[0]+1], gi[1])
     m2 = (wps[gi[0]+1][1] - wps[gi[0]][1])/(wps[gi[0]+1][0] - wps[gi[0]][0])
     b2 = wps[gi[0]][1] - m2*wps[gi[0]][0]
-    # plt.plot(rotated_entry[0], rotated_entry[1])
-    # plt.plot(rotated_bezier[0], rotated_bezier[1])
+
     show_local = False
     print(f'Required Travel Time: {target}\nActual Travel Time: {all_bez[mindex][0]}\nDifference: {target-all_bez[mindex][0]}')
     plt.plot(x, y, label = 'STAR Path', linewidth = 2)
@@ -1309,16 +1208,7 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, heading, velocity, kcmh, 
         print(f'Actual Heading: {np.rad2deg(head)}')
         # plt.text(optim_b[0][50], optim_b[1][50], f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
         plt.text(rotated_bezier[0][25], rotated_bezier[1][25]-2500, f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
-    # if head > pi == 'IV':
-    #     plt.arrow(ac_met[0], ac_met[1], 2500*np.cos(head+np.pi), 2500*np.sin(head+np.pi), width=50,
-    #                 length_includes_head=False,
-    #                 head_width=1000,
-    #                 head_length=1000,
-    #                 head_starts_at_zero=False,
-    #                 facecolor='black',
-    #                 edgecolor='black',
-    #                 label = f'Heading of {np.rad2deg(head)}')
-    # else:
+
     plt.arrow(ac_met[0], ac_met[1], 2500*np.cos(head), 2500*np.sin(head), width=50,
                 length_includes_head=False,
                 head_width=1000,
