@@ -426,7 +426,8 @@ def sort(etas, t_it, t_tran, dtmax):
                 print(i)
                 plt.scatter(c, i[0], marker = 's')
                 plt.text(c-0.1, i[0], f'{i[1]}')
-        plt.text(c-0.2, i[0]+15, f'RTA Runway {key}')
+        if key[0]:
+            plt.text(c-0.2, i[0]+15, f'RTA Runway {key}')
         c+=2
     plt.show()
 
@@ -472,13 +473,14 @@ def sort(etas, t_it, t_tran, dtmax):
                     staff[key].append([vals[i-1][0]+t_it, vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
                 else:
                     staff[key].append([vals[i][7]+ddfC[key][i][0], vals[i][1], vals[i][2], vals[i][3], vals[i][4], vals[i][5], vals[i][6], vals[i][7], ddfC[key][i][0], vals[i][-1]])
-
+                if staff[key][i][0] - staff[key][i-1][0] < t_it:
+                    staff[key][i][0] = staff[key][i][0] + (t_it - (staff[key][i][0] - staff[key][i-1][0]))
 
     print('STAFF_IT:', staff_it, '\n\n')
     print('STA:', sta_p, '\n\n')
     print('STAFF:', staff, '\n\n')
-
-
+    staff2 = copy.deepcopy(staff)
+    
     run = []
     j = 0
     c=0
@@ -546,4 +548,4 @@ def sort(etas, t_it, t_tran, dtmax):
     plt.xlim([0.95, 1.15])
     plt.show()
 
-    return sta_p, run, cp3, staff
+    return sta_p, run, cp3, staff2

@@ -695,7 +695,7 @@ class Autopilot(Entity, replaceable=True):
             vnwnd, vewnd = bs.traf.wind.getdata(bs.traf.lat[iab], bs.traf.lon[iab], bs.traf.alt[iab])
             gsnorth = tasnorth + vnwnd
             gseast = taseast + vewnd
-            self.trk[iab] = np.degrees(np.arctan2(gseast, gsnorth))%360.
+            self.trk[iab] = np.degrees(np.arctan2(gseast, gsnorth))#%360.
             self.trk[ibel] = hdg
         else:
             self.trk[idx] = hdg

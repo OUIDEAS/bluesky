@@ -56,7 +56,7 @@ class APorASAS(TrafficArrays):
             steer    = np.arcsin(np.minimum(1.0, np.maximum(-1.0,
                                      Vw * np.sin(drift) / np.maximum(0.001, bs.traf.tas))))
             # desired heading
-            self.hdg = (self.trk + np.degrees(steer)) % 360.
+            self.hdg = (self.trk + np.degrees(steer))% 360.
         else:
-            self.hdg = self.trk % 360.
+            self.hdg = self.trk% 360.
 

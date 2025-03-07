@@ -120,6 +120,10 @@ for i in range(len(teeze_wps)-1):
     p = get_line(teeze_wps[i], teeze_wps[i+1], 0.11257983)
     plt.scatter(p[0], p[1], marker = 's', s = 50)
 plt.show()
+
+entry = np.zeros(20)
+print(entry[0])
+
 # home = [39.4172, -82.2]
 # wp = [0, -1078.6]
 # newll = Meters_To_WSG84(wp, home)
