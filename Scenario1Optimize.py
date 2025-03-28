@@ -10,6 +10,9 @@ from scipy.optimize import brentq
 from scipy.optimize import fsolve
 from pyproj import Proj
 import pandas as pd
+import pyclothoids as pc
+from pyclothoids import Clothoid
+from pyclothoids import SolveG2
 
 def manual_bez(P0, P1, P2, points):
     t = np.linspace(0,1,points)
@@ -97,7 +100,7 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
     cons = (
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-            {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
+            # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
             {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
             ) 
 
@@ -173,33 +176,106 @@ def find_diff_entry(ba, nodes, velocity):
 
     for i in S:
 
+    #     if i>=0 and i <= 1:
+    #         index = int(np.round(float(i*200)))
+    #         if index == 200:
+    #             index = 199
+    #         bez_angle = np.arctan2(By(i+.01)-By(i), Bx(i+0.01)-Bx(i))
+
+    #         x_l = [i for i in np.linspace(229, Bx(i), 200)] #Space between nominal path and bez
+    #         y = [k+np.sqrt(tr**2 - (x-h)**2) for x in x_l] #arc created by turn
+    #         # plt.plot(path[0], path[1])
+    #         # plt.plot(x_l, y)
+    #         # plt.axis('equal')
+    #         # plt.show()
+
+    #         int_angle = np.arctan2(y[-1]-y[198], x_l[-1] - x_l[198])
+    #         diff = np.abs(bez_angle-int_angle)
+    #         if diff < mindiff and np.abs(y[-1] - By(i))<=.001 and np.abs(x_l[-1]-Bx(i))<=0.001:
+    #             mindiff = diff
+    #             # plt.plot(path[0], path[1])
+    #             # plt.plot(x_l, y)
+    #             # plt.scatter(path[0][index], path[1][index], color = 'yellow', marker = '*', s = 100)
+    #             # plt.scatter(x_l[-1], y[-1], color = 'purple', marker = '*', s = 100)
+    #             # plt.axis('equal')
+    #             # plt.show()
+    #             t_final = i
+    #         else:
+    #             t_final = 0
+
+    # return [mindiff, t_final]
         if i>=0 and i <= 1:
             index = int(np.round(float(i*200)))
+            # print(index)
             if index == 200:
                 index = 199
+            if index == 0:
+                index = 5
             bez_angle = np.arctan2(By(i+.01)-By(i), Bx(i+0.01)-Bx(i))
+            # print(f'BEZ ANGLE: {np.rad2deg(bez_angle)}')
+            if np.rad2deg(bez_angle) < 0:
+                bez_angle+=2*pi
+            # print('BEZ X:', Bx(i))
+            if lr == 1:
+                # print('LR + 1 LAND')
+                # y = np.linspace(pos[1], By(i), 200)
+                x_l = np.linspace(229, Bx(i), 200)
+                y = k+np.sqrt(tr**2 - (x_l-h)**2)
+                # x_l = h-np.sqrt(tr**2 - (y-k)**2)
+                # x_2 = h+np.sqrt(tr**2 - (y-k)**2)
+                # print(x_l)
+                # print(x_2)
+            else:
+                x_l = np.linspace(229, Bx(i), 200) #Space between nominal path and bez
+            # print(x_l)
+                y = k+np.sqrt(tr**2 - (x_l-h)**2) #arc created by turn
 
-            x_l = [i for i in np.linspace(229, Bx(i), 200)] #Space between nominal path and bez
-            y = [k+np.sqrt(tr**2 - (x-h)**2) for x in x_l] #arc created by turn
-            # plt.plot(path[0], path[1])
-            # plt.plot(x_l, y)
-            # plt.axis('equal')
-            # plt.show()
+                # y[0] = pos[1]
+            # print(x[0], x[0]-h, x[0]-h**2, )
+            # print(y)
+            # if show:
+            #     fig, ax = plt.subplots()
+            #     plt.scatter(h, k)
+            #     plt.scatter(pos[0], pos[1])
+            #     plt.axis('equal')
+            #     circ = plt.Circle((h, k), tr, fill = False)
+            #     ax.add_patch(circ)
+            #     plt.plot(path[0], path[1])
+            #     plt.plot(x_l, y, color = 'orange')
+            #     # plt.plot(x_2, y, color = 'red')
+            #     plt.axis('equal')
+            #     plt.show()
 
             int_angle = np.arctan2(y[-1]-y[198], x_l[-1] - x_l[198])
+            if bez_angle >= 3*pi/2 and int_angle <= pi/2:
+                int_angle+=2*pi
+            # print(f'INT ANGLE {np.rad2deg(int_angle)}')
+            if math.isnan(int_angle):
+                int_angle = np.arctan2(y[198]-y[197], x_l[198] - x_l[197])
+            if np.deg2rad(int_angle) <0:
+                int_angle+=2*pi
+            # print(f'BEZ ANGLE {np.rad2deg(bez_angle)}, INT ANGLE {np.rad2deg(int_angle)}, DIFFERENCE {np.abs(np.rad2deg(bez_angle-int_angle))}')
             diff = np.abs(bez_angle-int_angle)
-            if diff < mindiff and np.abs(y[-1] - By(i))<=.001 and np.abs(x_l[-1]-Bx(i))<=0.001:
+            # print(np.rad2deg(int_angle))
+            if diff < mindiff and np.abs(y[-1] - By(i))<=5 and np.abs(x_l[-1]-Bx(i))<=5:
                 mindiff = diff
-                # plt.plot(path[0], path[1])
-                # plt.plot(x_l, y)
-                # plt.scatter(path[0][index], path[1][index], color = 'yellow', marker = '*', s = 100)
-                # plt.scatter(x_l[-1], y[-1], color = 'purple', marker = '*', s = 100)
-                # plt.axis('equal')
-                # plt.show()
+                # if show:
+                #     plt.plot(path[0], path[1])
+                #     plt.plot(x_l, y)
+                #     plt.scatter(path[0][index], path[1][index], color = 'yellow', marker = '*', s = 100)
+                #     plt.scatter(x_l[-1], y[-1], color = 'purple', marker = '*', s = 100)
+                #     plt.axis('equal')
+                #     plt.show()
                 t_final = i
             else:
-                t_final = 0
-
+                # If no valid intersection found, dynamically penalize based on distance from Bézier curve
+                dist_to_curve = np.sqrt((Bx(i) - x_l[-1]) ** 2 + (By(i) - y[-1]) ** 2)
+                mindiff = max(mindiff, dist_to_curve * 100)  # Apply penalty
+                t_final = i
+        else:
+            t_final = i 
+    # print(f'BANK: {np.rad2deg(ba)}, T: {t_final}')
+    # print('MIN DIFF:', mindiff)
     return [mindiff, t_final]
 
 def find_diff_exit(guess, nodes, velocity):
@@ -228,7 +304,7 @@ def find_diff_exit(guess, nodes, velocity):
 
     y_l = [i for i in np.linspace(274, S, 200)]
     x = [229 for i in y_l]
-
+    print(y_l[-1])
     # print(S)
     for i in S:
         if i > 0: 
@@ -240,12 +316,12 @@ def find_diff_exit(guess, nodes, velocity):
                 int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
                 diff = np.abs((np.pi/2) - int_angle)
                 guess_deg = np.rad2deg(ba)
-                plt.title(f'{guess_deg} {t_guess}')
-                plt.plot(x, y_l, linestyle = 'dashed')
-                plt.plot(path[0], path[1])
-                plt.plot(x_l, y)
-                plt.axis('equal')
-                plt.show()
+                # plt.title(f'{guess_deg} {t_guess}')
+                # plt.plot(x, y_l, linestyle = 'dashed')
+                # plt.plot(path[0], path[1])
+                # plt.plot(x_l, y)
+                # plt.axis('equal')
+                # plt.show()
                 if diff < mindiff:
                     mindiff = diff
                     # print('BLARGY', diff)
@@ -551,8 +627,10 @@ def entryPath(velocity, ba, intersect):
     # y_entry[-1] = intersect[1]
     # central_angle = np.arctan2(y_entry[-1]-k, x_entry[-1] - 229)
     ar, ad = central_angle([h, k], [x_entry[0], y_entry[0]], [x_entry[-1], y_entry[-1]])
-    entryLength = 2*pi*tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
-    entryTOA = entryLength/(velocity**2/(9.81*np.tan(np.deg2rad(ba))))
+    # entryLength = 2*pi*tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
+    # entryTOA = entryLength/(velocity**2/(9.81*np.tan(np.deg2rad(ba))))
+    entryLength = tr*ar #entryLength = 2*pi*tr * (central_angle/(2*pi))
+    entryTOA = entryLength/velocity
     print('ENTRY ToA: ', entryTOA)
 
     return x_entry, y_entry, ad, entryLength, entryTOA, h, k
@@ -656,28 +734,46 @@ def exitPath(velocity, t_exit, ba, intersect, nodes):
 
     ar, ad = central_angle(center = [h, k], point1=[x_exit[-1], y_exit[-1]], point2=[x_exit[0], y_exit[0]])
     # print(ar, ad, ba)
-    exitLength = 2*pi*tr*ar
+    # exitLength = 2*pi*tr*ar
 
-    exitTOA = exitLength/(velocity**2/(9.81*np.tan(ba)))
+    # exitTOA = exitLength/(velocity**2/(9.81*np.tan(ba)))
+    exitLength = tr*ar
+
+    exitTOA = exitLength/velocity
     
     print('EXIT ToA:', exitTOA)
 
     return x_exit, y_exit, ad, exitLength, exitTOA, h, k
 
 def central_angle(center, point1, point2):
-    # Calculate vectors
-    v1 = (point1[0] - center[0], point1[1] - center[1])
-    v2 = (point2[0] - center[0], point2[1] - center[1])
-    
-    # Compute the angle using atan2
-    angle_radians = np.arctan2(v2[1]-v1[1], v2[0]-v1[0])# - math.atan2(v1[1], v1[0])
-    
-    # Normalize the angle to [0, 2*pi] if necessary
-    angle_radians = (angle_radians + 2 * math.pi) % (2 * math.pi)
-    
-    # Convert to degrees (optional)
+    """
+    Computes the central angle between two points on a circle.
+
+    Parameters:
+        center (tuple): (x, y) coordinates of circle center.
+        point1 (tuple): First point (x, y) on the circle.
+        point2 (tuple): Second point (x, y) on the circle.
+
+    Returns:
+        angle_radians (float): Angle in radians.
+        angle_degrees (float): Angle in degrees.
+    """
+    # Convert to NumPy arrays
+    center = np.array(center)
+    point1 = np.array(point1)
+    point2 = np.array(point2)
+
+    # Compute vectors from center to points
+    v1 = point1 - center
+    v2 = point2 - center
+
+    # Compute central angle using the dot product formula
+    dot_product = np.dot(v1, v2)
+    norms = np.linalg.norm(v1) * np.linalg.norm(v2)
+    angle_radians = np.arccos(np.clip(dot_product / norms, -1.0, 1.0))
+
+    # Convert to degrees
     angle_degrees = np.rad2deg(angle_radians)
-    print('CA:', angle_radians, angle_degrees)
     
     return angle_radians, angle_degrees
 
@@ -737,6 +833,7 @@ def hp():
 if __name__ == "__main__":
  
     velocity  = 57.412 #m/s
+    
     knots = velocity*1.94384
     # turn_rate = np.deg2rad(20) # RAD/s
     # turn_radius = velocity/turn_rate
@@ -961,7 +1058,7 @@ if __name__ == "__main__":
     t_start2 = 0.35678391959798994
 
     nodes2 = [np.array([nodes2[0][0], optim_sol2[0], nodes2[0][2]]).flatten(),np.array([nodes2[1][0], optim_sol2[1], nodes2[1][2]]).flatten()]
-    baEx, exit_t = solve_optimExit([np.deg2rad(25), t_start2], np.deg2rad(30), np.deg2rad(20), t_start2, nodes2, velocity)
+    baEx, exit_t = solve_optimExit([np.deg2rad(25), t_start2], np.deg2rad(73), np.deg2rad(20), t_start2, nodes2, velocity)
     print('EXIT BANK', np.rad2deg(baEx) )
 
     x_int_ex, y_int_ex = find_bez_xy([nodes2[0][0],nodes2[1][0]],
@@ -1053,6 +1150,8 @@ if __name__ == "__main__":
     # print("ENTRY TOA:", entryTOA)
     # print("EXIT TOA:", exitTOA)
     print("SOLVED BEZIER LEGNTH: ", pb1_length + pb2_length, pb1_length, pb2_length)
+    print(f'ENTRY + PB1 TRAVEL TIME {entryTOA+(pb1_length/velocity)}\nEXIT + PB2 TRAVEL TIME {exitTOA+(pb2_length/velocity)}')
+    t_t = (entryTOA+(pb1_length/velocity))+(exitTOA+(pb2_length/velocity))
     # print("PARTIAL BEZIER TRAVEL TIME:", (pb1_length+pb2_length)/velocity)
 
     # print("SOLVED LENGTH WITH ENTRY/EXIT: ", pb1_length + optim2_length + entryLength+exitLength)
@@ -1070,9 +1169,9 @@ if __name__ == "__main__":
     # ax.text(nodes2[0][2]+25,nodes2[1][2]+25,  r'$\bf{p_{22}}$', fontsize=16)
     # ax.text(nodes1[0][2]-137,nodes1[1][2]-35,  r'Curve 1', fontsize = 18)
     # ax.text(nodes1[0][2]-137,nodes1[1][2]+20,  r'Curve 2', fontsize = 18)
-    ax.text(500, 115, r'$\bf{Goal   TOA: 23s}$')
-    ax.text(-250, 215, r'$\bf{Goal   TOA: 18s}$')
-    ax.text(500, -500, r'$\bf{Goal   TOA: 34s}$')
+    ax.text(500, 115, f'BEZ GOAL TOA: {t_t:0.2f}', weight = 'bold')
+    ax.text(-250, 215, f'Goal TOA: 18s', weight = 'bold')
+    ax.text(500, -500, f'Goal TOA: 34s', weight = 'bold')
     # ax.text(mx+0.25, my, r'$\bf{m}$')
     # ax.text(center1x+0.25, center1y, r'$\bf{C_1}$')
     # ax.text(center2x+0.25, center2y, r'$\bf{C_2}$')
@@ -1106,9 +1205,36 @@ if __name__ == "__main__":
     ax.axis('equal')
     ax.set_xlabel('X (m)')
     ax.set_ylabel('Y (m)')
-    ax.legend(loc = 'lower left', fontsize = '10')
+    
     # plt.ylim(optim_sol1[1]-150, optim_sol2[1]+150)
     # plt.axes.set_ylim(-150, 600)
+
+    c0 = SolveG2(229, -391, np.pi/2, 0, 450, 225/2, np.pi/2, 0)#, Dmax=1000, dmax=100)
+# c0 = Clothoid.G1Hermite(229, -391, np.pi/2, 450, 225/2, np.pi/2)
+
+# print(c0.length/57.412)
+    t1 = (c0[0].length + c0[1].length + c0[2].length)/57.412
+    print(t1)
+    # print(c0[1])
+    # p = c0.SampleXY(200)
+    # c1 = Clothoid.G1Hermite(450, 225/2, np.pi/2, 229, 637.5, np.pi/2)
+    c1 = SolveG2(450, 225/2, np.pi/2, 0, 229, y_exit[0], np.pi/2, 0)#, Dmax=100, dmax=100)
+    t2 = (c1[0].length + c1[1].length + c1[2].length)/57.412
+    print(t2)
+    print(t1+t2)
+    ax.text(500, 200, f'CLOTHOID GOAL TOA: {(t1+t2):0.2f}', weight = 'bold')
+    # p1 = c1.SampleXY(200)
+    # print(c1.length/57.412)
+    # print(c0.dk)
+    # plt.figure()
+    # plt.axis('equal')
+    for i in c0:
+            ax.plot( *i.SampleXY(500), color = 'cyan', linestyle = '-.' )
+    # for i in c1:
+    ax.plot( *c1[0].SampleXY(500), color = 'cyan', linestyle = '-.' )
+    ax.plot( *c1[1].SampleXY(500), color = 'cyan', linestyle = '-.' )
+    ax.plot( *c1[2].SampleXY(500), color = 'cyan', linestyle = '-.', label = 'Clothoid Path' )
+    ax.legend(loc = 'lower left', fontsize = '10')
     plt.show()
     # bezXY = {
     #     'Bez1X': optimal_bez1[0],

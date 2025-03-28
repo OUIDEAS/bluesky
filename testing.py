@@ -7,6 +7,9 @@ from utm import from_latlon as llutm
 from utm import to_latlon as utmll
 import pandas as pd
 from numpy import array
+import pyclothoids as pc
+from pyclothoids import Clothoid
+from pyclothoids import SolveG2
 
 def Meters_To_WSG84(waypoints, home):
         # convert position back to LAT/LONg
@@ -109,20 +112,54 @@ taces = [40.090111, -82.916333]
 teeze_path = [melzz, dubln, trlgy, polrs, taces, teeze]
 teeze_wps = LongLat_To_WSG84_Meters(teeze_path, kcmh)
 
-print(teeze_wps)
-plt.plot([teeze_wps[0][0],teeze_wps[1][0],teeze_wps[2][0],teeze_wps[3][0],teeze_wps[4][0],teeze_wps[5][0]],
-         [teeze_wps[0][1],teeze_wps[1][1],teeze_wps[2][1],teeze_wps[3][1],teeze_wps[4][1],teeze_wps[5][1]], linewidth = 2, color = 'blue')
-for i in range(len(teeze_wps)):
-    plt.scatter(teeze_wps[i][0], teeze_wps[i][1], color = 'orange', s=50)
-for i in range(len(teeze_wps)-1):
-    p = get_line(teeze_wps[i], teeze_wps[i+1], 0.1)
-    plt.scatter(p[0], p[1], marker = 's', s = 50)
-    p = get_line(teeze_wps[i], teeze_wps[i+1], 0.11257983)
-    plt.scatter(p[0], p[1], marker = 's', s = 50)
-plt.show()
+# print(teeze_wps)
+# plt.plot([teeze_wps[0][0],teeze_wps[1][0],teeze_wps[2][0],teeze_wps[3][0],teeze_wps[4][0],teeze_wps[5][0]],
+#          [teeze_wps[0][1],teeze_wps[1][1],teeze_wps[2][1],teeze_wps[3][1],teeze_wps[4][1],teeze_wps[5][1]], linewidth = 2, color = 'blue')
+# for i in range(len(teeze_wps)):
+#     plt.scatter(teeze_wps[i][0], teeze_wps[i][1], color = 'orange', s=50)
+# for i in range(len(teeze_wps)-1):
+#     p = get_line(teeze_wps[i], teeze_wps[i+1], 0.1)
+#     plt.scatter(p[0], p[1], marker = 's', s = 50)
+#     p = get_line(teeze_wps[i], teeze_wps[i+1], 0.11257983)
+#     plt.scatter(p[0], p[1], marker = 's', s = 50)
+# plt.show()
 
-entry = np.zeros(20)
-print(entry[0])
+# entry = np.zeros((1000, 20, 20), dtype = int)
+# print(entry)
+# entry[500][5][6] = 10
+# print(entry[500][5])
+
+# start_end = [[0,0,0] for _ in range(20)]
+# start_end[5][1] = 20
+# start_end[6][1] = 30
+# print(np.max(start_end))
+turn_radius = (57.412*1.94384)**2/(11.26*math.tan(np.deg2rad(73)))
+turn_radius*=0.3048
+c0 = SolveG2(229, -391, np.pi/2, 0, 450, 225/2, np.pi/2, 0)#, Dmax=1000, dmax=100)
+# c0 = Clothoid.G1Hermite(229, -391, np.pi/2, 450, 225/2, np.pi/2)
+
+# print(c0.length/57.412)
+t1 = (c0[0].length + c0[1].length + c0[2].length)/57.412
+print(t1)
+# print(c0[1])
+# p = c0.SampleXY(200)
+# c1 = Clothoid.G1Hermite(450, 225/2, np.pi/2, 229, 637.5, np.pi/2)
+c1 = SolveG2(450, 225/2, np.pi/2, 0, 229, 637.5, np.pi/2, 0)#, Dmax=100, dmax=100)
+t2 = (c1[0].length + c1[1].length + c1[2].length)/57.412
+print(t2)
+print(t1+t2)
+# p1 = c1.SampleXY(200)
+# print(c1.length/57.412)
+# print(c0.dk)
+plt.figure()
+plt.axis('equal')
+for i in c0:
+        plt.plot( *i.SampleXY(500), color = 'black' )
+for i in c1:
+        plt.plot( *i.SampleXY(500), color = 'black' )
+# plt.plot(p[0], p[1])
+# plt.plot(p1[0], p1[1])
+plt.show()
 
 # home = [39.4172, -82.2]
 # wp = [0, -1078.6]
@@ -397,14 +434,16 @@ print(entry[0])
 # new = __WSG84_To_Meters_Single(pos, home, p)
 # print(new)
 
-# velocity  = 111.6 #m/s
-# turn_rate = np.deg2rad(3.5) # RAD/s
-# print(velocity/turn_rate)
-# tr = velocity/turn_rate
-# ba = np.arctan(111.6**2/(tr*11.6))
+velocity  = 106.68 #m/s
+turn_rate = np.deg2rad(5) # RAD/s
+print(velocity/turn_rate)
+tr = velocity/turn_rate
+ba = np.arctan(velocity**2/(tr*11.6))
 # print(np.rad2deg(ba))
 # # turn_rate = np.deg2rad(4.50) # RAD/s
-# turn_radius = 111.6**2/(11.26*math.tan(np.deg2rad(60)))
+turn_radius = 106.68**2/(11.26*math.tan(np.deg2rad(5)))
+turn_radius*=0.3048
+print(np.rad2deg(54.884/turn_radius))
 # turn_radius*=0.3048
 # print(np.rad2deg(velocity/turn_radius))
 # new = Meters_To_WSG84([0, 46], [39.4, -82.2])

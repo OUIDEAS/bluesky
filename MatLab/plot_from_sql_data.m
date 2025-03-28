@@ -42,28 +42,30 @@ function [lon_points, lat_points] = Meters_To_WSG84(cx1, cy1, home)
     end
 end
 
-
-path = 'C:/Users/Michael/Desktop/bluesky/MatLab/SingleHoldSQLData/';
+vr = 57.412-57.412;
+path = 'C:/Users/Michael/Desktop/bluesky/MatLab/FullBezSQLData/';
 
 data = struct();
-xl = zeros([1, 3]);
-mins = zeros([0, 3]);
+xl = zeros([1, 13]);
+xdel = zeros([1, 13]);
+mins = zeros([0, 13]);
 c = 1;
 
-path2 = 'C:/Users/Michael/Desktop/bluesky/MatLab/SingleBezSQLData/';
+path2 = 'C:/Users/Michael/Desktop/bluesky/MatLab/FullBezSQLData/';
 
 data2 = struct();
-xl2 = zeros([1, 3]);
-mins2 = zeros([0, 3]);
+xl2 = zeros([1, 13]);
+xdel2 = zeros([1, 13]);
+mins2 = zeros([0, 13]);
 c2 = 1;
 
-path3 = 'C:/Users/Michael/Desktop/bluesky/MatLab/FullHoldSQLData/';
+path3 = 'C:/Users/Michael/Desktop/bluesky/MatLab/FullBezRSQLData/';
 
 data3 = struct();
-xl3 = zeros([1, 3]);
-mins3 = zeros([0, 3]);
+xl3 = zeros([1, 13]);
+mins3 = zeros([0, 13]);
 c3 = 1;
-for sp = 24:-8:8
+for sp = 104:-8:8
     sp_str = sprintf('sp%.0f', sp); 
     ac_data = load(sprintf('%s%.0f_aircraft.mat', path, sp));
     % bez_data = load(sprintf('%s%.0f_bez.mat', path, sp));
@@ -72,7 +74,7 @@ for sp = 24:-8:8
     ev_data = load(sprintf('%s%.0f_ev_specific.mat', path, sp));
     note_data = load(sprintf('%s%.0f_note_events.mat', path, sp));
     state_data = load(sprintf('%s%.0f_state.mat', path, sp));
-    % dist_data = load(sprintf('%s%.0f_distances.mat', path, sp));
+    dist_data = load(sprintf('%s%.0f_distances.mat', path, sp));
 
     data.(sp_str).aircraft = ac_data;
     % data.(sp_str).bez = bez_data;
@@ -81,8 +83,8 @@ for sp = 24:-8:8
     data.(sp_str).ev_specific = ev_data;
     data.(sp_str).note_events = note_data;
     data.(sp_str).state = state_data;
-    % data.(sp_str).distances = dist_data;
-
+    data.(sp_str).distances = dist_data;
+    xdel(c) = sp/(8 + vr*0.01);
     xl(c) = sp;
     c = c+1;
 
@@ -93,7 +95,7 @@ for sp = 24:-8:8
     ev_data2 = load(sprintf('%s%.0f_ev_specific.mat', path2, sp));
     note_data2 = load(sprintf('%s%.0f_note_events.mat', path2, sp));
     state_data2 = load(sprintf('%s%.0f_state.mat', path2, sp));
-    % dist_data2 = load(sprintf('%s%.0f_distances.mat', path2, sp));
+    dist_data2 = load(sprintf('%s%.0f_distances.mat', path2, sp));
 
     data2.(sp_str).aircraft = ac_data2;
     % data2.(sp_str).bez = bez_data2;
@@ -102,7 +104,7 @@ for sp = 24:-8:8
     data2.(sp_str).ev_specific = ev_data2;
     data2.(sp_str).note_events = note_data2;
     data2.(sp_str).state = state_data2;
-    % data2.(sp_str).distances = dist_data2;
+    data2.(sp_str).distances = dist_data2;
 
     dist_data3 = load(sprintf('%s%.0f_distances.mat', path3, sp));
     data3.(sp_str).distances = dist_data3;
@@ -134,11 +136,11 @@ for i = 1:length(xl)
     disp(sp_str);
     % disp(min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist))
     min_dist = min(data.(sp_str).ev_specific.ev_specific_dat.TOI_Dist);
-    % % min_dist = min(data.(sp_str).distances.dist_dat.ac_dist);
+    min_dist = min(data.(sp_str).distances.dist_dat.ac_dist);
     min_dist2 = min(data2.(sp_str).ev_specific.ev_specific_dat.TOI_Dist);
-    % min_dist2 = min(data2.(sp_str).distances.dist_dat.ac_dist);
+    min_dist2 = min(data2.(sp_str).distances.dist_dat.ac_dist);
     min_dist3 = min(data3.(sp_str).ev_specific.ev_specific_dat.TOI_Dist);
-    % min_dist3 = min(data3.(sp_str).distances.dist_dat.ac_dist);
+    min_dist3 = min(data3.(sp_str).distances.dist_dat.ac_dist);
     if data.(sp_str).delay.delay_dat.delay >= 0
     delay_values = data.(sp_str).delay.delay_dat.delay; % Extract delay values for this sp
     delay_values2 = data2.(sp_str).delay.delay_dat.delay;
@@ -146,7 +148,7 @@ for i = 1:length(xl)
     %     delay_values = delay_values(1:2);
         % disp(delay_values)
     % end
-    
+    xdel2(i) = xl(i)/(8 + vr*0.01);
     delay_matrix(i, :) = delay_values(); 
     mins(i) = min_dist;
     delay_matrix2(i, :) = delay_values2; 
@@ -163,31 +165,32 @@ x = 1:length(xl); % X values corresponding to sp indices
 bar(x, delay_matrix, bar_width); % Plot grouped bars
 
 % Customize the plot
-xticks(x);
-% grid();
-xticklabels(arrayfun(@num2str, xl, 'UniformOutput', false)); % Set x-axis labels to sp numbers
-xlabel('Initial Spacing Between Fleet Aircraft (m)');
+grid();
+xticks(x); % Set tick positions
+xticklabels(sprintfc('%.0f', xdel)); % Keeps full precision up to 3 decimals without rounding
+xlabel('\delta', FontWeight='Bold');
 ylabel('Delay (s)');
 legend({'AX0', 'AX1'}, 'Location', 'best');
 % title('Delay for Each Aircraft Across SP Values');
-ylim([0, 25]);
+ylim([0, 2.5]);
 grid('on');
 hold off;
 
 
 figure(2);
 % bar(x, mins, bar_width); % Plot grouped bars% home = [39.49029047106718, -82.2];
-b=bar(x, [mins; mins2;]', bar_width);
+b=bar(x, [mins; mins2;mins3;]', bar_width);
 % b(1).FaceColor = 'green';
 % b(2).FaceColor = 'black';
 % plot(x, mins, LineWidth=5)
-xticks(x);
-xticklabels(arrayfun(@num2str, xl, 'UniformOutput', false)); % Set x-axis labels to sp numbers
-xlabel('Initial Spacing Between Aircraft (m)');
+grid();
+xticks(x); % Set tick positions
+xticklabels(sprintfc('%.0f', xdel)); % Keeps full precision up to 3 decimals without rounding
+xlabel('\delta', FontWeight='Bold');
 ylabel('Minimum Distance Between Aircraft (m)');
-% legend({'Holding Pattern','Opposite Sides', 'Same Side'}, 'Location', 'best', 'FontSize', 14);
+legend({'Holding Pattern','Opposite Sides', 'Same Side'}, 'Location', 'best', 'FontSize', 14);
 % title('Distance Between Fleet Aircraft and EX0 Across SP Values');
-legend({'Holding Pattern','Bezier'}, 'Location', 'best', 'FontSize', 14);
+% legend({'Holding Pattern','Bezier'}, 'Location', 'best', 'FontSize', 14);
 ylim([0, 25]);
 % xlim([40, 8])
 grid('on')

@@ -275,6 +275,17 @@ def to_json(obj, name, path):
 
     print(f"{name} data saved to {output_file}")
 
+def reformat_list(data):
+    reformatted = []
+    for sublist in data:
+        if sublist != False:
+            x_vals = [point[0] for point in sublist]
+            y_vals = [point[1] for point in sublist]
+            reformatted.append([x_vals, y_vals])
+        else:
+            reformatted.append(False)
+    return reformatted
+
 def tracon_points(r, n):
 
     x = [math.cos(2*pi/n*x)*r for x in range(0,n+1)]
@@ -591,8 +602,8 @@ bs.scr = ScreenDummy()
 #Pattern for pulling from terminal
 pattern = r'Dist = (\d+\.\d+) nm'
 #Create Log
-bs.stack.stack(f'CRELOG SequencingFlightTest2 1')
-bs.stack.stack(f'SCEN SequencingFlightTest2; SAVEIC SequencingFlightTest2')
+bs.stack.stack(f'CRELOG SequencingFlightTest3 1')
+bs.stack.stack(f'SCEN SequencingFlightTest3; SAVEIC SequencingFlightTest3')
 # bs.stack.stack(f'CRELOG HoldSingleBypass 1')
 # bs.stack.stack(f'SCEN HoldSingleBypass; SAVEIC HoldSingleBypass')
 # Set Sim Time
@@ -724,11 +735,12 @@ p = Proj(proj='utm',zone=17,ellps='WGS84', preserve_units=False)
 
 
 
-
+b_ll = []
+e_ll = []
 
 t_max = 15001
 # t_max = 10000
-# t_max = 4001
+# t_max = 1
 
 # t_max = 6010
 # t_max = 2
@@ -792,6 +804,7 @@ ac_info = [[0, 0, 0, 0, 0, 0, True, 0, 0, 0] for _ in range(ntraf)]
 plan_eta = [0 for _ in range(ntraf)]
 diff = [0]*ntraf
 buff = [0]*ntraf
+all_dists = np.zeros((n_steps, ntraf, ntraf), dtype = int)
 
 start_time = time.time()
 if scen == 'WP':
@@ -816,6 +829,10 @@ if scen == 'WP':
         for j in range(len(bs.traf.id)):
             pos = __WSG84_To_Meters_Single([bs.traf.lat[j], bs.traf.lon[j]], kcmh, p)
             current_xy[j][i] = pos
+            for k in range(ntraf):
+                if k != j:
+                    h, d = qdrdist(bs.traf.lat[j], bs.traf.lon[j], bs.traf.lat[k], bs.traf.lon[k])
+                    all_dists[i][j][k] = d
             # if i %100 == 0:
             #     print(f'min_centx: {min_centx}, p[0]: {pos[0]}, max_centx: {max_centx}, min_freezey: {min_freezey}, p[1]: {pos[1]}, max_freezey: {max_freezey}')
             # if min_centlon < bs.traf.lon[j] < max_centlon and min_freezelat < bs.traf.lat[j] < max_freezelat and sorter[j] ==  0:
@@ -929,11 +946,20 @@ if scen == 'Bez':
             step[c] = 1
             c+=1
             
-
+        lat = np.array(bs.traf.lat)
+        lon = np.array(bs.traf.lon)
         for j in range(len(bs.traf.id)):
             # bs.stack.stack(f'SPD {bs.traf.id[j]} 111.6')
             pos = __WSG84_To_Meters_Single([bs.traf.lat[j], bs.traf.lon[j]], kcmh, p)
             current_xy[j][i] = pos
+            # for k in range(ntraf):
+            #     if k != j:
+            #         h, d = qdrdist(bs.traf.lat[j], bs.traf.lon[j], bs.traf.lat[k], bs.traf.lon[k])
+            #         all_dists[i][j][k] = d
+            mask = np.arange(ntraf) != j  # Create a boolean mask to exclude j
+            h, dists = qdrdist(lat[j], lon[j], lat[mask], lon[mask])  # Vectorized call
+            all_dists[i, j, mask] = dists  # Assign results directly
+            all_dists[i][j][j] = -1
             # if j== 1 and guide[j]==4: 
             #     print(bs.traf.id[j], bs.traf.hdg[j], guide[j])
             # if guide[j] == 3:
@@ -983,10 +1009,13 @@ if scen == 'Bez':
             if guide[j] == 1:
                 pos_ll = [bs.traf.lat[j], bs.traf.lon[j]]
                 # print(bs.traf.id[j], pos_ll, bs.traf.hdg[j])
-                interps[j], end_point[j], nodes[j], bez[j], entry[j], fl[j], times[j], diffs[j], lr[j] = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]],
+                interps[j], end_point[j], nodes[j], bez[j], entry[j], fl[j], times[j], diffs[j], lr[j], path = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]],
                                                                                                                                         run_id[j][0], waypt_set[j], 
                                                                                                                                         bs.traf.hdg[j], bs.traf.tas[j], kcmh, 
                                                                                                                                         gate[j], False, ac_info[j], t_it)
+                b_ll.append(path[0])
+                # if path[1] != False:
+                e_ll.append(path[1])
                 plan_eta[j] = diffs[j][1]
                 diff[j] = diffs[j][0]
                 if entry[j][0]:
@@ -1002,10 +1031,13 @@ if scen == 'Bez':
                 print(f'REPLANNING PATH FOR {bs.traf.id[j]}')
                 pos_ll = [bs.traf.lat[j], bs.traf.lon[j]]
                 # print(bs.traf.id[j], pos_ll, bs.traf.hdg[j])
-                interps[j], end_point[j], nodes[j], bez[j], entry[j], fl[j], times[j], diffs[j], lr[j] = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]],
+                interps[j], end_point[j], nodes[j], bez[j], entry[j], fl[j], times[j], diffs[j], lr[j], path = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]],
                                                                                                                                         ac_info[j][1], waypt_set[j], 
                                                                                                                                         bs.traf.hdg[j], bs.traf.tas[j], kcmh, 
                                                                                                                                         gate[j], False, ac_info[j], t_it)
+                b_ll[j] = path[0]
+                # if path[1] != False:
+                e_ll[j] = path[1]
                 plan_eta[j] = diffs[j][1]
                 diff[j] = diffs[j][0]
                 if entry[j][0]:
@@ -1057,6 +1089,7 @@ if scen == 'Bez':
             if t_g[j] >= 1 and guide[j] == 4 and passed[j]:
                 guide[j] = 5
                 print(f'INITIATING WP GUIDANCE FOR {bs.traf.id[j]} AT TIMESTEP {i}')
+                tag = i
                
                 h, d[j] = qdrdist(waypts[j][0][index[j]], waypts[j][1][index[j]], bs.traf.lat[j], bs.traf.lon[j])
                 index[j] = get_wpIndex([bs.traf.lat[j], bs.traf.lon[j]], waypts[j], gate[j])
@@ -1194,6 +1227,7 @@ if scen == 'Bez':
 #                 buff[ind] = 1
 #             else:
 #                 buff[ind] = 2
+
 print(ac_info)
 print(run)
 # print(sta_p)
@@ -1222,11 +1256,34 @@ for i in range(len(bs.traf.id)):
     print(bs.traf.id[i], bs.traf.lat[i],',', bs.traf.lon[i], bs.traf.hdg[i])
 
 end_time = time.time()
+# print(all_dists)
+
+masked_dists = np.where(all_dists == -1, np.inf, all_dists)  # Replace 0s with np.inf
+valid_indices = np.where(np.logical_and(masked_dists != np.inf, np.arange(all_dists.shape[0])[:, None, None] < tag))
+
+# Extract corresponding distances
+valid_dists = masked_dists[valid_indices]
+
+# Get indices of top 10 smallest values
+sorted_indices = np.argsort(valid_dists)[:150]
+
+# Extract the actual (i, j, k) indices from valid_indices
+top_i = valid_indices[0][sorted_indices]
+top_j = valid_indices[1][sorted_indices]
+top_k = valid_indices[2][sorted_indices]
+top_values = valid_dists[sorted_indices]
+
+# Print results
+for rank in range(len(top_values)):
+    print(f"i: {top_i[rank]}, j: {top_j[rank]}, k: {top_k[rank]}, Distance: {top_values[rank]}")
+
+
 print("SIM TIME", end_time-start_time)
-# print(sort_group1)
+print(sort_group1)
+
 plt.figure()
 '''Plotting'''
-
+color_map = {}
 for idx, acid in enumerate(bs.traf.id):
 
     if idx%2 == 0:
@@ -1235,9 +1292,13 @@ for idx, acid in enumerate(bs.traf.id):
         marker = '^'
     else:
         marker = 'x'
+    plt.text(res[0, 1, idx], res[0, 0, idx], f'AC{idx}', fontweight = 'bold', fontsize = 10)
+    # plt.plot(res[::10, 1, idx], res[::10, 0, idx], marker = marker, linestyle = '')#, label=f'AX{idx}')
+    # plt.plot([kcmh[1], res[0, 1, idx]], [kcmh[0], res[0, 0, idx]], linestyle = '--', color = 'black', linewidth = 2)
+    line, = plt.plot(res[::10, 1, idx], res[::10, 0, idx], marker=marker, linestyle='')
 
-    plt.plot(res[::10, 1, idx], res[::10, 0, idx], marker = marker, linestyle = '', label=f'AC{idx}')
-    plt.plot([kcmh[1], res[0, 1, idx]], [kcmh[0], res[0, 0, idx]], linestyle = '--', color = 'black', linewidth = 2)
+    # Store the color assigned to this object
+    color_map[idx] = line.get_color()
 
 for i in range(0, points, 2):
     if i == 0:
@@ -1262,13 +1323,24 @@ plt.scatter([teeze_path[0][1], teeze_path[2][1], teeze_path[3][1], teeze_path[4]
 plt.scatter([elupy_path[0][1], elupy_path[1][1], elupy_path[3][1], elupy_path[4][1], elupy_path[5][1]],
             [elupy_path[0][0], elupy_path[1][0], elupy_path[3][0], elupy_path[4][0], elupy_path[5][0]], marker = 's', s=  100, color = 'magenta')
 plt.axis('equal')
+# print(b_ll)
+b2 = reformat_list(b_ll)
+e2 = reformat_list(e_ll)
 # plt.gca().set_aspect('equal', adjustable='datalim')
-
+# c = 0
+for i in b2:
+    plt.plot(i[1], i[0], linewidth = 2, zorder = 100, color = 'black')
+#     c+=1
+# c = 0
+for i in e2:
+    if i != False:
+        plt.plot(i[1], i[0], linestyle = '--', linewidth = 2, zorder = 100, color = 'black')
+    # c+=1
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.grid()
 plt.xlim(-83.3, -82.5)
-plt.legend(loc = 'upper right')
+plt.legend(loc = 'best')
 # plt.show()
 color_list = ['black', 'red', 'blue', 'green', 'yellow', 'orange', 'cyan', 'magenta', 'purple', 'brown']
 c = 0
@@ -1282,7 +1354,7 @@ for idx, acid in enumerate(bs.traf.id):
         # print(run[act_index])
         # print(final_order[final_index])
         if final_order[final_index][-1] in ['I', 'IV']:
-            plt.scatter(1, run[act_index][0], marker = 's', color = color_list[c], label = f'{acid} Delay {final_order[final_index][3]:0.2f}')
+            plt.scatter(1, run[act_index][0], marker = 's', color = color_map[idx], label = f'{acid} Delay {final_order[final_index][3]:0.2f}')
             if ac_info[idx][2]!=0:
                 if ac_info[idx][1] - ac_info[idx][5] >= t_it-0.5:
                     plt.scatter(1.1, ac_info[idx][1], color = 'green')
@@ -1291,20 +1363,20 @@ for idx, acid in enumerate(bs.traf.id):
             # plt.scatter(1.2, final_order[final_index][1], marker = 's', color = color_list[c])
             # plt.plot([1, 1.2], [run[act_index][0], final_order[final_index][1]], linestyle = '--', linewidth = 2, color = 'black')
             plt.plot([1, 1.1], [run[act_index][0], ac_info[idx][1]], linestyle = '--', linewidth = 2, color = 'black')
-            plt.text(0.9, run[act_index][0], f'{acid}', weight = 'bold')
-            plt.text(1.25, final_order[final_index][1], f'{acid}', weight = 'bold')
+            plt.text(0.975, run[act_index][0], f'{acid}', weight = 'bold')
+            # plt.text(1.25, final_order[final_index][1], f'{acid}', weight = 'bold')
         else:
-            plt.scatter(1.4, run[act_index][0], marker = 's', color = color_list[c], label = f'{acid} Delay {final_order[final_index][3]:0.2f}')
+            plt.scatter(1.3, run[act_index][0], marker = 's', color = color_map[idx], label = f'{acid} Delay {final_order[final_index][3]:0.2f}')
             if ac_info[idx][2]!=0:
                 if ac_info[idx][1] - ac_info[idx][5] >= t_it-0.5:
-                    plt.scatter(1.5, ac_info[idx][1], color = 'green')
+                    plt.scatter(1.4, ac_info[idx][1], color = 'green')
                 else:
-                    plt.scatter(1.5, ac_info[idx][1], color ='red')
+                    plt.scatter(1.4, ac_info[idx][1], color ='red')
 
-            # plt.scatter(1.6, final_order[final_index][1], marker = 's', color = color_list[c])
-            plt.plot([1.4, 1.5], [run[act_index][0], ac_info[idx][1]], linestyle = '--', linewidth = 2, color = 'black')
-            plt.text(1.3, run[act_index][0], f'{acid}', weight = 'bold')
-            plt.text(1.65, final_order[final_index][1], f'{acid}', weight = 'bold')
+            # plt.scatter(1.6,final_order[final_index][1], marker = 's', color = color_list[c])
+            plt.plot([1.3, 1.4], [run[act_index][0], ac_info[idx][1]], linestyle = '--', linewidth = 2, color = 'black')
+            plt.text(1.25, run[act_index][0], f'{acid}', weight = 'bold')
+            # plt.text(1.65, final_order[final_index][1], f'{acid}', weight = 'bold')
         # plt.text(2, final_order[act_index][1], f'Delay: {final_order[act_index][3]:0.2f}')
         c+=1
         if c == len(color_list):
@@ -1330,10 +1402,10 @@ for key, vals in staff.items():
                 plt.plot([1.1, 1.2], [ac_info[act_index][1], final_order[final_index][1]], linestyle = '--', color = 'black', linewidth = 2)
             else:
                 if final_order[final_index][1] - final_order[front_index][1]>=t_it-0.5:
-                    plt.scatter(1.6, final_order[final_index][1], marker = 's', color = 'green')
+                    plt.scatter(1.5, final_order[final_index][1], marker = 's', color = 'green')
                 else:
-                    plt.scatter(1.6, final_order[final_index][1], marker = 's', color = 'red')
-                plt.plot([1.5, 1.6], [ac_info[act_index][1], final_order[final_index][1]], linestyle = '--', color = 'black', linewidth = 2)
+                    plt.scatter(1.5, final_order[final_index][1], marker = 's', color = 'red')
+                plt.plot([1.4, 1.5], [ac_info[act_index][1], final_order[final_index][1]], linestyle = '--', color = 'black', linewidth = 2)
         else:
             final_index = next(i for i, item in enumerate(final_order) if item[0] == ind)
             act_index = next(i for i, item in enumerate(ac_info) if item[0] == ind)
@@ -1341,18 +1413,20 @@ for key, vals in staff.items():
                 plt.plot([1.1, 1.2], [ac_info[act_index][1], final_order[final_index][1]], linestyle = '--', color = 'black', linewidth = 2)
                 plt.scatter(1.2, final_order[final_index][1], marker = 's', color = 'green')
             else: 
-                plt.plot([1.5, 1.6], [ac_info[act_index][1], final_order[final_index][1]], linestyle = '--', color = 'black', linewidth = 2)
-                plt.scatter(1.6, final_order[final_index][1], marker = 's', color = 'green')
+                plt.plot([1.3, 1.5], [ac_info[act_index][1], final_order[final_index][1]], linestyle = '--', color = 'black', linewidth = 2)
+                plt.scatter(1.5, final_order[final_index][1], marker = 's', color = 'green')
                 
 
 
 plt.grid()
-plt.xlim(0.85, 1.7)
-plt.legend(loc = 'upper right')
+plt.xlim(0.9, 1.6)
+plt.legend(loc = 'best')
 plt.ylim(run[0][0]-25, run[-1][0]+25)
 plt.title('R1                                                                                                                                        R2')
 plt.text(0.98, run[0][0]-15, 'STA')
 plt.text(1.18, run[0][0]-15, 'Actual')
 # plt.xlabel(f'Scheduled Arrival Time Actual Arrival Time')
 plt.ylabel('Arrival Time (s)')
+
+
 plt.show()

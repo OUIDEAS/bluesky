@@ -99,7 +99,7 @@ def solve_optim1(P0, P2, target_toa,  guess, target_heading, velocity, turn_radi
     cons = (
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2) - turn_radius},
             {'type': 'ineq', 'fun': lambda x: curvature(P0,x,P2)},
-            {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
+            # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
             {'type': 'eq', 'fun': lambda x: x[1] - (line[0]*x[0] + line[1])}
             ) 
 
