@@ -295,7 +295,7 @@ def tracon_points(r, n):
 
 def get_ll(x, y, home_ll, picked):
     i = np.random.randint(0, 360)
-    j = np.random.randint(500, 3000)
+    j = np.random.randint(250, 1500)
     c = 0 
     # i = 202
     # j = 500
@@ -403,7 +403,7 @@ def makeWPTS(wpts):
 
 def findWPs(acid, run, fixes_l):
     index = [i for i, entry in enumerate(run) if entry[1] == acid]
-    print(acid, index[0])
+    print(acid, index)
     # fixes_l = [favus_path, teeze_path, elupy_path, xavyr_path]
     # TR/G1R1, TL/G2R2, BL/G3R2, BR/G4R1
     seq_dat = run[index[0]]
@@ -567,7 +567,7 @@ def carrot_following(nodes, ac_ll, kcmh, tr, t_guess, hdg, dt, lr, gate):
 
 def get_wpIndex(pos, wp_list, gate):
     dists = 0
-    tol = 0.005
+    tol = 0.0125
     if gate =='I':
         for i in range(len(wp_list[0])-1):
             if wp_list[0][i+1]-tol<=pos[0]<=wp_list[0][i]+tol and pos[1] >= wp_list[1][i+1]:
@@ -616,11 +616,17 @@ datasets = [wptdata, aptdata]
 # bs.traf.mcre(10, 'M250')
 #R2 is 28 L
 nm = 1852
+# points = 360
+# tracon = 10*nm
+# center = 30*nm # OPTIMIZATION HORIZON
+# freeze = 20.7*nm
+# other = 36*nm
+
 points = 360
-tracon = 10*nm
-center = 30*nm # OPTIMIZATION HORIZON
-freeze = 20.7*nm
-other = 36*nm
+tracon = 5*nm #1/2 original size
+center = 15*nm # OPTIMIZATION HORIZON
+freeze = 10.35*nm
+other = 18*nm
 
 scen = 'Bez'
 
@@ -630,18 +636,18 @@ All fixes lead to either Runway 28L/R, aka R1 and R2 when sorted
 '''
 
 kcmh = [39.997472, -82.891194]
-favus = [40.058917, -82.639417]
-teeze = [40.0865, -82.848111]
-elupy = [39.831083, -83.074778]
-xavyr = [39.906167, -82.647333]
+favus = [40.00502063164824+.09104331345452721/4, -82.6850294964626-(.09-0.023707242877549106/4)]#[40.058917, -82.639417]
+teeze = [40.0865-.0612, -82.848111]
+elupy = [39.88185526727974+.06-0.06736603158122989/2, -82.9237048299046-0.0796450897821046/2]#[39.831083, -83.074778]
+xavyr = [39.959292879848704-0.032592, -82.68887171974728-(.09-0.0391717+.03)]#[39.906167, -82.647333]
 
 
 # TEEZE WAYPOINTS
-melzz = [40.313417, -83.247194]
-dubln = [40.202944, -83.132306]
-trlgy = [40.167944, -83.061139]
-polrs = [40.111194, -82.953444]
-taces = [40.090111, -82.916333]
+melzz = [40.154727261845196-.0612+0.06897273815480332, -82.967559164574110-.08044083542588453]#[40.313417, -83.247194]
+dubln = [40.12150912956359-.0612+0.06897273815480332/1.5, -82.93326967366974-0.08044083542588453/1.5]#[40.202944, -83.132306]
+trlgy = [40.11097573575894-.0612+0.06897273815480332/2, -82.91196721748639-0.08044083542588453/2]#[40.167944, -83.061139]
+polrs = [40.09391845855305-.0612, -82.87970325537123]#[40.111194, -82.953444]
+taces = [40.0875875389755-.0612, -82.86857700539062]#[40.090111, -82.916333]
 
 teeze_path = [melzz, dubln, trlgy, polrs, taces, teeze]
 teeze_wps = LongLat_To_WSG84_Meters(teeze_path, kcmh)
@@ -651,11 +657,11 @@ teeze_pts, teeze_dists, teeze_toa, teeze_total_t = interp_wps(teeze_wps, 100, 54
 
 
 # FAVUS WAYPOINTS
-bugzz = [40.565, -82.454056]
-cbuss = [40.325306, -82.5405]
-molls = [40.132139, -82.609194]
-ordiw = [39.989306, -82.666056]
-bazel = [39.981917, -82.704556]
+# bugzz = #[40.565, -82.454056]
+cbuss = [40.084956686545475+0.09104331345452721, -82.65550724287755-(.09-0.023707242877549106)]#[40.325306, -82.5405]
+molls = [40.02699133679011+0.09104331345452721/2, -82.67599045675338-(.09-0.023707242877549106/2)]#[40.132139, -82.609194]
+ordiw = [39.9841350262143250, -82.69300691574763-.09]#[39.989306, -82.666056]
+bazel = [39.98191699999999, -82.704556-.096]#[39.981917, -82.704556]
 
 favus_path =[cbuss, molls, favus, ordiw, bazel]
 favus_wps = LongLat_To_WSG84_Meters(favus_path, kcmh)
@@ -663,12 +669,12 @@ favus_wps = LongLat_To_WSG84_Meters(favus_path, kcmh)
 favus_pts, favus_dists, favus_toa, favus_total_t = interp_wps(favus_wps, 100, 54.84)
 
 # ELUPY WAYPOINTS
-jaktz = [39.591028, -83.419583]
-rscot = [39.722389,  -83.286306]
-obetz = [39.787667, -83.158389]
-edwib = [39.877472, -82.984861]
-gagbe = [39.907167, -82.927278]
-jesce = [39.903556, -82.858889]
+# jaktz = [39.591028, -83.419583]
+rscot = [39.849366031581226+.06-0.06736603158122989, -82.98735491021789-0.0796450897821046]#[39.722389,  -83.286306]
+obetz = [39.868868203275454+.06-0.06736603158122989/1.5, -82.94884735363269-0.0796450897821046/1.5]#[39.787667, -83.158389]
+edwib = [39.89574495207381+.06-0.06736603158122989/3, -82.89669116351142-0.0796450897821046/3]#[39.877472, -82.984861]
+gagbe = [39.9046435552641+.06, -82.87940511110223]#[39.907167, -82.927278]
+jesce = [39.903556+.06, -82.858889]
 
 elupy_path = [rscot, obetz, elupy, edwib, gagbe, jesce]
 elupy_wps = LongLat_To_WSG84_Meters(elupy_path, kcmh)
@@ -676,10 +682,10 @@ elupy_wps = LongLat_To_WSG84_Meters(elupy_path, kcmh)
 elupy_pts, elupy_dists, elupy_toa, elupy_total_t = interp_wps(elupy_wps, 100, 54.84)
 
 # XAVYR WAYPOINTS
-scrlt = [39.502917, -82.350833]
-brtus = [39.730944, -82.473083]
-guber = [39.963222, -82.670889]
-bkeye = [39.982056, -82.706694]
+scrlt = [39.502917+.0225, -82.350833-0.175]
+brtus = [39.906776537279754-0.0423765, -82.63643009207992-(.09-0.05393)]#[39.730944, -82.473083]
+guber = [39.97640701109672, -82.69595045686351-.086]#[39.963222, -82.670889]
+bkeye = [39.982056, -82.706694-.094]
 
 xavyr_path = [brtus, xavyr, guber, bkeye]
 xavyr_wps = LongLat_To_WSG84_Meters(xavyr_path, kcmh)
@@ -712,7 +718,7 @@ for i in range(0, ntraf):
     lat, lon, alt, hdg, picked = get_ll(other_x, other_y, kcmh, picked)
     # print(hdg)
     # bs.traf.cre(f'AC{i}', 'M250', lat, lon, hdg, 10000, 57.412)
-    bs.traf.cre(f'AC{i}', 'M250', lat, lon, hdg, 5000, 54.84)
+    bs.traf.cre(f'AC{i}', 'M250', lat, lon, hdg, 1524, 54.84)
     print(bs.traf.id[i],bs.traf.hdg[i])
 print('PICKED VALUES:', picked)
 for acid in bs.traf.id:
@@ -738,7 +744,7 @@ p = Proj(proj='utm',zone=17,ellps='WGS84', preserve_units=False)
 b_ll = []
 e_ll = []
 
-t_max = 15001
+t_max = 7500
 # t_max = 10000
 # t_max = 1
 
@@ -820,7 +826,7 @@ if scen == 'WP':
                     bs.traf.tas,
                     bs.traf.hdg]
         
-        if i == 3000:
+        if i == 1000:
             print(f'Optimization Interval Closed! Number Of Aircraft In Interval Is {len(locals()[f'sort_group{c}'])}')
             step[c] = 1
             c+=1
@@ -941,7 +947,7 @@ if scen == 'Bez':
                     bs.traf.tas,
                     bs.traf.hdg]
         
-        if i == 3000:
+        if i == 1500:
             print(f'Optimization Interval Closed! Number Of Aircraft In Interval Is {len(locals()[f'sort_group{c}'])}')
             step[c] = 1
             c+=1
@@ -1008,6 +1014,8 @@ if scen == 'Bez':
                 guide[j] = 1
             if guide[j] == 1:
                 pos_ll = [bs.traf.lat[j], bs.traf.lon[j]]
+                print(f'AC DATA: {pos_ll}, {bs.traf.hdg[j]}, {bs.traf.tas[j]}')
+                
                 # print(bs.traf.id[j], pos_ll, bs.traf.hdg[j])
                 interps[j], end_point[j], nodes[j], bez[j], entry[j], fl[j], times[j], diffs[j], lr[j], path = BIO.GenerateTrajectoryOutside([bs.traf.lat[j], bs.traf.lon[j]],
                                                                                                                                         run_id[j][0], waypt_set[j], 
@@ -1060,7 +1068,7 @@ if scen == 'Bez':
             # if guide[j] == 3 and entry[j][0]:
             #     print(f'HEADING {bs.traf.hdg[j]}, POS: {pos}, ENTRY POINT: {entry_point[j]}, DIST: {np.hypot(entry_point[j][1]-pos[1], entry_point[j][0]-pos[0])}')
 
-            if np.isclose(entry_point[j][0], pos[0], atol = 50) and np.isclose(entry_point[j][1], pos[1], atol = 50) and guide[j]==3:
+            if np.isclose(entry_point[j][0], pos[0], atol = 100) and np.isclose(entry_point[j][1], pos[1], atol = 100) and guide[j]==3:
                 guide[j] = 4
                 # bs.stack.stack(f'ALT {bs.traf.id[j]}, {fl[j]}')
                 bs.stack.stack(f'BANK {bs.traf.id[j]} 73')
@@ -1090,7 +1098,14 @@ if scen == 'Bez':
                 guide[j] = 5
                 print(f'INITIATING WP GUIDANCE FOR {bs.traf.id[j]} AT TIMESTEP {i}')
                 tag = i
-               
+                if ac_info[j][3] == 'R2' and gate[j] == 'I':
+                    gate[j] = 'II'
+                elif ac_info[j][3] == 'R2' and gate[j] == 'IV':
+                    gate[j] = 'III'
+                elif ac_info[j][3] == 'R1' and gate[j] == 'II':
+                    gate[j] = 'I'
+                elif ac_info[j][3] == 'R1' and gate[j] == 'III':
+                    gate[j] = 'IV'
                 h, d[j] = qdrdist(waypts[j][0][index[j]], waypts[j][1][index[j]], bs.traf.lat[j], bs.traf.lon[j])
                 index[j] = get_wpIndex([bs.traf.lat[j], bs.traf.lon[j]], waypts[j], gate[j])
 
@@ -1100,36 +1115,6 @@ if scen == 'Bez':
             if guide[j] == 5:
                 
                 head, d[j], index[j], stat = WPGuidance(waypts[j], index[j], [bs.traf.lat[j], bs.traf.lon[j]], d[j], gate[j], i, bs.traf.id[j], bs.traf.hdg[j], lr[j])
-                # if gate[j] == 'I':
-                #     if index[j] == 0:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 8000')
-                #         # bs.stack.stack(f'VS {bs.traf.id[j]} 1128.2')
-                #     if index[j] >=1:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 5000')
-                # if gate[j] == 'II': #[melzz, dubln, trlgy, polrs, taces, teeze]
-                #     if index[j] == 0:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 10000')
-                #     if index[j] == 2:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 8000')
-                #         # bs.stack.stack(f'VS {bs.traf.id[j]} 1128.2')
-                #     if index[j] >= 3:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 6000')
-                # if gate[j] == 'III':#[rscot, obetz, elupy, edwib, gagbe, jesce]
-                #     if index[j] == 0:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 10000')
-                #     if index[j] == 2:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 8000')
-                #         # bs.stack.stack(f'VS {bs.traf.id[j]} 1128.2')
-                #     if index[j] == 3:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 7000')
-                #         # bs.stack.stack(f'VS {bs.traf.id[j]} 1130.5')
-                #     if index[j] >= 4:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 6000')
-                # if gate[j] == 'IV': #[brtus, xavyr, guber, bkeye]
-                #     if index[j] == 0:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 10000')
-                #     if index[j] >= 1:
-                #         bs.stack.stack(f'ALT {bs.traf.id[j]}, 5000')
 
                 h, dtw = qdrdist(bs.traf.lat[j], bs.traf.lon[j], kcmh[0], kcmh[1])
                 d2[j] = [bs.traf.id[j], dtw]
@@ -1149,6 +1134,7 @@ if scen == 'Bez':
         if step[c-1] == 1:
             # t_it = 5
             dtmax = 8
+            # print(etas, t_tran)
             sta_p, run, cp3, staff = SQO.sort(etas, t_it, t_tran, dtmax)
             step[c-1] = 2
             run_id = sorted(run, key = lambda x: int(x[1][2:]))

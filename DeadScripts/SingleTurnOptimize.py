@@ -9,7 +9,7 @@ import scipy
 import sympy as sp
 from scipy.optimize import brentq
 # import Scenario1Optimize as MBO
-from algebra_with_sympy import *
+# from algebra_with_sympy import *
 
 '''
 TO DO: 
@@ -125,6 +125,7 @@ def solve_optimExit(guess, max_bank, min_bank, min_t, nodes, velocity):
 def find_diff_exit(guess, nodes, velocity):
     ba = guess[0]
     t_guess = guess[1]
+    lr = -1
     # print(guess, ba, t_guess)
     mindiff = 100
     path = manual_bez(P0 = [nodes[0][0], nodes[1][0]],
@@ -136,33 +137,65 @@ def find_diff_exit(guess, nodes, velocity):
     By = lambda t: nodes[1][1] + (nodes[1][0] - nodes[1][1]) * (1 - t)**2 + (nodes[1][2] - nodes[1][1]) * t**2
     bezHead = np.arctan2(By(t_guess)-By(t_guess-0.01), Bx(t_guess)-Bx(t_guess-0.01))
 
-    tr = velocity**2 / (11.26*math.tan(ba))
-    h = lambda t: Bx(t) - tr*math.cos(bezHead)
-    k = lambda t: By(t) + tr*math.sin(bezHead)
 
-    circle_eq = lambda y: (750-h(t_guess))**2+(y-k(t_guess))**2 - tr**2
-    y_guess = 2000
+
+
+    print(np.rad2deg(bezHead))
+    tr = velocity**2 / (11.26*np.tan(ba))
+    h = lambda t: Bx(t) + lr*tr*np.cos(bezHead)
+    k = lambda t: By(t) + tr*np.sin(bezHead)
+
+    circle_eq = lambda y: (0-h(t_guess))**2+(y-k(t_guess))**2 - tr**2
+    nom = [0 for i in range(0, 100)]
+    y_s = [i*20 for i in range(len(nom))]
+    # print(y_s)
+    # fig, ax = plt.subplots()
+    # plt.scatter(h(t_guess), k(t_guess), color = 'blue', marker = 's')
+    # # plt.scatter(pos[0], pos[1])
+    # plt.axis('equal')
+    # circ = plt.Circle((h(t_guess), k(t_guess)), tr, fill = False)
+    # ax.add_patch(circ)
+    # plt.plot(path[0], path[1], color = 'black', linewidth = 2)
+    # # plt.plot(x_l, y)
+    # plt.plot(nom, y_s)
+    # plt.axis('equal')
+    # # plt.arrow(pos[0], pos[1], 2500*np.cos(head), 2500*np.sin(head), width=50,
+    # #             length_includes_head=False,
+    # #             head_width=1000,
+    # #             head_length=1000,
+    # #             head_starts_at_zero=False,
+    # #             facecolor='black',
+    # #             edgecolor='black',
+    # #             label = f'Heading of {np.rad2deg(head)-180}')
+    # plt.show()
+    y_guess = By(1)+200
+    print(y_guess)
     S = fsolve(circle_eq, y_guess) #gives y intersection
-    t_final = .5
+    t_final = t_guess
 
-    y_l = [i for i in np.linspace(900, S, 200)]
-    x = [750 for i in y_l]
+    # y_l = [i for i in np.linspace(900, S, 200)]
+    # x = [750 for i in y_l]
 
     # print(S)
     for i in S:
-        if i > 0: 
-            y = [i for i in np.linspace(S, By(t_guess))]
-            x_l = [h(t_guess) - np.sqrt(tr**2 - (y_y - k(t_guess))**2) for y_y in y]
-            if x_l[0] ==750:# <= 0.01:
+        # print(i)
+        # if 0<=i<=1: 
+            
+            y = np.linspace(By(t_guess), i)
+            x_l = [h(t_guess) + np.sqrt(tr**2 - (y_y - k(t_guess))**2) for y_y in y]
+            # x_l = np.linspace(By(i), h(i)-tr, 200)
+            # y = k(i)+np.sqrt(tr**2 - (x_l - h(i))**2)
+            if x_l[0] <=50:# <= 0.01:
                 # x_l = [i for i in np.linspace(750, Bx(t_guess))]
                 # y = [k(t_guess)-np.sqrt(tr**2 - (x-h(t_guess))**2) for x in x_l]
                 int_angle = np.arctan2(y[0]-y[1], x_l[0]-x_l[1])
                 diff = np.abs((np.pi/2) - int_angle)
                 guess_deg = np.rad2deg(ba)
                 # plt.title(f'{guess_deg} {t_guess}')
-                # plt.plot(x, y_l, linestyle = 'dashed')
+                # # plt.plot(x, y_l, linestyle = 'dashed')
                 # plt.plot(path[0], path[1])
                 # plt.plot(x_l, y)
+                # plt.plot(nom, y_s)
                 # plt.axis('equal')
                 # plt.show()
                 if diff < mindiff:
@@ -186,12 +219,12 @@ if __name__=='__main__':
     # print(end-start)
     # print(np.deg2rad(29.22))
     velocity = 111.6
-    nodes1 = [np.array([750, 1461.58471522, 1475]).flatten(),np.array([-50, -50, 450]).flatten()]
-    optim_sol, t_val= solve_optimEntry(np.deg2rad(25), np.deg2rad(30), np.deg2rad(25), nodes1, velocity)
+    # nodes1 = [np.array([750, 1461.58471522, 1475]).flatten(),np.array([-50, -50, 450]).flatten()]
+    # optim_sol, t_val= solve_optimEntry(np.deg2rad(25), np.deg2rad(30), np.deg2rad(25), nodes1, velocity)
 
-    nodes2 = [np.array([1475, 1500, 750]).flatten(),np.array([450, 900, 900]).flatten()]
+    nodes2 = [np.array([-750, -750, 0]).flatten(),np.array([450, 900, 900]).flatten()]
     t_start2 = 0.35678391959798994
-    optim_sol2 = solve_optimExit([np.deg2rad(30), 0.3], np.deg2rad(30), np.deg2rad(25), t_start2, nodes2, velocity)
+    optim_sol2 = solve_optimExit([np.deg2rad(30), 0.8], np.deg2rad(73), np.deg2rad(5), t_start2, nodes2, velocity)
     print(np.rad2deg(optim_sol2[0]), optim_sol2[1])
     print('DIFF', np.pi/2 - optim_sol2[0])
     end = time.time()

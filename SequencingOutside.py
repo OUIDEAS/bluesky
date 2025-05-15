@@ -325,6 +325,14 @@ def sort(etas, t_it, t_tran, dtmax):
             # print(rs)
             # print(retas[np.argmin(rs)], retas[rs.index(np.min(rs))])
             # print(retas[rs.index(np.min(rs))]+np.min(rs), f'R{np.argmin(rs)+1}')
+            if np.argmin(rs)+1 == 2 and i[3] == 'I':
+                i[3] = 'II'
+            elif np.argmin(rs)+1 == 2 and i[3] == 'IV':
+                i[3] = 'III'
+            elif np.argmin(rs)+1 == 1 and i[3] == 'II':
+                i[3] = 'I'
+            elif np.argmin(rs)+1 == 1 and i[3] == 'III':
+                i[3] = 'IV'
             rta.append([np.min(rs), i[1],i[2], i[3], f'R{np.argmin(rs)+1}', i[5], i[4], i[0], i[6]])
             rta2.append([np.max(rs), i[1],i[2], i[3], f'R{np.argmax(rs)+1}', i[5], i[4], i[0], i[6]])
 

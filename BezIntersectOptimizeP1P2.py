@@ -278,7 +278,7 @@ def solve_optim12(P0, target_toa, guess, target_heading, velocity, turn_radius, 
             {'type': 'ineq', 'fun': lambda x: 1-np.abs(x[1])},
             {'type': 'ineq', 'fun': lambda x: x[1]-0},
             {'type': 'ineq', 'fun': lambda x: x[1]-x[0]},
-            {'type': 'ineq', 'fun': lambda x: get_line(wps[0], wps[1], x[1])[1]- get_line_p1(wps[0],get_line(wps[0], wps[1], x[1]), x[0], target_heading)[1] -100},
+            {'type': 'ineq', 'fun': lambda x: get_line(wps[0], wps[1], x[1])[1]- get_line_p1(wps[0],get_line(wps[0], wps[1], x[1]), x[0], target_heading)[1] -10},
             # {'type': 'ineq', 'fun': lambda x: x[1]-x[0]-0.001},
             # {'type': 'ineq', 'fun': lambda x: np.sqrt((x[0] - P2[0])**2 + (x[1] - P2[1])**2) - 500},
             # {'type': 'ineq', 'fun': lambda x: np.abs(target_heading-np.arctan2((P2[1]-x[1]), (P2[0]-x[0])))},
@@ -399,7 +399,7 @@ def find_diff_entry(ba, nodes, velocity, pos, lr, head, show, mindiff):
     circle_eq = lambda t: (Bx(t)-h)**2+(By(t)-k)**2 - tr**2
     # print(f'H:{h}, k:{k}, tr:{tr}')
     
-    
+    show = False
     if show:
         path = manual_bez(P0 = [nodes[0][0], nodes[1][0]],
                       P1 = [nodes[0][1], nodes[1][1]],
@@ -951,7 +951,7 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, h, velocity, kcmh, gate, 
 
     bank = 5
     min = 5
-    plan_ahead = 10
+    plan_ahead = 5
     
     path_startX = ac_met[0] + np.cos(head)*v*plan_ahead 
     path_startY = ac_met[1] + np.sin(head)*v*plan_ahead 
@@ -1005,8 +1005,8 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, h, velocity, kcmh, gate, 
     for i in range(len(wps)-1):
 
         # g = 5000
-        gi[1] = 0.5
-        p1g = 0.25
+        gi[1] = 0.25
+        p1g = 0.125
         valid = False
         w1 = rotated_wps[gi[0]]
         w2 = rotated_wps[gi[0]+1]
@@ -1073,7 +1073,22 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, h, velocity, kcmh, gate, 
                 # else:
                 #     bank = 5
                 # print(f'BEZ ANGLE: {bez_ang}, GUESS {bank}')
-                ba, t_entry = solve_optimEntry([np.deg2rad(bank), 0.005], np.deg2rad(73), np.deg2rad(min), nodes1, v*1.94384, ac_met, lr, rotated_heading, show)
+                x_int_en, y_int_en = find_bez_xy([nodes1[0][0],nodes1[1][0]],
+                                            [optim1[0],optim1[1]],
+                                            [end_point[0], end_point[1]], 0.05)
+               
+                x_int_en2, y_int_en2 = find_bez_xy([nodes1[0][0],nodes1[1][0]],
+                                            [optim1[0],optim1[1]],
+                                            [end_point[0], end_point[1]], 0)
+                req_ent = np.rad2deg(np.arctan2(y_int_en2-y_int_en,x_int_en2-x_int_en))
+                # print(np.abs(90 - req_ent) )
+                if np.abs(90 - req_ent) > 90:
+                    guess = 0.25
+                else:
+                    guess = 0.005
+                if plot:
+                    show = True
+                ba, t_entry = solve_optimEntry([np.deg2rad(bank), guess], np.deg2rad(73), np.deg2rad(min), nodes1, v*1.94384, ac_met, lr, rotated_heading, show)
                 
 
 
@@ -1102,45 +1117,46 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, h, velocity, kcmh, gate, 
             '''
             Plots for step by step
             '''
-            ang_y = (end_point[0] - 500) *m + b
-            # plt.plot([end_point[0],end_point[0] - 5000], [end_point[1], ang_y], color = 'green', linestyle = '--')
-            # plt.plot(x_rot, y_rot)
-            # plt.scatter(ac_met[0], ac_met[1])
-            # plt.plot(x_rot, y_rot)
-            # plt.scatter(optim1[0], optim1[1], marker = '^', color = 'red')
-            # plt.plot(optim_b[0], optim_b[1], color = 'black')
-            # plt.scatter(end_point[0], end_point[1], marker = 's', color = 'black')
-            # plt.axis('equal')
-            # plt.text(rotated_wps[-1][0]-5000, rotated_wps[-1][1], f'Required Travel Time: {target:0.2f}\nActual Travel Time: {path_toa+new_total:0.2f}', weight = 'bold')
-            # plt.text(rotated_wps[1][0], rotated_wps[1][1], f'STAR Travel Time: {new_total:0.2f}s', weight = 'bold' )
-            # # if math.isnan(path_toa):
-            # #     print(optim_b[0])
-            # #     print(optim_b[1])
-            # #     print(nodes1)
-            # #     print(pb_length, optim_b_length)
-            # #     print(x_entry)
-            # #     print(y_entry)
-            # if entry:
-            #     plt.plot(x_entry, y_entry, color = 'cyan')
-            #     plt.text(x_entry[-1]-5000, y_entry[-1]-5000, f'Entry Path Travel Time: \n{entryTOA:0.2f}', weight = 'bold')
-            #     plt.text(optim_b[0][25], optim_b[1][25]-5000, f'Partial Bez Travel Time: {pb_toa}s', weight = 'bold' )
-            #     print(f'Partial Bez Travel Time: {pb_toa}, Entry Path Travel Time: {entryTOA}')
-            #     plt.text(x_entry[0], y_entry[0], f'BANK ANGLE: {np.rad2deg(ba[0]):0.4f}', weight = 'bold')
-            # else:
-            #     # print(f'Bez Travel Time: {path_toa:0.2f}s')
-            #     plt.text(optim_b[0][25], optim_b[1][25], f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
-            
-            
-            
-            
-            # print(new_total + path_toa)
-            # print(f'TARGET: {target}, ACTUAL TRAVEL TIME: {path_toa+new_total}')
-            # print(np.abs(target - (path_toa+new_total)))
-            # print(f'Original Target: {target}, New STAR Travel Time: {new_total}, New Target Time: {t_t}, Path TOA: {path_toa}')
-            # print(new_total+path_toa, target)
-            # plt.show()
-        
+            # if plot:
+            #     ang_y = (end_point[0] - 500) *m + b
+            #     plt.plot([end_point[0],end_point[0] - 5000], [end_point[1], ang_y], color = 'green', linestyle = '--')
+            #     plt.plot(x_rot, y_rot)
+            #     plt.scatter(ac_met[0], ac_met[1])
+            #     plt.plot(x_rot, y_rot)
+            #     plt.scatter(optim1[0], optim1[1], marker = '^', color = 'red')
+            #     plt.plot(optim_b[0], optim_b[1], color = 'black')
+            #     plt.scatter(end_point[0], end_point[1], marker = 's', color = 'black')
+            #     plt.axis('equal')
+            #     plt.text(rotated_wps[-1][0]-5000, rotated_wps[-1][1], f'Required Travel Time: {target:0.2f}\nActual Travel Time: {path_toa+new_total:0.2f}', weight = 'bold')
+            #     plt.text(rotated_wps[1][0], rotated_wps[1][1], f'STAR Travel Time: {new_total:0.2f}s', weight = 'bold' )
+            #     # if math.isnan(path_toa):
+            #     #     print(optim_b[0])
+            #     #     print(optim_b[1])
+            #     #     print(nodes1)
+            #     #     print(pb_length, optim_b_length)
+            #     #     print(x_entry)
+            #     #     print(y_entry)
+            #     if entry:
+            #         plt.plot(x_entry, y_entry, color = 'cyan')
+            #         plt.text(x_entry[-1]-5000, y_entry[-1]-5000, f'Entry Path Travel Time: \n{entryTOA:0.2f}', weight = 'bold')
+            #         plt.text(optim_b[0][25], optim_b[1][25]-5000, f'Partial Bez Travel Time: {pb_toa}s', weight = 'bold' )
+            #         print(f'Partial Bez Travel Time: {pb_toa}, Entry Path Travel Time: {entryTOA}')
+            #         plt.text(x_entry[0], y_entry[0], f'BANK ANGLE: {np.rad2deg(ba[0]):0.4f}', weight = 'bold')
+            #     else:
+            #         # print(f'Bez Travel Time: {path_toa:0.2f}s')
+            #         plt.text(optim_b[0][25], optim_b[1][25], f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
                 
+                
+                
+                
+            #     print(new_total + path_toa)
+            #     print(f'TARGET: {target}, ACTUAL TRAVEL TIME: {path_toa+new_total}')
+            #     print(np.abs(target - (path_toa+new_total)))
+            #     print(f'Original Target: {target}, New STAR Travel Time: {new_total}, New Target Time: {t_t}, Path TOA: {path_toa}')
+            #     print(new_total+path_toa, target)
+            #     plt.show()
+        
+               
             if entry and not math.isnan(path_toa):
                 all_bez.append([path_toa+new_total, partial_bez1[0], partial_bez1[1], new_total, x_entry, y_entry, pb_toa, pb_length, entryLength, [ba, t_entry], entryTOA, [act_ent, req_ent], curv1, gi[0], end, True])
                 all_nodes.append(nodes1)
@@ -1317,10 +1333,10 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, h, velocity, kcmh, gate, 
     #                 edgecolor='black',
     #                 label = f'Heading of {np.rad2deg(head)}')
     # else:
-    plt.arrow(ac_met[0], ac_met[1], 2500*np.cos(head), 2500*np.sin(head), width=50,
+    plt.arrow(ac_met[0], ac_met[1], 250*np.cos(head), 250*np.sin(head), width=50,
                 length_includes_head=False,
-                head_width=1000,
-                head_length=1000,
+                head_width=100,
+                head_length=100,
                 head_starts_at_zero=False,
                 facecolor='black',
                 edgecolor='black',
@@ -1454,50 +1470,69 @@ def GenerateTrajectoryOutside(ac_pos, target, wp_list, h, velocity, kcmh, gate, 
 
 if __name__ == '__main__':
 
-    v = 57.412
+    v = 54.84
     p = Proj(proj='utm',zone=17,ellps='WGS84', preserve_units=False)
+
+    # kcmh = [39.997472, -82.891194]
+    # teeze = [40.0865, -82.848111]
+
     kcmh = [39.997472, -82.891194]
-    teeze = [40.0865, -82.848111]
+    favus = [40.00502063164824+.09104331345452721/4, -82.6850294964626-(.09-0.023707242877549106/4)]#[40.058917, -82.639417]
+    teeze = [40.0865-.0612, -82.848111]
+    elupy = [39.88185526727974+.06-0.06736603158122989/2, -82.9237048299046-0.0796450897821046/2]#[39.831083, -83.074778]
+    xavyr = [39.959292879848704-0.032592, -82.68887171974728-(.09-0.0391717+.03)]#[39.906167, -82.647333]
+
+
     # TEEZE WAYPOINTS
-    melzz = [40.313417, -83.247194]
-    dubln = [40.202944, -83.132306]
-    trlgy = [40.167944, -83.061139]
-    polrs = [40.111194, -82.953444]
-    taces = [40.090111, -82.916333]
-    
+    melzz = [40.154727261845196-.0612+0.06897273815480332, -82.967559164574110-.08044083542588453]#[40.313417, -83.247194]
+    dubln = [40.12150912956359-.0612+0.06897273815480332/1.5, -82.93326967366974-0.08044083542588453/1.5]#[40.202944, -83.132306]
+    trlgy = [40.11097573575894-.0612+0.06897273815480332/2, -82.91196721748639-0.08044083542588453/2]#[40.167944, -83.061139]
+    polrs = [40.09391845855305-.0612, -82.87970325537123]#[40.111194, -82.953444]
+    taces = [40.0875875389755-.0612, -82.86857700539062]#[40.090111, -82.916333]
 
     teeze_path = [melzz, dubln, trlgy, polrs, taces, teeze]
-    
-    jaktz = [39.591028, -83.419583]
-    rscot = [39.722389,  -83.286306]
-    obetz = [39.787667, -83.158389]
-    edwib = [39.877472, -82.984861]
-    gagbe = [39.907167, -82.927278]
-    jesce = [39.903556, -82.858889]
-    elupy = [39.831083, -83.074778]
+    teeze_wps = LongLat_To_WSG84_Meters(teeze_path, kcmh)
+    # teeze_pts, teeze_dists, teeze_toa, teeze_total_t = interp_wps(teeze_wps, 100, 57.412)
+    teeze_pts, teeze_dists, teeze_toa, teeze_total_t = interp_wps(teeze_wps, 100, 54.84)
 
 
-    elupy_path = [rscot, obetz, elupy, edwib, gagbe, jesce]
-
-
-    # XAVYR WAYPOINTS
-    scrlt = [39.502917, -82.350833]
-    brtus = [39.730944, -82.473083]
-    guber = [39.963222, -82.670889]
-    bkeye = [39.982056, -82.706694]
-    xavyr = [39.906167, -82.647333]
-    xavyr_path = [brtus, xavyr, guber, bkeye]
 
     # FAVUS WAYPOINTS
-    bugzz = [40.565, -82.454056]
-    cbuss = [40.325306, -82.5405]
-    molls = [40.132139, -82.609194]
-    ordiw = [39.989306, -82.666056]
-    bazel = [39.981917, -82.704556]
-    favus = [40.058917, -82.639417]
-
+    # bugzz = #[40.565, -82.454056]
+    cbuss = [40.084956686545475+0.09104331345452721, -82.65550724287755-(.09-0.023707242877549106)]#[40.325306, -82.5405]
+    molls = [40.02699133679011+0.09104331345452721/2, -82.67599045675338-(.09-0.023707242877549106/2)]#[40.132139, -82.609194]
+    ordiw = [39.9841350262143250, -82.69300691574763-.09]#[39.989306, -82.666056]
+    bazel = [39.98191699999999, -82.704556-.096]#[39.981917, -82.704556]
 
     favus_path =[cbuss, molls, favus, ordiw, bazel]
+    favus_wps = LongLat_To_WSG84_Meters(favus_path, kcmh)
+    # favus_pts, favus_dists, favus_toa, favus_total_t = interp_wps(favus_wps, 100, 57.412)
+    favus_pts, favus_dists, favus_toa, favus_total_t = interp_wps(favus_wps, 100, 54.84)
+
+    # ELUPY WAYPOINTS
+    # jaktz = [39.591028, -83.419583]
+    rscot = [39.849366031581226+.06-0.06736603158122989, -82.98735491021789-0.0796450897821046]#[39.722389,  -83.286306]
+    obetz = [39.868868203275454+.06-0.06736603158122989/1.5, -82.94884735363269-0.0796450897821046/1.5]#[39.787667, -83.158389]
+    edwib = [39.89574495207381+.06-0.06736603158122989/3, -82.89669116351142-0.0796450897821046/3]#[39.877472, -82.984861]
+    gagbe = [39.9046435552641+.06, -82.87940511110223]#[39.907167, -82.927278]
+    jesce = [39.903556+.06, -82.858889]
+
+    elupy_path = [rscot, obetz, elupy, edwib, gagbe, jesce]
+    elupy_wps = LongLat_To_WSG84_Meters(elupy_path, kcmh)
+    # elupy_pts, elupy_dists, elupy_toa, elupy_total_t = interp_wps(elupy_wps, 100, 57.412)
+    elupy_pts, elupy_dists, elupy_toa, elupy_total_t = interp_wps(elupy_wps, 100, 54.84)
+
+    # XAVYR WAYPOINTS
+    scrlt = [39.502917+.0225, -82.350833-0.175]
+    brtus = [39.906776537279754-0.0423765, -82.63643009207992-(.09-0.05393)]#[39.730944, -82.473083]
+    guber = [39.97640701109672, -82.69595045686351-.086]#[39.963222, -82.670889]
+    bkeye = [39.982056, -82.706694-.094]
+
+    xavyr_path = [brtus, xavyr, guber, bkeye]
+    xavyr_wps = LongLat_To_WSG84_Meters(xavyr_path, kcmh)
+    # xavyr_pts, xavyr_dists, xavyr_toa, xavyr_total_t = interp_wps(xavyr_wps, 100, 57.412)
+    xavyr_pts, xavyr_dists, xavyr_toa, xavyr_total_t = interp_wps(xavyr_wps, 100, 54.84)
+
     
     # ac_pos = [40.10373464575462, -82.30768892311026] #g1
     # h=257.97
@@ -1520,9 +1555,19 @@ if __name__ == '__main__':
     # h=206.9461709913814
     # target = 954.439730218743
 
+    # ac_pos = [40.1056167078979 , -82.64953460473923]
+    # target = 333.51
+    # h = 241.42539955066874
+
+
     # heading=270-h
     # head = np.deg2rad(heading-180)
     # angle_to_rotate = (90-heading+180)
+    # diff = h-90
+    # heading = 360-diff
+    # # heading = h+180
+    # head = np.deg2rad(heading)
+    # angle_to_rotate = (90-heading)
     # gate = ['I']
     # wps = LongLat_To_WSG84_Meters(favus_path, kcmh) #Gives waypoints in global frame
     # wps_local = LongLat_To_WSG84_Meters(favus_path, ac_pos)
@@ -1535,11 +1580,25 @@ if __name__ == '__main__':
     # h = 164
     # target = 965.4033554973976
 
-    ac_pos = [40.16910942656836, -83.46660171897712]
-    h = 113
-    target = 978.4033554973976
+    # ac_pos = [40.16910942656836, -83.46660171897712]
+    # h = 113
+    # target = 978.4033554973976
+    # ac_pos = [40.204809960749806 , -82.93152468507452]
+    # h = 173.2935475549918
+    # target = 396.82
+    # ac_pos = [40.117934012265046 , -83.12748865737323]
+    # h = 125.4245514934257
+    # target = 406.89
 
-    heading = h+180
+    # heading = h+180
+    # head = np.deg2rad(heading)
+
+    ac_pos = [40.15042894994758, -83.10343971627064]
+    h = 135
+    target = 505.02
+    diff = h-90
+    heading = 360-diff
+    # heading = h+180
     head = np.deg2rad(heading)
     angle_to_rotate = (90-heading)
     gate = ['II']
@@ -1555,8 +1614,14 @@ if __name__ == '__main__':
     # h=28.201610030646435
     # target=838.973276722232
 
+    # ac_pos = [39.87150417378955 , -83.12115506568982]
+    # h = 56.511989540747436
+    # target = 376.82
 
-    # heading=h
+
+    # diff = h-90
+    # heading = 360-diff
+    # # heading = h+180
     # head = np.deg2rad(heading)
     # angle_to_rotate = (90-heading)
     # gate = ['III']
@@ -1589,7 +1654,7 @@ if __name__ == '__main__':
     # wps_local = LongLat_To_WSG84_Meters(xavyr_path, ac_pos)
 
 
-    rotate_head = np.deg2rad(heading+angle_to_rotate)
+    rotate_head = np.deg2rad(h+angle_to_rotate)
 
     print(f'HEADING: {h}, ROTATE ANGLE: {angle_to_rotate}, ROTATED HEADING: {h+angle_to_rotate}')
     
@@ -1605,7 +1670,7 @@ if __name__ == '__main__':
 
     bank = 5
     min = 5
-    plan_ahead = 10
+    plan_ahead = 5
 
     
 
@@ -1625,48 +1690,50 @@ if __name__ == '__main__':
 
     dists_local, toa_local, total_local = total_travel(wps_local, v)
 
-    turn_radius = (v*1.94384)**2/(11.26*math.tan(np.deg2rad(5)))
+    turn_radius = (v*1.94384)**2/(11.26*math.tan(np.deg2rad(73)))
     turn_radius*=0.3048
-    fig, ax = plt.subplots()
-    for i in range(len(wps)-1):
-        ax.plot([rotated_wps[i][0], rotated_wps[i+1][0]], [rotated_wps[i][1], rotated_wps[i+1][1]], color = 'orange', linewidth = 2, label = 'STAR')
-        ax.scatter(rotated_wps[i][0], rotated_wps[i][1], marker = 's', color = 'black', label = 'STAR Waypoints')
-        ax.plot([wps[i][0], wps[i+1][0]], [wps[i][1], wps[i+1][1]], color = 'blue', linewidth = 2)
-        ax.scatter(wps[i][0], wps[i][1], marker = 's', color = 'black', label = 'STAR Waypoints')
-    circ = plt.Circle((ac_met[0]-turn_radius, ac_met[1]), turn_radius, fill = False, color = 'orange', linewidth = 2)
-    ax.add_patch(circ)
-    circ = plt.Circle((ac_met[0]-turn_radius*np.sin(head), ac_met[1]+turn_radius*np.cos(head)), turn_radius, fill = False, color = 'black', linewidth = 2)
-    ax.add_patch(circ)
-    # circ = plt.Circle((h, k), turn_radius, fill = False)
+
+    # fig, ax = plt.subplots()
+    # for i in range(len(wps)-1):
+    #     ax.plot([rotated_wps[i][0], rotated_wps[i+1][0]], [rotated_wps[i][1], rotated_wps[i+1][1]], color = 'orange', linewidth = 2, label = 'STAR')
+    #     ax.scatter(rotated_wps[i][0], rotated_wps[i][1], marker = 's', color = 'black', label = 'STAR Waypoints')
+    #     ax.plot([wps[i][0], wps[i+1][0]], [wps[i][1], wps[i+1][1]], color = 'blue', linewidth = 2)
+    #     ax.scatter(wps[i][0], wps[i][1], marker = 's', color = 'black', label = 'STAR Waypoints')
+    # circ = plt.Circle((ac_met[0]-turn_radius, ac_met[1]), turn_radius, fill = False, color = 'orange', linewidth = 2)
     # ax.add_patch(circ)
-    ax.text(-20000, 30000, 'STAR', fontsize=15, weight = 'bold')
-    ax.text(-80000, 40000, 'Rotated\nSTAR', fontsize=15, weight = 'bold')
-    ax.arrow(ac_met[0], ac_met[1], 5000*np.cos(np.pi/2), 5000*np.sin(np.pi/2), width=100,
-                        length_includes_head=False,
-                        head_width=2000,
-                        head_length=2000,
-                        head_starts_at_zero=False,
-                        facecolor='orange',
-                        edgecolor='orange',
-                        label = f'Heading of {np.rad2deg(head):0.2f}')
-    ax.arrow(ac_met[0], ac_met[1], 5000*np.cos(head), 5000*np.sin(head), width=100,
-                        length_includes_head=False,
-                        head_width=2000,
-                        head_length=2000,
-                        head_starts_at_zero=False,
-                        facecolor='black',
-                        edgecolor='black',
-                        label = f'Heading of {np.rad2deg(head):0.2f}')
-    ax.text(ac_met[0], ac_met[1], 'Aircraft', weight ='bold', fontsize=12)
-    ax.text(-60000, 30000, 'Heading of 90°', weight = 'bold', fontsize=12)
-    ax.text(-60000, 10000, f'Heading of 293°', weight = 'bold', fontsize=12)
-    # plt.plot(x_local, y_local)
-    ax.grid()
-    ax.axis('equal')
-    ax.set_xlabel('X (m)')
-    ax.set_ylabel('Y (m)')
-    ax.scatter(origin[0][0], origin[0][1])
-    plt.show()
+    # circ = plt.Circle((ac_met[0]-turn_radius*np.sin(head), ac_met[1]+turn_radius*np.cos(head)), turn_radius, fill = False, color = 'black', linewidth = 2)
+    # ax.add_patch(circ)
+    # # circ = plt.Circle((h, k), turn_radius, fill = False)
+    # # ax.add_patch(circ)
+    # ax.text(-20000, 30000, 'STAR', fontsize=15, weight = 'bold')
+    # ax.text(-80000, 40000, 'Rotated\nSTAR', fontsize=15, weight = 'bold')
+    # ax.arrow(ac_met[0], ac_met[1], 5000*np.cos(np.pi/2), 5000*np.sin(np.pi/2), width=100,
+    #                     length_includes_head=False,
+    #                     head_width=2000,
+    #                     head_length=2000,
+    #                     head_starts_at_zero=False,
+    #                     facecolor='orange',
+    #                     edgecolor='orange',
+    #                     label = f'Heading of {np.rad2deg(head):0.2f}')
+    # ax.arrow(ac_met[0], ac_met[1], 5000*np.cos(head), 5000*np.sin(head), width=100,
+    #                     length_includes_head=False,
+    #                     head_width=2000,
+    #                     head_length=2000,
+    #                     head_starts_at_zero=False,
+    #                     facecolor='black',
+    #                     edgecolor='black',
+    #                     label = f'Heading of {np.rad2deg(head):0.2f}')
+    # ax.text(ac_met[0], ac_met[1], 'Aircraft', weight ='bold', fontsize=12)
+    # ax.text(-60000, 30000, 'Heading of 90°', weight = 'bold', fontsize=12)
+    # ax.text(-60000, 10000, f'Heading of 293°', weight = 'bold', fontsize=12)
+    # # plt.plot(x_local, y_local)
+    # ax.grid()
+    # ax.axis('equal')
+    # ax.set_xlabel('X (m)')
+    # ax.set_ylabel('Y (m)')
+    # ax.scatter(origin[0][0], origin[0][1])
+    # plt.show()
+
     if rotated_wps[1][0] < ac_met[0]:
         lr = -1
     else:
@@ -1693,6 +1760,8 @@ if __name__ == '__main__':
     end_point_ref = get_line(rotated_wps[1], rotated_wps[2], 0.1)
     new_travel, new_total = getTravelXY(wps, end_point, gi[0], toa_local, v)
     t_h = np.arctan2(end_point_ref[1]- end_point[1],end_point_ref[0]- end_point[0])
+    # t_h2 = np.arctan2(rotated_wps[g_index][1]-rotated_wps[g_index-1][1], rotated_wps[g_index][0]-rotated_wps[g_index-1][0])
+
     t_t = target-new_total-plan_ahead
     end_point = get_line(rotated_wps[1], rotated_wps[2], gi[1])
     entry = False
@@ -1701,6 +1770,8 @@ if __name__ == '__main__':
     all_nodes = []
     opt = []
     show = False
+    path_toa = new_total+plan_ahead
+    start_time = time.time()
     
     # for i in rotated_wps:
     #     if ac_met[1]-i[1] >0:
@@ -1710,8 +1781,8 @@ if __name__ == '__main__':
 
     for i in range(gi[0], len(wps)-1):
         # g = 5000
-        gi[1] = 0.6
-        p1g = 0.25
+        gi[1] = 0.25
+        p1g = 0.125
         valid = False
         w1 = rotated_wps[gi[0]]
         w2 = rotated_wps[gi[0]+1]
@@ -1719,26 +1790,22 @@ if __name__ == '__main__':
         b = w1[1] - m*w1[0]
         coeffs = [m, b]
         t_h = np.arctan2(w2[1]- w1[1],w2[1]- w1[0])
-        ang_y = (w2[0] + 5000) *m + b
+        # ang_y = (w2[0] + 5000) *m + b
         
         # while gi[1] < 1:
-        for j in range(0,11):
+        for j in range(0,15):
             print(gi, p1g)
-
+            
             end_point = get_line(w1, w2, gi[1])
             p1_point = get_line_p1(w1, end_point, p1g, t_h)
             new_travel, new_total = getTravelXY(rotated_wps, end_point, gi[0], toa_local, v)
             print(f'NEW STAR TOTAL TIME: {new_total}')
             t_t = target-new_total-entryTOA
             print(f'BEZ TARGET TIME: {t_t}')
-            # nodes = [np.array([path_startX_local, end_point[0]+lr*g*np.abs(np.cos(t_h)), end_point[0]]).flatten(),
-            #     np.array([path_startY_local, end_point[1]+lr*g*np.abs(np.sin(t_h)), end_point[1]]).flatten()]
+            
+       
             nodes = [np.array([path_startX_local, p1_point[0], end_point[0]]).flatten(),
                 np.array([path_startY_local, p1_point[1], end_point[1]]).flatten()]
-            # nodes = [np.array([path_startX_local, w1[0], end_point[0]]).flatten(),
-            #     np.array([path_startY_local, w1[1], end_point[1]]).flatten()]
-            
-           
             # end_point_ref = get_line(w1, w2, 1)
             
             print(f'TARGET HEADING: {np.rad2deg(t_h)}')
@@ -1753,19 +1820,15 @@ if __name__ == '__main__':
                                         guess = [p1g, gi[1]],
                                         target_heading=t_h, velocity=v, turn_radius=turn_radius, lr = lr, line = coeffs, wps=[w1, w2])
             print(f'GUESS: {gi[1]}, RESULT: {end}')
-            p1g = p1
-            # print('END POINT', (gi[0], end))
-            # optim1, end, curv1 = solve_optim12_o(
-            #     nodes[0], t_t, nodes[1], t_h, v, turn_radius, lr, coeffs, [w1,w2]
-            # )
+            
+
             opt.append(time.time()-opt_time)
             # print(f'OPTIMIZATION TIME: {time.time()-opt_time}')
             end_point = get_line(w1, w2, end)
-            # end_point = get_line_o(w1,w2,end)
             optim1 = get_line_p1(w1, end_point, p1, t_h)
             new_travel, new_total = getTravelXY(rotated_wps, end_point, gi[0], toa_local, v)
-            # # new_travel, new_total = get_travel_xy(rotated_wps, np.array(end_point), gi[0], toa_local, v)
             t_t = target-new_total-entryTOA
+            p1g = p1
 
             if optim1[0] < ac_met[0]:
                 lr = -1
@@ -1796,17 +1859,7 @@ if __name__ == '__main__':
                 # show = True
                 entry = True
                 bez_ang = np.rad2deg(np.arctan2(optim_b[1][1]-optim_b[1][0], optim_b[0][1]-optim_b[0][0]))
-                # if i ==1:
-                #     show = True
-                # else:
-                #     show = False
-                # if bez_ang<0:
-                #     bez_ang+=360
-                # if bez_ang>=270:
-                #     bank = 42.5
-                # else:
-                #     bank = 5
-                # print(f'BEZ ANGLE: {bez_ang}, BANK {bank}')
+                
                 opt_time = time.time()
                 ba, t_entry = solve_optimEntry([np.deg2rad(bank), 0.005], np.deg2rad(73), np.deg2rad(min), nodes1, v*1.94384, ac_met, lr, rotate_head, show)
                 # ba[0] = np.deg2rad(35)
@@ -1824,7 +1877,7 @@ if __name__ == '__main__':
                 #                             np.array([end_point[0], end_point[1]]), t_entry)
                 x_int_en2, y_int_en2 = find_bez_xy([nodes1[0][0],nodes1[1][0]],
                                             [optim1[0],optim1[1]],
-                                            [end_point[0], end_point[1]], t_entry+0.001)
+                                            [end_point[0], end_point[1]], t_entry+0.01)
                 # x_int_en2, y_int_en2 = find_bez_xy_o(np.array([nodes1[0][0],nodes1[1][0]]),
                 #                             np.array([optim1[0],optim1[1]]),
                 #                             np.array([end_point[0], end_point[1]]), t_entry+0.01)
@@ -1848,7 +1901,7 @@ if __name__ == '__main__':
                 # print(f'PB TOA: {pb_toa}')
                 path_toa = entryTOA + pb_toa
                 print(f'TOA: {path_toa+new_total}, NEW TOTAL {new_total}, TARGET: {target}, PATH TOA: {path_toa}, DIFF: {np.abs(target - (path_toa+new_total))}')
-            ang_y = (end_point[0] - 2500) *m + b
+            ang_y = (end_point[0] - 500) *m + b
             # plt.plot([end_point[0],end_point[0] - 5000], [end_point[1], ang_y], color = 'green', linestyle = '--')
             # plt.plot(x_rot, y_rot)
             # plt.scatter(ac_met[0], ac_met[1])
@@ -1879,227 +1932,13 @@ if __name__ == '__main__':
                 
             # plt.show()
                 
-            # if 1<=np.abs(target - (path_toa+new_total))<=5 and not math.isnan(path_toa):
-            #     og = gi[1]
-            #     for i in range(0, 5):
-            #         w1 = rotated_wps[gi[0]]
-            #         w2 = rotated_wps[gi[0]+1]
-            #         m = (w2[1] - w1[1])/(w2[0] - w1[0])
-            #         b = w1[1] - m*w1[0]
-            #         coeffs = [m, b]
-            #         # gi[1]+=0.05
-            #         if w2[0] <= w1[0]:
-            #             if path_toa+new_total > target:
-            #                 g-=2500
-            #                 gi[1]+=0.05
-            #             else:
-            #                 g+=2500
-            #                 gi[1]-=0.05
-            #         else:
-            #             if path_toa+new_total > target:
-            #                 g+=2500
-            #                 gi[1]+=0.05
-            #             else:
-            #                 g-=2500
-            #                 gi[1]-=0.05
-            #         # print(g, gi)
-            #         # print('HERHE HERE HERE')
-
-            #         end_point = get_line(rotated_wps[gi[0]], rotated_wps[gi[0]+1], gi[1])
-            #         # end_point = get_line_o(rotated_wps[gi[0]], rotated_wps[gi[0]+1], gi[1])
-            #         show = False
-            #         new_travel, new_total = getTravelXY(rotated_wps, end_point, gi[0], toa_local, v)
-            #         # new_travel, new_total = get_travel_xy(rotated_wps, np.array(end_point), gi[0], toa_local, v)
-            #         t_t = target-new_total-entryTOA
-                    
-            #         nodes = [np.array([path_startX_local, end_point[0]+lr*g*np.abs(np.cos(t_h)), end_point[0]]).flatten(),
-            #             np.array([path_startY_local, end_point[1]+lr*g*np.abs(np.sin(t_h)), end_point[1]]).flatten()]
-                
-            #         # m = (rotated_wps[gi[0]+1][1] - rotated_wps[gi[0]][1])/(rotated_wps[gi[0]+1][0] - rotated_wps[gi[0]][0])
-            #         # b = rotated_wps[gi[0]][1] - m*rotated_wps[gi[0]][0]
-            #         # coeffs = [m, b]
-
-            #         # end_point_ref = get_line(rotated_wps[gi[0]], rotated_wps[gi[0]+1], 1)
-            #         # end_point_ref = get_line_o(rotated_wps[gi[0]], rotated_wps[gi[0]+1], 1)
-
-            #         # t_h = np.arctan2(end_point_ref[1]- end_point[1],end_point_ref[0]- end_point[0])
-            #         t_h = np.arctan2(w2[1]- end_point[1],w2[1]- end_point[0])
-            #         opt_time = time.time()
-            #         optim1, end, curv1 = solve_optim12(P0 = [nodes[0][0],nodes[1][0]],
-            #                                     target_toa=t_t,
-            #                                     guess = [nodes[0][1], nodes[1][1], gi[1]],
-            #                                     target_heading=t_h, velocity=v, turn_radius=turn_radius, lr = lr, line = coeffs, wps=[w1, w2])
-            #         # optim1, end, curv1 = solve_optim12_o(P0 = [nodes[0][0],nodes[1][0]],
-            #         #                             target_toa=t_t,
-            #         #                             guess = [nodes[0][1], nodes[1][1], gi[1]],
-            #         #                             target_heading=t_h, velocity=v, turn_radius=turn_radius, lr = lr, line = coeffs, wps=[w1, w2])
-            #         opt.append(time.time()-opt_time)
-            #         # print(f'OPTIMIZATION TIME: {time.time()-opt_time}')
-            #         end_point = get_line(rotated_wps[gi[0]], rotated_wps[gi[0]+1], end)
-            #         # end_point = get_line_o(rotated_wps[gi[0]], rotated_wps[gi[0]+1], end)
-            #         new_travel, new_total = getTravelXY(rotated_wps, end_point, gi[0], toa_local, v)
-            #         # new_travel, new_total = get_travel_xy(rotated_wps, np.array(end_point), gi[0], toa_local, v)
-
-
-            #         if optim1[0] < ac_met[0]:
-            #             lr = -1
-            #         else:
-            #             lr = 1
-            #         optim_b = manual_bez([nodes[0][0],nodes[1][0]], [optim1[0], optim1[1]], [end_point[0], end_point[1]], 50)
-            #         # optim_b = manual_bez_o(np.array([nodes[0][0],nodes[1][0]]), np.array([optim1[0], optim1[1]]), np.array([end_point[0], end_point[1]]), 50)
-
-            #         optim_b_length = path_length([optim1[0], optim1[1]],[nodes[0][0],nodes[1][0]],[end_point[0], end_point[1]],1)
-            #         # optim_b_length = path_length_o(np.array([optim1[0], optim1[1]]),np.array([nodes[0][0],nodes[1][0]]),np.array([end_point[0], end_point[1]]),1)
-
-            #         path_toa = optim_b_length/v
-
-            #         nodes1 = [np.array([nodes[0][0], optim1[0], end_point[0]]).flatten(), np.array([nodes[1][0], optim1[1], end_point[1]])]
-
-            #         if np.isclose(np.arctan2(optim_b[1][1] - optim_b[1][0],  optim_b[0][1]-optim_b[0][0]), np.pi/2, atol = np.deg2rad(10)):
-            #             entryTOA = plan_ahead
-            #             path_toa = optim_b_length/v + entryTOA
-            #             entry = False
-            #             # all_bez.append([optim_b[0], optim_b[1], optim_b_length, path_toa])
-            #             # print('using plan ahead TOA')
-            #         else:
-            #             entry = True
-            #             bez_ang = np.rad2deg(np.arctan2(optim_b[1][1]-optim_b[1][0], optim_b[0][1]-optim_b[0][0]))
-            #             # if bez_ang<0:
-            #             #     bez_ang+=360
-            #             # if bez_ang>=270:
-            #             #     bank = 42.5
-            #             # else:
-            #             #     bank = 5
-            #             # print(f'BEZ ANGLE: {bez_ang}, BANK {bank}')
-            #             opt_time = time.time()
-            #             ba, t_entry = solve_optimEntry([np.deg2rad(bank), 0.005], np.deg2rad(73), np.deg2rad(min), nodes1, v*1.94384, ac_met, lr, rotate_head, show)
-            #             # ba[0] = np.deg2rad(35)
-            #             # t_entry+=0.005
-            #             # print('T ENTRY', t_entry)
-            #             # t_entry+=0.01
-            #             # ba, t_entry = solve_optimEntry_o(np.deg2rad(bank), np.deg2rad(73), np.deg2rad(min), nodes1, v*1.94384, ac_met, lr, rotate_head, show)
-            #             opt.append(time.time()-opt_time)
-                        
-
-            #             x_int_en, y_int_en = find_bez_xy([nodes1[0][0],nodes1[1][0]],
-            #                                         [optim1[0],optim1[1]],
-            #                                         [end_point[0], end_point[1]], t_entry)
-                        
-            #             x_int_en2, y_int_en2 = find_bez_xy([nodes1[0][0],nodes1[1][0]],
-            #                                         [optim1[0],optim1[1]],
-            #                                         [end_point[0], end_point[1]], t_entry+0.001)
-                        
-            #             # x_int_en, y_int_en = find_bez_xy_o(np.array([nodes1[0][0],nodes1[1][0]]),
-            #             #                     np.array([optim1[0],optim1[1]]),
-            #             #                     np.array([end_point[0], end_point[1]]), t_entry)
-                        
-            #             # x_int_en2, y_int_en2 = find_bez_xy_o(np.array([nodes1[0][0],nodes1[1][0]]),
-            #             #                     np.array([optim1[0],optim1[1]]),
-            #             #                     np.array([end_point[0], end_point[1]]), t_entry+0.01)
-            #             req_ent = np.rad2deg(np.arctan2(y_int_en2-y_int_en,x_int_en2-x_int_en))
-                        
-                        
-            #             x_entry, y_entry, ca, entryLength, entryTOA, h_c, k_c = entryPath(v, np.rad2deg(ba), [x_int_en, y_int_en], ac_met, lr, rotate_head)
-            #             # x_entry, y_entry, ca, entryLength, entryTOA, h_c, k_c = entryPath_o(v, np.rad2deg(ba), np.array([x_int_en, y_int_en]), np.array(ac_met), lr, rotate_head)
-            #             act_ent = np.rad2deg(np.arctan2(y_entry[-1]-y_entry[len(y_entry)-2], x_entry[-1]-x_entry[len(x_entry)-2]))
-                        
-
-            #             partial_bez1 = manual_bez_partial([nodes1[0][0],nodes1[1][0]],
-            #                                     [optim1[0],optim1[1]],
-            #                                     [end_point[0], end_point[1]], 50, t_entry)
-            #             # partial_bez1 = manual_bez_partial_o(np.array([nodes1[0][0],nodes1[1][0]]),
-            #             #                     np.array([optim1[0],optim1[1]]),
-            #             #                     np.array([end_point[0], end_point[1]]), 50, t_entry)
-            #             pb_length = optim_b_length - path_length([optim1[0], optim1[1]],[nodes[0][0],nodes[1][0]],[end_point[0], end_point[1]],t_entry)
-            #             # pb_length = optim_b_length - path_length_o(np.array([optim1[0], optim1[1]]),np.array([nodes[0][0],nodes[1][0]]),np.array([end_point[0], end_point[1]]),t_entry)
-
-            #             pb_toa = pb_length/v
-            #             path_toa = entryTOA + pb_toa
-                        
-
-            #         ang_y = (end_point[0] - 5000) *m + b
-            #         # plt.plot([end_point[0],end_point[0] - 5000], [end_point[1], ang_y], color = 'green', linestyle = '--')
-            #         # plt.plot(x_rot, y_rot)
-            #         # plt.scatter(ac_met[0], ac_met[1])
-            #         # plt.plot(x_rot, y_rot)
-            #         # plt.scatter(optim1[0], optim1[1], marker = '^', color = 'red')
-            #         # plt.plot(optim_b[0], optim_b[1], color = 'black')
-            #         # plt.scatter(end_point[0], end_point[1], marker = 's', color = 'black')
-            #         # plt.axis('equal')
-            #         # plt.text(rotated_wps[-1][0], rotated_wps[-1][1], f'Required Travel Time: {target:0.2f}\nActual Travel Time: {path_toa+new_total:0.2f}', weight = 'bold')
-            #         # plt.text(rotated_wps[1][0], rotated_wps[1][1], f'STAR Travel Time: {new_total:0.2f}s\nIn Region', weight = 'bold' )
-
-            #         # if entry:
-            #         #     plt.plot(x_entry, y_entry, color = 'cyan')
-            #         #     plt.text(x_entry[-1]-5000, y_entry[-1]-5000, f'Entry Path Travel Time: \n{entryTOA:0.2f}', weight = 'bold')
-            #         #     plt.text(optim_b[0][25], optim_b[1][25]-5000, f'Partial Bez Travel Time: {pb_toa}s', weight = 'bold' )
-            #         #     plt.text(x_entry[0], y_entry[0], f'BANK ANGLE: {np.rad2deg(ba[0]):0.2f}', weight = 'bold')
-            #         # #     print(f'Partial Bez Travel Time: {pb_toa}, Entry Path Travel Time: {entryTOA}')
-            #         # else:
-            #         # #     print(f'Bez Travel Time: {path_toa:0.2f}s')
-            #         #     plt.text(optim_b[0][25], optim_b[1][25], f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
-            #         # plt.show()
-            #         if entry:
-            #             x_close = np.isclose(x_entry[-1],partial_bez1[0][0], atol = 5)
-            #             y_close = np.isclose(y_entry[-1],partial_bez1[1][0], atol = 5)
-            #             # print(f'X ENTRY, PB1 Start: {x_entry[-1]}, {partial_bez1[0][0]}, {x_close}')
-            #             # print(f'Y ENTRY, PB1 Start: {y_entry[-1]}, {partial_bez1[1][0]}, {y_close}')
-
-            #         if entry and not math.isnan(path_toa) and x_close and y_close:
-            #             all_bez.append([path_toa+new_total, partial_bez1[0], partial_bez1[1], new_total, x_entry, y_entry, pb_toa, pb_length, entryLength, ba, entryTOA, act_ent, gi[0], end, entry])
-            #             all_nodes.append(nodes1)
-            #         elif not entry and not math.isnan(path_toa):
-            #             all_bez.append([path_toa+new_total, optim_b[0], optim_b[1], new_total,  path_toa, optim_b_length, gi[0], end, entry])
-            #             all_nodes.append(nodes1)
-            #         if np.abs(target - (path_toa+new_total))<=1 and not math.isnan(path_toa):
-                        
-            #             if entry == True and  (not x_close or not y_close):
-            #                 valid = False
-            #             elif entry == True and x_close and y_close:
-                       
-            #                 valid = True
-            #                 break
-            #             else:
-            #                 valid = True
-            #                 break
-            #     gi[1] = og
-                    
-                    # print(new_total + path_toa)
-                    # print(f'TARGET: {target}, ACTUAL TRAVEL TIME: {path_toa+new_total}')
-                    
-                    # print(f'TIME DIFFERENCE: {np.abs(target - (path_toa+new_total))}')
-                    # print(f'Original Target: {target}, New STAR Travel Time: {new_total}, New Target Time: {t_t}, Path TOA: {path_toa}')
-                
+           
             if entry and not math.isnan(path_toa):
                 all_bez.append([path_toa+new_total, partial_bez1[0], partial_bez1[1], new_total, x_entry, y_entry, pb_toa, pb_length, entryLength, [ba, t_entry], entryTOA, [act_ent, req_ent], curv1, gi[0], end, entry])
                 all_nodes.append(nodes1)
             elif not entry and not math.isnan(path_toa):
                 all_bez.append([path_toa+new_total, optim_b[0], optim_b[1], new_total,  path_toa, optim_b_length, curv1, gi[0], end, entry])
                 all_nodes.append(nodes1)
-                # if np.abs(target - (path_toa+new_total))<=1 and not math.isnan(path_toa):
-                # # print('PATH IS VALID, APPENDINH')
-                #     # print(f'X ENTRY, PB1 Start: {x_entry[-1]}, {partial_bez1[0][0]}')
-                #     # print(f'Y ENTRY, PB1 Start: {y_entry[-1]}, {partial_bez1[1][0]}')
-                #     x_close = np.isclose(x_entry[-1],partial_bez1[0][0], atol = 5)
-                #     y_close = np.isclose(y_entry[-1],partial_bez1[1][0], atol = 5)
-                #     if entry == True and (not x_close or not y_close):
-                #         valid = False
-                #         if act_ent > req_ent:
-                #             bank-=2.5
-                #         else:
-                #             bank+=10
-                #     elif entry == True and x_close and y_close:
-                #         # print(path_toa+new_total, pb_toa, new_total)
-                #         all_bez.append([path_toa+new_total, partial_bez1[0], partial_bez1[1], new_total, x_entry, y_entry, pb_toa, pb_length, entryLength, ba, entryTOA, act_ent, gi[0], end, entry])
-                #         # all_nodes.append(nodes1)
-                #         valid = True
-                #         break
-                #     else:
-                #         valid = True
-                #         all_bez.append([path_toa+new_total, optim_b[0], optim_b[1], new_total,  path_toa, optim_b_length, gi[0], end, entry])
-                #         all_nodes.append(nodes1)
-                #         break
-            
 
             if np.abs(target - (path_toa+new_total))<=1 and not math.isnan(path_toa):
                 
@@ -2221,7 +2060,7 @@ if __name__ == '__main__':
     # plt.scatter(nodes1[0], nodes1[1])
     # plt.show()
     print(f'TOTAL OPTIMIZATION TIME: {stop_time-start_time}')
-    plot_mult = True
+    plot_mult = False
     # print("ENTRY TOA:", entryTOA)
     # print("Bez TOA:", pb_toa)
     # print(f'Target Total is {target}\nTarget Bez TOA is: {t_t}\nBez+Entry Path TOA is: {path_toa}\nTotal Travel Time w/ STAR Route is {path_toa+new_total}\nValidity is {valid}')
@@ -2281,9 +2120,9 @@ if __name__ == '__main__':
             '''
             plt.plot(rotated_entry[0], rotated_entry[1], label = 'Entry Arc', color = 'cyan', linewidth = 2)
             plt.scatter(rotated_entry[0][-1], rotated_entry[1][-1], marker = '*', color = 'brown', label = 'Intersection Point', zorder = 100)
-            plt.text(rotated_entry[0][0]+5000,rotated_entry[1][0]-2500, f'Entry Path Travel Time: \n{all_bez[mindex][10]:0.2f}', weight = 'bold')
+            plt.text(rotated_entry[0][0]+6000,rotated_entry[1][0], f'Entry Path Travel Time: \n{all_bez[mindex][10]:0.2f}', weight = 'bold')
             plt.plot(rotated_partial[0], rotated_partial[1], c = 'black', label = 'Partial Bez Traj', linewidth = 2)
-            # plt.text(rotated_bezier[0][10], rotated_bezier[1][10]-5000, f'Partial Bez Travel Time: \n{all_bez[mindex][6]:0.2f}s', weight = 'bold' )
+            plt.text(-20000, rotated_bezier[1][0]-5000, f'Partial Bez Travel Time: \n{all_bez[mindex][6]:0.2f}s', weight = 'bold' )
             plt.text(-45000, 22500, f'Partial Bez Travel Time: \n{all_bez[mindex][6]:0.2f}s', weight = 'bold' )
             # plt.plot(rotated_bezier[0], rotated_bezier[1], color = 'black', linestyle = '--', linewidth = 2)
         else:
@@ -2292,7 +2131,7 @@ if __name__ == '__main__':
             print(f'Actual Heading: {np.rad2deg(head)}')
             print('BEZ CURVATURE:', all_bez[mindex][6], 'TURN RADIUS:', turn_radius)
             # plt.text(optim_b[0][50], optim_b[1][50], f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
-            plt.text(rotated_bezier[0][25], rotated_bezier[1][25]-2500, f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
+            plt.text(rotated_bezier[0][25]+1000, rotated_bezier[1][25]-2500, f'Bez Travel Time: {path_toa:0.2f}s', weight = 'bold' )
         # if head > pi == 'IV':
         #     plt.arrow(ac_met[0], ac_met[1], 2500*np.cos(head+np.pi), 2500*np.sin(head+np.pi), width=50,
         #                 length_includes_head=False,
@@ -2347,7 +2186,7 @@ if __name__ == '__main__':
         # plt.text(wps[1][0], wps[1][1], f'STAR Travel Time: {all_bez[mindex][3]:0.2f}s', weight = 'bold' )
         # plt.text(wps[-1][0], wps[-1][1], f'Required Travel Time: {target:0.2f}\nActual Travel Time: {all_bez[mindex][0]:0.2f}', weight = 'bold')
         plt.text(-20000, 5000, f'Required Travel Time: {target:0.2f}\nActual Travel Time: {all_bez[mindex][0]:0.2f}', weight = 'bold')
-        plt.text(wps[2][0]+1000, wps[2][1], f'STAR Travel Time: \n{all_bez[mindex][3]:0.2f}s', weight = 'bold' )
+        plt.text(wps[2][0]-10000, wps[2][1]-1000, f'STAR Travel Time: \n{all_bez[mindex][3]:0.2f}s', weight = 'bold' )
         # nodes_r = rotate_bez(all_nodes[4], -angle_to_rotate, origin)
         # new_b = manual_bez([nodes_r[0][0], nodes_r[1][0]], [nodes_r[0][1], nodes_r[1][1]], [nodes_r[0][2], nodes_r[1][2]], 200)
         # plt.plot(new_b[0], new_b[1], linewidth = 3, color = 'red')
@@ -2375,7 +2214,7 @@ if __name__ == '__main__':
                 unique_labels.append(label)
                 unique_handles.append(handle)
 
-        plt.legend(unique_handles, unique_labels, loc='lower left', fontsize = 9)
+        plt.legend(unique_handles, unique_labels, loc='upper right', fontsize = 9)
 
         plt.ylabel('Y (m)')
         plt.xlabel('X (m)')
@@ -2389,6 +2228,7 @@ if __name__ == '__main__':
         colors = ['black', 'magenta', 'red', 'cyan', 'green']
         c = 0
         ax.plot(x, y, label = 'STAR', linewidth = 2, color = 'blue')
+        
         for i in min_indices.items():
             
             # print(min_indices.items(), i)
@@ -2496,8 +2336,18 @@ if __name__ == '__main__':
             # ax.scatter(rot_nodes[0][2], rot_nodes[1][2], marker = '^', color = 'red', label = 'Control Points')
             ax.scatter(rotated_bezier[0][-1], rotated_bezier[1][-1], marker = '^', color = colors[c], label = 'Optimized End Point', s = 50, zorder = 100)
 
-            
-            ax.text(rotated_bezier[0][-1], rotated_bezier[1][-1], f'   ETA: {all_bez[mindex][0]:0.2f}', weight = 'bold', color = colors[c], fontsize = 12)
+            # if c == 0:
+            #     ax.text(0, 20000, f'   ETA: {all_bez[mindex][0]:0.2f}', weight = 'bold', color = colors[c], fontsize = 12)
+            # elif c == 1:
+            #     ax.text(0, 17500, f'   ETA: {all_bez[mindex][0]:0.2f}', weight = 'bold', color = colors[c], fontsize = 12)
+            # elif c == 2:
+            #     ax.text(0, 15000, f'   ETA: {all_bez[mindex][0]:0.2f}', weight = 'bold', color = colors[c], fontsize = 12)
+            if c == 3:
+                ax.text(rotated_bezier[0][-1], rotated_bezier[1][-1]+750, f'   ETA: {all_bez[mindex][0]:0.2f}', weight = 'bold', color = colors[c], fontsize = 12)
+            # elif c == 4:
+            #     ax.text(0, 10000, f'   ETA: {all_bez[mindex][0]:0.2f}', weight = 'bold', color = colors[c], fontsize = 12)
+            else:
+                ax.text(rotated_bezier[0][-1], rotated_bezier[1][-1], f'   ETA: {all_bez[mindex][0]:0.2f}', weight = 'bold', color = colors[c], fontsize = 12)
             # ax.text(wps[0][0], wps[0][1], f'Required Travel Time: {target:0.2f}\nActual Travel Time: {all_bez[mindex][0]:0.2f}', weight = 'bold')
             # ax.text(wps[1][0], wps[1][1], f'STAR Travel Time: {all_bez[mindex][3]:0.2f}s', weight = 'bold' )
             # ax.text(wps[-1][0], wps[-1][1], f'Required Travel Time: {target:0.2f}\nActual Travel Time: {all_bez[mindex][0]:0.2f}', weight = 'bold')
@@ -2514,7 +2364,7 @@ if __name__ == '__main__':
         #                 facecolor='black',
         #                 edgecolor='black',
         #                 label = f'Heading of {np.rad2deg(head):0.2f}')
-        ax.text(-20000, 5000, f'STA: {target:0.2f}', weight = 'bold', fontsize = 12)
+        ax.text(1000, 1000, f'STA: {target:0.2f}', weight = 'bold', fontsize = 12)
         arrow = patches.FancyArrow(ac_met[0], ac_met[1], 
                            2500*np.cos(head), 2500*np.sin(head), 
                            width=50, head_width=1000, head_length=1000, 
@@ -2537,7 +2387,7 @@ if __name__ == '__main__':
         ax.set_xlabel('X (m)')
 
         ax.axis('equal')
-        ax.set_xlim([-56000, 20000])
+        # ax.set_xlim([-56000, 20000])
         ax.grid()
         # ax.set_title(f'Quadrant {gate[0]}, Path Optimization Time: {(stop_time-start_time):0.2f}')
 
@@ -2554,10 +2404,55 @@ if __name__ == '__main__':
                 unique_labels.append(label)
                 unique_handles.append(handle)
 
-        ax.legend(unique_handles, unique_labels, loc='lower left', fontsize = 7)
+        ax.legend(unique_handles, unique_labels, loc='lower left', fontsize = 8)
 
         # Set aspect ratio to equal, which may influence the limits
         # ax.axis('equal')
 
         # Display the plot
         plt.show()
+
+    fig, ax = plt.subplots()
+    for i in range(len(wps)-1):
+        ax.plot([rotated_wps[i][0], rotated_wps[i+1][0]], [rotated_wps[i][1], rotated_wps[i+1][1]], color = 'orange', linewidth = 2)#, label = 'STAR')
+        ax.scatter(rotated_wps[i][0], rotated_wps[i][1], marker = 's', color = 'black')#, label = 'STAR Waypoints')
+        ax.plot([wps[i][0], wps[i+1][0]], [wps[i][1], wps[i+1][1]], color = 'blue', linewidth = 2)
+        ax.scatter(wps[i][0], wps[i][1], marker = 's', color = 'black')#, label = 'STAR Waypoints')
+    # circ = plt.Circle((ac_met[0]-turn_radius, ac_met[1]), turn_radius, fill = False, color = 'orange', linewidth = 2)
+    # ax.add_patch(circ)
+    # circ = plt.Circle((ac_met[0]-turn_radius*np.sin(head), ac_met[1]+turn_radius*np.cos(head)), turn_radius, fill = False, color = 'black', linewidth = 2)
+    # ax.add_patch(circ)
+    # circ = plt.Circle((h, k), turn_radius, fill = False)
+    # ax.add_patch(circ)
+    ax.text(-10000, 15000, 'STAR', fontsize=15, weight = 'bold')
+    ax.text(-20000, 30000, 'Rotated\nSTAR', fontsize=15, weight = 'bold')
+    ax.arrow(ac_met[0], ac_met[1], 5000*np.cos(np.pi/2), 5000*np.sin(np.pi/2), width=100,
+                        length_includes_head=False,
+                        head_width=2000,
+                        head_length=2000,
+                        head_starts_at_zero=False,
+                        facecolor='orange',
+                        edgecolor='orange',)
+                        # label = f'Heading of {np.rad2deg(head):0.2f}')
+    ax.arrow(ac_met[0], ac_met[1], 5000*np.cos(head), 5000*np.sin(head), width=100,
+                        length_includes_head=False,
+                        head_width=2000,
+                        head_length=2000,
+                        head_starts_at_zero=False,
+                        facecolor='black',
+                        edgecolor='black',)
+                        # label = f'Heading of {np.rad2deg(head):0.2f}')
+    ax.text(-27500, 17000, 'Aircraft', weight ='bold', fontsize=12)
+    ax.text(-16000, 22500, 'Heading of\n90°', weight = 'bold', fontsize=12)
+    ax.text(-27500, 10000, f'Heading of\n293°', weight = 'bold', fontsize=12)
+    # plt.plot(x_local, y_local)
+    ax.grid()
+    ax.axis('equal')
+    ax.set_xlabel('X (m)')
+    ax.set_ylabel('Y (m)')
+    ax.set_xlim([-30000, 5000])
+    ax.scatter(origin[0][0], origin[0][1])
+    ax.plot(rotated_bezier[0], rotated_bezier[1], linewidth = 3, color = 'black', label = 'Actual Bezier')
+    ax.plot(optim_b[0], optim_b[1], linewidth = 3, color = 'red', label = 'Rotated Bezier')
+    ax.legend(loc = 'best')
+    plt.show()

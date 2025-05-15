@@ -71,17 +71,18 @@ set(p_ax.Legend,'AutoUpdate','off');
 
 title(p_ax,'Draw the first ROI around the area to be zoomed')
 rect_zoom=drawrectangle(p_ax,zoomArea_para{:},'Selected',1,'Label','ZoomPlot_zoomarea','LabelVisible','off'); % select
-title(p_ax,'Now draw the second ROI for the size and position ZOOM axes')
+% title(p_ax,'Now draw the second ROI for the size and position ZOOM axes')
 rect_axis=drawrectangle(p_ax,'FaceAlpha',0,'Color','red','Selected',1,'LineWidth',2,'Label','ZoomPlot_zoomaxis','LabelVisible','off');
 
 % wait for resizinig/respositiong and update the plot
 toggle_selected=@(~,~) toggleSelected(rect_zoom,rect_axis);
-title(p_ax,'Great! adjust size/position and Click anywhere on the parent axes to confirm')
+% title(p_ax,'Great! adjust size/position and Click anywhere on the parent axes to confirm')
 set(p_ax,'ButtonDownFcn',toggle_selected,'HitTest','on')
 
 r1pos_old=zeros(1,4);
 r2pos_old=zeros(1,4);
 while(rect_axis.Selected )
+    % axis('equal')
     pause(0.1)
     if((~isequal(r2pos_old,rect_axis.Position) || ~isequal(r1pos_old,rect_zoom.Position)))
         if(exist('line1','var')), delete(line1),end
@@ -144,7 +145,7 @@ while(rect_axis.Selected )
 % ylim(ch_ax, [rect_zoom.Position(2) rect_zoom.Position(2) + rect_zoom.Position(4)]);
 
 % Remove the axis ticks
-% set(ch_ax, 'XTick', [], 'YTick', []);
+set(ch_ax, 'XTick', [], 'YTick', []);
 end
 
 % remove second ROI
